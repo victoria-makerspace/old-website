@@ -1,0 +1,26 @@
+Site:
+    - HTTP/2
+    - Go templates
+    - Mux for Discourse server
+    - OAuth for Discourse automatic login
+
+Database:
+    - PostgreSQL
+
+Tool use hooks:
+    - Laser cutter
+        - Vacuum
+        - Compressed air
+    - Woodshop tools
+        - Main vacuum
+        - Shop vacuum(s)
+    - Per-member use logging
+
+Security:
+    Tool access:
+    Cameras:
+
+Payment:
+    - Beanstream API
+    - Failed payment notification
+    - Membership termination notification and VITP card cancel
