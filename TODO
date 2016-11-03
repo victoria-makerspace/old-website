@@ -24,3 +24,8 @@ Payment:
     - Beanstream API
     - Failed payment notification
     - Membership termination notification and VITP card cancel
+
+Makerspace computers:
+    - NFS
+    - LDAP
+    - SSO
