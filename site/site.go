@@ -1,12 +1,18 @@
 package main
 
 import (
-    "fmt"
+    "html/template"
     "net/http"
 )
 
+var templates = template.Must(template.ParseFiles("template.html"))
+
+type page struct {
+}
+
 func handler (w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintf(w, "makerspace.ca", r.URL.Path[1:])
+    p := page{}
+    templates.Execute(w, p)
 }
 
 func main () {
