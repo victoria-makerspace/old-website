@@ -2,7 +2,8 @@ Site:
     - HTTP/2
     - Go templates
     - Mux for Discourse server
-    - OAuth for Discourse automatic login
+    - SSO for Discourse automatic login
+    - Discourse CSS
 
 Database:
     - PostgreSQL
@@ -18,6 +19,8 @@ Tool use hooks:
 
 Security:
     Tool access:
+        - AVR with table of allowed users
+        - Queries server for updates when user not in table
     Cameras:
 
 Payment:
@@ -28,4 +31,4 @@ Payment:
 Makerspace computers:
     - NFS
     - LDAP
-    - SSO
+    - SSO using card reader
