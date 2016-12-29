@@ -1,21 +1,20 @@
-package main
+package site
 
 import (
     "html/template"
+    "log"
     "net/http"
 )
-
-var templates = template.Must(template.ParseFiles("template.html"))
 
 type page struct {
 }
 
-func handler (w http.ResponseWriter, r *http.Request) {
+func indexHandler (w http.ResponseWriter, r *http.Request) {
     p := page{}
-    templates.Execute(w, p)
+    template.Execute(w, p)
 }
 
-func main () {
-    http.HandleFunc("/", handler)
-    http.ListenAndServe(":8080", nil)
+func Serve (addr string) {
+    http.HandleFunc("/", indexHandler)
+    log.Fatal(http.ListenAndServe(addr, nil))
 }
