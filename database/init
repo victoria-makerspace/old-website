@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+sudo postgresql-setup --initdb
+sudo -u postgres -i createuser -d $USER
+createdb makerspace
+
+psql makerspace
+
+CREATE SCHEMA makerspace;
+ALTER DATABASE makerspace SET search_path TO makerspace, pg_catalog;
+\q

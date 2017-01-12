@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+psql makerspace <<EOF
+
+DROP TABLE IF EXISTS member CASCADE;
+DROP TABLE IF EXISTS email CASCADE;
+DROP TABLE IF EXISTS storage CASCADE;
+
+CREATE TABLE member (
+    username text NOT NULL PRIMARY KEY,
+    name text NOT NULL
+);
+CREATE TABLE email (
+    address text NOT NULL PRIMARY KEY,
+    member text NOT NULL REFERENCES member,
+    "primary" boolean DEFAULT true NOT NULL
+);
+CREATE TABLE storage (
+    location text NOT NULL,
+    number integer NOT NULL,
+    member text REFERENCES member,
+    description text,
+    PRIMARY KEY (location, number)
+);
+CREATE UNIQUE INDEX ON email (member, "primary") WHERE ("primary" = true);
+
+EOF

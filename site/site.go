@@ -6,12 +6,14 @@ import (
     "net/http"
 )
 
+var templates = template.Must(template.ParseGlob("site/templates/*"))
+
 type page struct {
 }
 
 func indexHandler (w http.ResponseWriter, r *http.Request) {
     p := page{}
-    template.Execute(w, p)
+    templates.Execute(w, p)
 }
 
 func Serve (addr string) {
