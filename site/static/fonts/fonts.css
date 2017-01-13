@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css?family=PT+Serif');
+@font-face {
+    font-family:        'Glyphicons Regular';
+    src: url('glyphicons-regular.eot');
+    src: url('glyphicons-regular.ttf') format('truetype'),
+    url('glyphicons-regular.woff2') format('woff2');
+}
+@font-face {
+    font-family:        'Glyphicons Halflings';
+    src: url('glyphicons-halflings-regular.eot');
+    src: url('glyphicons-halflings-regular.ttf') format('truetype'),
+    url('glyphicons-halflings-regular.woff2') format('woff2');
+}
+@font-face {
+    font-family:        'Glyphicons Social';
+    src: url('glyphicons-social-regular.eot');
+    src: url('glyphicons-social-regular.ttf') format('truetype'),
+    url('glyphicons-social-regular.woff2') format('woff2');
+}
+@font-face {
+    font-family:        'Glyphicons Filetypes';
+    src: url('glyphicons-filetypes-regular.eot');
+    src: url('glyphicons-filetypes-regular.ttf') format('truetype'),
+    url('glyphicons-filetypes-regular.woff2') format('woff2');
+}
+
+.glyphicon-user:before {
+    font-family:        'Glyphicons Regular';
+    content:            "\E004";
+}
+.glyphicon-globe:before {
+    font-family:        'Glyphicons Regular';
+    content:            "\E341";
+}
+.glyphicon-file:before {
+    font-family:        'Glyphicons Regular';
+    content:            "\E037";
+}
+.glyphicon-gmail:before {
+    font-family:        'Glyphicons Social';
+    content:            "\E019";
+}
+.glyphicon-linked-in:before {
+    font-family:        'Glyphicons Social';
+    content:            "\E018";
+}
+.glyphicon-github:before {
+    font-family:        'Glyphicons Social';
+    content:            "\E022";
+}
+.glyphicon-instagram:before {
+    font-family:        'Glyphicons Social';
+    content:            "\E033";
+}
+.glyphicon-unknown-file:before {
+    font-family:        'Glyphicons Filetypes';
+    content:            "\E140";
+}
+.glyphicon-jpg:before {
+    font-family:        'Glyphicons Filetypes';
+    content:            "\E052";
+}
+.glyphicon-pdf:before {
+    font-family:        'Glyphicons Filetypes';
+    content:            "\E065";
+}
