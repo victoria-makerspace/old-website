@@ -13,17 +13,26 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <nav class="navbar navbar-toggleable-xl navbar-light fixed-top bg-faded">
+    <nav class="navbar navbar-toggleable-xl navbar-light fixed-top">
         <div class="container">
             <a class="navbar-brand" href="/">
                 <img src="/logo-simple-text.svg" alt="Victoria Makerspace">
             </a>
-            <ul class="navbar-nav">
+            <ul class="collapse navbar-collapse navbar-nav nav-tabs justify-content-center">
                 <li class="nav-item">
-                    <a class="glyphicons glyphicons-conversation" href="/talk" title="Talk forum"></a>
+                    <a class="nav-link" href="">shop</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="">classes</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="">join</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/talk"><span class="glyphicons glyphicons-conversation"></span> talk</a>
                 </li>
             </ul>
-            <span class="navbar-text"><a class="btn btn-outline-primary rounded-circle glyphicons glyphicons-user" href="/member" title="Sign in"></a></span>
+            <a class="btn btn-outline-primary rounded-circle glyphicons glyphicons-user" href="/member" title="Sign in"></a>
         </div>
     </nav>
     <div id="myCarousel" class="carousel slide" data-ride="carousel">
@@ -66,7 +75,7 @@
         <footer>
             <hr>
             <p class="float-right"><a href="#">Back to top</a></p>
-            <p>&copy; 2017 Victoria Makerspace &middot; <a href="mailto:admin@makerspace.ca">Support</a></p>
+            <p>&copy; 2017 Victoria Makerspace &middot; <a class="glyphicons-social glyphicons-social-gmail" href="mailto:admin@makerspace.ca" title="E-mail"></a> <a class="glyphicons-social glyphicons-social-twitter" href="https://twitter.com/VicMakerspace" title="Twitter"></a> <a class="glyphicons-social glyphicons-social-facebook" href="https://facebook.com/VicMakerspace" title="Facebook"></a></p>
         </footer>
     </div>
 

@@ -5,34 +5,48 @@ body {
     color: #5a5a5a;
 }
 
-.navbar.bg-faded {
+.navbar {
     background: rgba(247,247,247,0.8);
+    padding-bottom: 0;
+}
+.navbar > .container {
+    height: 3rem;
 }
 .navbar-brand {
     padding: 0;
+    margin: 0 0 0.5rem 0;
 }
-.navbar-brand img {
+.navbar-brand > img {
     height: 2.5rem;
 }
-.navbar-text {
-    width: 100%;
-    text-align: end;
-}
-.navbar-text a {
+.navbar a {
     color: inherit;
     border-color: inherit;
 }
-.navbar-text a:hover, .navbar-text a:focus {
-    color: rgba(0,0,0,0.5);
-    border-color: #014c8c;
-    background-color: #014c8c;
+.navbar a.btn:hover, .navbar a.btn:focus,
+.nav-item > .nav-link:hover, .nav-item > .nav-link:focus {
+    color: rgba(0,0,0,0.7);
+    border-color: #0275d8;
+    background-color: #0275d8;
 }
-.navbar-text .btn {
+.navbar-nav {
+    height: 100%;
+    border: 0;
+}
+.nav-link {
+    font-weight: bold;
+    line-height: 2rem;
+    margin-top: 0.5rem;
+    padding: 0.25rem 1rem 0 1rem;
+    height: 2.5rem;
+    transition: all 0.2s ease-in-out;
+}
+.navbar .btn.glyphicons {
+    margin: 0 0 0.5rem 0;
     width: 2.5rem;
     height: 2.5rem;
-    padding: 0;
-    font-size: 1.1rem;
-    line-height: 2.3rem;
+    padding: 0 0.6rem;
+    line-height: 2.4rem;
 }
 
 .carousel {
