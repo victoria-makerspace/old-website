@@ -46,7 +46,7 @@ body {
     background: rgba(0,0,0,0.5);
 }
 .carousel-item {
-    height: 32rem;
+    height: 22rem;
     background-color: #777;
 }
 .carousel-item > img {
@@ -54,6 +54,11 @@ body {
     top: 0;
     left: 50%;
     transform: translate(-50%, 0);
-    height: 32rem;
+    height: 22rem;
 }
 
+@media (min-width: 768px) {
+    .carousel-item, .carousel-item > img {
+        height: 32rem;
+    }
+}
