@@ -6,7 +6,7 @@ body {
 }
 
 .navbar.bg-faded {
-    background: rgba(247,247,247,0.9);
+    background: rgba(247,247,247,0.8);
 }
 .navbar-brand {
     padding: 0;
@@ -42,6 +42,9 @@ body {
     z-index: 10;
     bottom: 3rem;
 }
+.carousel-caption p {
+    background: rgba(0,0,0,0.5);
+}
 .carousel-item {
     height: 32rem;
     background-color: #777;
@@ -49,11 +52,8 @@ body {
 .carousel-item > img {
     position: absolute;
     top: 0;
-    left: 0;
-    min-width: 75%;
+    left: 50%;
+    transform: translate(-50%, 0);
     height: 32rem;
 }
 
-footer {
-    padding: 2rem;
-}
