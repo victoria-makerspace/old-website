@@ -53,6 +53,9 @@ body {
     background: rgba(247,247,247,0.8);
 }
 
+.carousel {
+    padding-bottom: 2rem;
+}
 .carousel-caption p {
     background: rgba(0,0,0,0.5);
 }
@@ -63,7 +66,8 @@ body {
 .carousel-item > img {
     position: absolute;
     top: 0;
-    left: 0;
+    left: 50%;
+    transform: translateX(-50%);
     height: 22rem;
 }
 
@@ -75,7 +79,7 @@ body {
         display: none;
     }
     body {
-        padding-top: 3em;
+        padding-top: 5rem;
     }
 }
 @media (max-width: 768px) {
