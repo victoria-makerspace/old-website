@@ -74,13 +74,6 @@ body {
     height: 22rem;
 }
 
-.map {
-    border: 0;
-    margin: 0 0 1rem 2rem;
-    width: 20rem;
-    height: 20rem;
-}
-
 @media (max-width: 576px) {
     .container {
         margin: 0;
@@ -88,29 +81,17 @@ body {
     .carousel {
         display: none;
     }
-    .map {
-        width: 100%;
-    }
     body {
         padding-top: 5rem;
     }
 }
 @media (max-width: 768px) {
-    .map:first-child {
-        display: none;
-    }
     .navbar-nav, .nav-item:last-child > .nav-link {
         border-bottom-left-radius: 0.25rem;
         border-bottom-right-radius: 0.25rem;
     }
 }
 @media (min-width: 768px) {
-    .map {
-        display: none;
-    }
-    .map:first-child {
-        display: block;
-    }
     .nav-link {
         border-top-left-radius: 0.25rem;
         border-top-right-radius: 0.25rem;
