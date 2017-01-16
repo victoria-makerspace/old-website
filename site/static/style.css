@@ -74,6 +74,30 @@ body {
     height: 22rem;
 }
 
+#shop-features {
+    padding-top: 4rem;
+    margin-top: -4rem;
+}
+.shop-features img {
+    max-width: 100%;
+    padding-bottom: 1rem;
+}
+
+.modal-open {
+    padding-right: 10px !important;
+}
+.modal-open > .fixed-top {
+    margin-right: 10px;
+}
+.modal-content {
+    background: rgba(247,247,247,0.9);
+}
+.modal button.close {
+    padding: 1rem 1rem 0 0;
+    text-align: right;
+}
+
+
 @media (max-width: 576px) {
     .container {
         margin: 0;
