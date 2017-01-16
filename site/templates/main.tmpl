@@ -13,26 +13,30 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <nav class="navbar navbar-toggleable-xl navbar-light fixed-top">
+    <nav class="navbar navbar-toggleable-sm navbar-light fixed-top">
         <div class="container">
+            <a class="navbar-toggler navbar-toggler-right nav-link glyphicons glyphicons-menu-hamburger" role="button" data-toggle="collapse" data-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation"></a>
+            </span>
             <a class="navbar-brand" href="/">
                 <img src="/logo-simple-text.svg" alt="Victoria Makerspace">
             </a>
-            <ul class="collapse navbar-collapse navbar-nav nav-tabs justify-content-center">
+            <ul class="collapse navbar-collapse navbar-nav justify-content-center" id="navbar">
                 <li class="nav-item">
-                    <a class="nav-link" href="">shop</a>
+                    <a class="nav-link" href=""><span class="glyphicons glyphicons-hand-saw"></span> shop features</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="">classes</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="">join</a>
+                    <a class="nav-link" href=""><span class="glyphicons glyphicons-book-open"></span> classes</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/talk"><span class="glyphicons glyphicons-conversation"></span> talk</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href=""><span class="glyphicons glyphicons-user-add"></span> &nbsp;join</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/member"><span class="glyphicons glyphicons-user"></span> sign in</a>
+                </li>
             </ul>
-            <a class="btn btn-outline-primary rounded-circle glyphicons glyphicons-user" href="/member" title="Sign in"></a>
         </div>
     </nav>
     <div id="myCarousel" class="carousel slide" data-ride="carousel">

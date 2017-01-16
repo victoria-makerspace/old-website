@@ -7,13 +7,15 @@ import (
     "os"
 )
 
-var tmpl = template.Must(template.ParseGlob(os.Getenv("MAKERSPACE_DIR") + "/site/templates/*"))
+//var tmpl = template.Must(template.ParseGlob(os.Getenv("MAKERSPACE_DIR") + "/site/templates/*"))
 
 type page struct {
 }
 
 func rootHandler (w http.ResponseWriter, r *http.Request) {
     if r.URL.Path == "/" {
+//        tmpl = template.Must(template.ParseGlob(os.Getenv("MAKERSPACE_DIR") + "/site/templates/*"))
+        tmpl := template.Must(template.ParseFiles(os.Getenv("MAKERSPACE_DIR") + "/site/templates/main.tmpl"))
         tmpl.Execute(w, page{
         })
     } else {
@@ -22,8 +24,8 @@ func rootHandler (w http.ResponseWriter, r *http.Request) {
 }
 
 func memberHandler (w http.ResponseWriter, r *http.Request) {
-    tmpl.Execute(w, page{
-    })
+    //tmpl.Execute(w, page{
+    //})
 }
 
 func Serve (addr string) {
