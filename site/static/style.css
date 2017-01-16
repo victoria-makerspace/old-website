@@ -1,6 +1,7 @@
 @import url('fonts/fonts.css');
 
 body {
+    position: relative;
     padding-bottom: 3rem;
     color: #5a5a5a;
 }
@@ -19,10 +20,6 @@ body {
 .navbar-brand > img {
     height: 2.5rem;
 }
-.navbar a {
-    color: inherit;
-    border-color: inherit;
-}
 .navbar-nav {
     border: 0;
     margin-top: 0.5rem;
@@ -34,8 +31,14 @@ body {
     height: 2.5rem;
     transition: all 0.2s ease-in-out;
 }
-.nav-link:hover, .nav-link:focus {
-    background-color: #0275d8;
+.nav-link:hover, .nav-link:focus,
+.nav-link.active:hover, .nav-link.active:focus {
+    color: rgba(0,0,0,0.9) !important;
+    background-color: rgba(2, 117, 216, 1.0);
+}
+.nav-link.active {
+    color: rgba(0,0,0,0.7) !important;
+    background-color: rgba(2, 117, 216, 0.7);
 }
 .navbar-toggler {
     right: 0;
