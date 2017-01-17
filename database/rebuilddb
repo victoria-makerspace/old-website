@@ -7,11 +7,19 @@ DROP TABLE IF EXISTS email CASCADE;
 DROP TABLE IF EXISTS storage CASCADE;
 
 CREATE TABLE member (
-    username text NOT NULL PRIMARY KEY,
-    name text NOT NULL
+    username text PRIMARY KEY,
+    name text NOT NULL,
+    password_key character(32) NOT NULL,
+    password_salt character(32) NOT NULL UNIQUE
+);
+CREATE TABLE session_http (
+    key text PRIMARY KEY,
+    username text NOT NULL REFERENCES member,
+    sign_in_time timestamp NOT NULL,
+    last_seen timestamp NOT NULL
 );
 CREATE TABLE email (
-    address text NOT NULL PRIMARY KEY,
+    address text PRIMARY KEY,
     member text NOT NULL REFERENCES member,
     "primary" boolean DEFAULT true NOT NULL
 );

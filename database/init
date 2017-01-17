@@ -4,8 +4,9 @@ sudo postgresql-setup --initdb
 sudo -u postgres -i createuser -d $USER
 createdb makerspace
 
-psql makerspace
+psql makerspace <<EOF
 
 CREATE SCHEMA makerspace;
 ALTER DATABASE makerspace SET search_path TO makerspace, pg_catalog;
-\q
+
+EOF
