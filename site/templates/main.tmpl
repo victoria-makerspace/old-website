@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
     <link rel="stylesheet" href="/style.css">
 </head>
-<body data-spy="scroll" data-target="#navbar">
+<body{{if eq .Name "index"}} data-spy="scroll" data-target="#navbar"{{end}}>
     <div class="modal fade" id="signin" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -42,7 +42,7 @@
             </a>
             <ul class="collapse navbar-collapse navbar-nav justify-content-end" id="navbar">
                 <li class="nav-item">
-                    <a class="nav-link" href="#shop-features"><span class="glyphicons glyphicons-hand-saw"></span> shop features</a>
+                    <a class="nav-link" href="{{if ne .Name "index"}}/{{end}}#shop-features"><span class="glyphicons glyphicons-hand-saw"></span> shop features</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href=""><span class="glyphicons glyphicons-book-open"></span> classes</a>
@@ -51,7 +51,7 @@
                     <a class="nav-link" href="/talk"><span class="glyphicons glyphicons-conversation"></span> talk</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href=""><span class="glyphicons glyphicons-user-add"></span> &nbsp;join</a>
+                    <a class="nav-link{{if eq .Name "join"}} active{{end}}" href="/join"><span class="glyphicons glyphicons-user-add"></span> &nbsp;join</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="" data-toggle="modal" data-target="#signin"><span class="glyphicons glyphicons-user"></span> sign in</a>
@@ -59,6 +59,7 @@
             </ul>
         </div>
     </nav>
+{{if eq .Name "index"}}
     <div id="myCarousel" class="carousel slide" data-ride="carousel">
         <ol class="carousel-indicators">
             <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
@@ -70,8 +71,7 @@
                 <div class="container">
                     <div class="carousel-caption d-none d-md-block text-left">
                         <h1>Get Involved!</h1>
-                        <p></p>
-                        <a class="btn btn-lg btn-primary" href="#" role="button">Sign up</a>
+                        <a class="btn btn-lg btn-primary" href="/join" role="button">Sign up</a>
                     </div>
                 </div>
             </div>
@@ -81,7 +81,6 @@
                     <div class="carousel-caption d-none d-md-block">
                         <h1>Working Together</h1>
                         <p>Our space is created, used and maintained by members. If we don't have something we need, we get together and make it happen. From a metal bandsaw to a CNC laser cutter, it's all members making it work.</p>
-                        <a class="btn btn-lg btn-primary" href="#" role="button">Learn more</a>
                     </div>
                 </div>
             </div>
@@ -95,13 +94,16 @@
             <span class="sr-only">Next</span>
         </a>
     </div>
+{{end}}
     <div class="container">
+{{if eq .Name "index"}}
         <div class="row">
             <div class="col-md-7">
                 <h3>What is Makerspace?</h3>
                 <p>Makerspace is a member-operated shared space where people come together and collaborate while sharing tools, resources and knowledge.  Members come from all different backgrounds and collectively bring vast amounts of knowledge and experience to the space.  To keep Makerspace functioning, all members share a responsibility to keep the space safe, tidy, and welcoming.  Makerspace members benefit from 24-hour access to a large assortment of equipment and tools.</p>
                 <h3>How do I get involved?</h3>
-                <p>The best way to start is to come to one of our open-house events on the 2nd and 4th Tuesday of each month, from 7 to 9pm.  Find us at <a href="https://goo.gl/maps/e9HWSv2j3yk">4476 Markham St., Saanich, BC</a>.
+                <p>The best way to start is to come to one of our open-house events on the 2nd and 4th Tuesday of each month, from 7 to 9pm.</p>
+                <address>Find us at <a href="https://goo.gl/maps/e9HWSv2j3yk" target="_blank">4476 Markham St., Saanich, BC</a>.</address>
             </div>
             <iframe class="col-md-5" src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d25157.013276243564!2d-123.4270878263007!3d48.48903771117378!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x304fb4781cae8b2e!2sVictoria+Makerspace!5e0!3m2!1sen!2sus!4v1484528263037" frameborder="0" allowfullscreen></iframe>
         </div>
@@ -142,6 +144,70 @@
                 <img src="/shop-features-metalwork.jpg">
             </div>
         </div>
+{{end}}
+{{if eq .Name "join"}}
+       <h2>Join Makerspace</h2>
+        <p>Open-house nights are on the 2nd and 4th Tuesday of each month, from 7 to 9pm.</p>
+       <address>Find us at <a href="https://goo.gl/maps/e9HWSv2j3yk" target="_blank">4476 Markham St., Saanich, BC</a>.</address>
+        <form method="post" action="/join">
+            <div class="row">
+                <div class="col-md-9 col-lg-7 col-xl-6 font-weight-bold">
+                    <div class="form-group row">
+                        <label for="username" class="col-sm-2 col-form-label">Username</label>
+                        <div class="col-10 input-group">
+                            <span class="input-group-addon">@</span>
+                            <input type="text" id="username" name="username" class="form-control" autofocus>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="email" class="col-sm-2 col-form-label">E-mail</label>
+                        <div class="col-10">
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="password" class="col-sm-2 col-form-label">Password</label>
+                        <div class="col-10">
+                            <input type="password" class="form-control" id="password" name="password">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 col-lg-4">
+                    <fieldset class="form-group">
+                        <legend>Membership rate</legend>
+                        <div class="form-check">
+                            <label class="custom-control custom-radio">
+                                <input type="radio" name="rate" class="custom-control-input" value="regular" checked>
+                                <span class="custom-control-indicator"></span>
+                                <span class="custom-control-description"><b>Regular</b> ($50/month)</span>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <label class="custom-control custom-radio">
+                                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student">
+                                <span class="custom-control-indicator"></span>
+                                <span class="custom-control-description"><b>Student</b> ($30/month)</span>
+                            </label>
+                        </div>
+                    </fieldset>
+                </div>
+                <fieldset id="student" class="col-10 col-sm-6 col-xl-5 text-muted" disabled>
+                    <legend>Student info</legend>
+                    <div class="form-group">
+                        <label for="institution">Institution name</label>
+                        <input type="text" class="form-control" id="institution" name="institution">
+                    </div>
+                    <div class="form-group">
+                        <label for="graduation">Expected graduation</label>
+                        <input type="month" class="form-control" id="graduation" name="graduation">
+                    </div>
+                </fieldset>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+{{end}}
         <footer>
             <hr>
             <p class="float-right">&copy; 2017 Victoria Makerspace &middot; <a class="glyphicons-social glyphicons-social-gmail" href="mailto:admin@makerspace.ca" title="E-mail"></a> <a class="glyphicons-social glyphicons-social-twitter" href="https://twitter.com/VicMakerspace" title="Twitter"></a> <a class="glyphicons-social glyphicons-social-facebook" href="https://facebook.com/VicMakerspace" title="Facebook"></a></p>
@@ -151,5 +217,14 @@
     <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+{{if eq .Name "join"}}
+    <script>
+        $("input[name=rate]").change(function(){
+            var checked = $("#student-rate").prop("checked");
+            $("#student").prop("disabled", !checked);
+            $("#student").toggleClass("text-muted", !checked);
+        });
+    </script>
+{{end}}
 </body>
 </html>

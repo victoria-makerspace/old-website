@@ -21,7 +21,8 @@ CREATE TABLE session_http (
 CREATE TABLE email (
     address text PRIMARY KEY,
     member text NOT NULL REFERENCES member,
-    "primary" boolean DEFAULT true NOT NULL
+    "primary" boolean DEFAULT true NOT NULL,
+    validated boolean DEFAULT false NOT NULL
 );
 CREATE TABLE storage (
     location text NOT NULL,

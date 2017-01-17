@@ -47,8 +47,16 @@ func memberHandler (w http.ResponseWriter, r *http.Request) {
     })
 }
 
+func joinHandler (w http.ResponseWriter, r *http.Request) {
+    p := page{"join", "Join"}
+    tmpl := template.Must(template.ParseFiles(os.Getenv("MAKERSPACE_DIR") + "/site/templates/main.tmpl"))
+
+    tmpl.Execute(w, p)
+}
+
 func Serve (addr string) {
     http.HandleFunc("/", rootHandler)
     http.HandleFunc("/member", memberHandler)
+    http.HandleFunc("/join", joinHandler)
     log.Panic(http.ListenAndServe(addr, nil))
 }
