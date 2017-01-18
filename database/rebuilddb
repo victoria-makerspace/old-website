@@ -3,7 +3,9 @@
 psql makerspace <<EOF
 
 DROP TABLE IF EXISTS member CASCADE;
+DROP TABLE IF EXISTS session_http CASCADE;
 DROP TABLE IF EXISTS email CASCADE;
+DROP TABLE IF EXISTS student CASCADE;
 DROP TABLE IF EXISTS storage CASCADE;
 
 CREATE TABLE member (
@@ -23,6 +25,11 @@ CREATE TABLE email (
     member text NOT NULL REFERENCES member,
     "primary" boolean DEFAULT true NOT NULL,
     validated boolean DEFAULT false NOT NULL
+);
+CREATE TABLE student (
+    username text PRIMARY KEY REFERENCES member,
+    institution text,
+    graduation_date date
 );
 CREATE TABLE storage (
     location text NOT NULL,

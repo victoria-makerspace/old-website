@@ -20,8 +20,8 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <form class="modal-body" id="signin-form" action="/" method="post">
-                    <input type="text" class="form-group form-control" name="username" placeholder="Username">
-                    <input type="password" class="form-group form-control" name="password" placeholder="Password">
+                    <input type="text" class="form-group form-control" name="username" placeholder="Username" required>
+                    <input type="password" class="form-group form-control" name="password" placeholder="Password" required>
                     <div class="float-left">
                         <label class="custom-control custom-checkbox">
                             <input type="checkbox" name="save_session" class="custom-control-input" checked>
@@ -149,26 +149,26 @@
        <h2>Join Makerspace</h2>
         <p>Open-house nights are on the 2nd and 4th Tuesday of each month, from 7 to 9pm.</p>
        <address>Find us at <a href="https://goo.gl/maps/e9HWSv2j3yk" target="_blank">4476 Markham St., Saanich, BC</a>.</address>
-        <form method="post" action="/join">
+        <form id="join" method="post" action="/join">
             <div class="row">
                 <div class="col-md-9 col-lg-7 col-xl-6 font-weight-bold">
                     <div class="form-group row">
                         <label for="username" class="col-sm-2 col-form-label">Username</label>
                         <div class="col-10 input-group">
                             <span class="input-group-addon">@</span>
-                            <input type="text" id="username" name="username" class="form-control" autofocus>
+                            <input type="text" id="username" name="username" class="form-control" autofocus required>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="email" class="col-sm-2 col-form-label">E-mail</label>
                         <div class="col-10">
-                            <input type="email" class="form-control" id="email" name="email">
+                            <input type="email" class="form-control" id="email" name="email" required>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="password" class="col-sm-2 col-form-label">Password</label>
                         <div class="col-10">
-                            <input type="password" class="form-control" id="password" name="password">
+                            <input type="password" class="form-control" id="password" name="password" required>
                         </div>
                     </div>
                 </div>
@@ -218,11 +218,24 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
 {{if eq .Name "join"}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.15.0/jquery.validate.min.js"></script>
     <script>
         $("input[name=rate]").change(function(){
             var checked = $("#student-rate").prop("checked");
             $("#student").prop("disabled", !checked);
             $("#student").toggleClass("text-muted", !checked);
+        });
+        $("#join").validate({
+            rules: {
+                username: {
+                    remote: ""
+                },
+                institution: { required: "#student-rate:checked" },
+                graduation: { required: "#student-rate:checked" }
+            },
+            messages: {
+                
+            }
         });
     </script>
 {{end}}
