@@ -99,14 +99,11 @@ body {
 body > .container {
     padding-top: 5rem;
 }
-.carousel ~ .container {
-    padding-top: 0;
-}
 
 label {
     margin: 0;
 }
-label.col-form-label {
+.col-form-label {
     font-weight: bold;
 }
 
@@ -116,6 +113,11 @@ label.col-form-label {
     }
     .carousel {
         display: none;
+    }
+}
+@media (min-width: 576px) {
+    .carousel ~ .container {
+        padding-top: 0;
     }
 }
 @media (max-width: 768px) {
