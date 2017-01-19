@@ -92,22 +92,18 @@ body {
 .modal-content {
     background: rgba(247,247,247,0.9);
 }
-.modal button.close {
-    padding: 1rem 1rem 0 0;
-    text-align: right;
-}
 body > .container {
     padding-top: 5rem;
-}
-.carousel ~ .container {
-    padding-top: 0;
 }
 
 label {
     margin: 0;
 }
-label.col-form-label {
+.col-form-label {
     font-weight: bold;
+}
+.form-control-feedback {
+    display: none;
 }
 
 @media (max-width: 576px) {
@@ -116,6 +112,11 @@ label.col-form-label {
     }
     .carousel {
         display: none;
+    }
+}
+@media (min-width: 576px) {
+    .carousel + .container {
+        padding-top: 0;
     }
 }
 @media (max-width: 768px) {

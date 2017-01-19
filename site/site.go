@@ -78,16 +78,16 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
         q := r.URL.Query();
         if u, ok := q["username"]; ok {
             if u[0] == "victor" {
-                w.Write([]byte("false"))
+                w.Write([]byte("true"))
                 return
             }
         } else if e, ok := q["email"]; ok {
             if e[0] == "vvanpoppelen@gmail.com" {
-                w.Write([]byte("false"))
+                w.Write([]byte("true"))
                 return
             }
         }
-        w.Write([]byte("true"))
+        w.Write([]byte("false"))
         return;
     }
 }
