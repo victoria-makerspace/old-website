@@ -2,6 +2,7 @@ package site
 
 import (
     "html/template"
+    _ "encoding/json"
     "log"
     "net/http"
     "net/url"
@@ -54,9 +55,29 @@ func joinHandler (w http.ResponseWriter, r *http.Request) {
     tmpl.Execute(w, p)
 }
 
+func checkHandler(w http.ResponseWriter, r *http.Request) {
+    if (r.URL.Path == "/check") {
+        q := r.URL.Query();
+        if u, ok := q["username"]; ok {
+            if u[0] == "victor" {
+                w.Write([]byte("false"))
+                return
+            }
+        } else if e, ok := q["email"]; ok {
+            if e[0] == "vvanpoppelen@gmail.com" {
+                w.Write([]byte("false"))
+                return
+            }
+        }
+        w.Write([]byte("true"))
+        return;
+    }
+}
+
 func Serve (addr string) {
     http.HandleFunc("/", rootHandler)
     http.HandleFunc("/member", memberHandler)
     http.HandleFunc("/join", joinHandler)
+    http.HandleFunc("/check", checkHandler)
     log.Panic(http.ListenAndServe(addr, nil))
 }
