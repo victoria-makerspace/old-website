@@ -6,10 +6,15 @@ import (
     "log"
     "net/http"
     "net/url"
-    "os"
     _ "crypto/rand"
     _ "golang.org/x/crypto/scrypt"
 )
+
+type Http_server struct {
+    http.Server
+    Mux *http.ServeMux
+    Dir string
+}
 
 //var tmpl = template.Must(template.ParseGlob(os.Getenv("MAKERSPACE_DIR") + "/site/templates/*"))
 
@@ -22,13 +27,26 @@ func authenticate_form (post url.Values) bool {
     return false
 }
 
+func (s *Http_server) root () {
+    s.Mux.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
+        if r.URL.Path == "/" {
+            p := page{"index", ""}
+            if r.PostFormValue("signin") == "true" && !authenticate_form(r.PostForm) {
+            }
+            tmpl := template.Must(template.ParseFiles(s.Dir + "/templates/main.tmpl"))
+            tmpl.Execute(w, p)
+        } else {
+            http.FileServer(http.Dir(s.Dir + "/static/")).ServeHTTP(w, r)
+        }
+    })
+}
+/*
 func rootHandler (w http.ResponseWriter, r *http.Request) {
     if r.URL.Path == "/" {
         p := page{"index", ""}
         if r.PostFormValue("signin") == "true" && !authenticate_form(r.PostForm) {
         }
-//        tmpl = template.Must(template.ParseGlob(os.Getenv("MAKERSPACE_DIR") + "/site/templates/*"))
-        tmpl := template.Must(template.ParseFiles(os.Getenv("MAKERSPACE_DIR") + "/site/templates/main.tmpl"))
+        tmpl := template.Must(template.ParseFiles(s.Dir + "/templates/main.tmpl"))
         tmpl.Execute(w, p)
     } else {
         http.FileServer(http.Dir(os.Getenv("MAKERSPACE_DIR") + "/site/static/")).ServeHTTP(w, r)
@@ -73,11 +91,9 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
         return;
     }
 }
-
-func Serve (addr string) {
-    http.HandleFunc("/", rootHandler)
-    http.HandleFunc("/member", memberHandler)
-    http.HandleFunc("/join", joinHandler)
-    http.HandleFunc("/check", checkHandler)
-    log.Panic(http.ListenAndServe(addr, nil))
+*/
+func (s *Http_server) Serve () {
+    s.Mux = http.DefaultServeMux
+    s.root()
+    log.Panic(s.ListenAndServe())
 }
