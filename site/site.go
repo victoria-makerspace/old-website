@@ -1,18 +1,20 @@
 package site
 
 import (
+    "bytes"
+    "database/sql"
     "html/template"
     "log"
     "net/http"
-    "net/url"
-    _ "crypto/rand"
-    _ "golang.org/x/crypto/scrypt"
+    "crypto/rand"
+    "golang.org/x/crypto/scrypt"
 )
 
 type Http_server struct {
     srv http.Server
     mux *http.ServeMux
     dir string
+    db *sql.DB
     tmpl template.Template
 }
 
@@ -21,8 +23,16 @@ type page struct {
     Title string
 }
 
-func authenticate_form (post url.Values) bool {
-    return false
+func salt() []byte {
+    salt := make([]byte, 32)
+    _, err := rand.Read(salt)
+    if err != nil { log.Panic(err) }
+    return salt
+}
+func key(password string, salt []byte) []byte {
+    key, err := scrypt.Key([]byte(password), salt, 16384, 8, 1, 32);
+    if err != nil { log.Panic(err) }
+    return key
 }
 
 func (s *Http_server) root () {
@@ -32,21 +42,26 @@ func (s *Http_server) root () {
             return
         }
         p := page{"index", ""}
-        if r.PostFormValue("signin") == "true" && !authenticate_form(r.PostForm) {
-        }
         tmpl := template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
         tmpl.Execute(w, p)
     })
     s.mux.HandleFunc("/authenticate", func (w http.ResponseWriter, r *http.Request) {
         if r.URL.Path != "/authenticate" { return };
         r.ParseForm()
-        username := r.PostForm.Get("username");
-        password := r.PostForm.Get("password");
+        var password struct{
+            password_key []byte
+            password_salt []byte
+        }
+        err := s.db.QueryRow("SELECT password_key, password_salt FROM member WHERE username = $1", r.PostForm.Get("username")).Scan(&password)
         rsp := "success"
-        if username != "victor" {
+        if err == sql.ErrNoRows {
             rsp = "invalid username"
-        } else if password != "abc" {
-            rsp = "incorrect password"
+        } else {
+            if !bytes.Equal(password.password_key, key(r.PostForm.Get("password"), password.password_salt)) {
+                rsp = "incorrect password"
+            } else {
+                http.SetCookie(w, &http.Cookie{Name: "session", Value: r.PostForm.Get("username")})
+            }
         }
         w.Write([]byte("\"" + rsp + "\""))
     })
@@ -60,16 +75,22 @@ func (s *Http_server) join () {
     })
     s.mux.HandleFunc("/check", func (w http.ResponseWriter, r *http.Request) {
         if (r.URL.Path == "/check") {
-            q := r.URL.Query();
+            q := r.URL.Query()
             rsp := "nil"
-            if u, ok := q["username"]; ok {
-                if rsp = "false"; u[0] == "victor" {
-                    rsp = "true"
-                }
-            } else if e, ok := q["email"]; ok {
-                if rsp = "false"; e[0] == "vvanpoppelen@gmail.com" {
-                    rsp = "true"
-                }
+            if _, ok := q["username"]; ok {
+                var n int
+                err := s.db.QueryRow("SELECT COUNT(*) FROM member WHERE username = $1", q.Get("username")).Scan(&n)
+                if err != nil { log.Panic(err) }
+                if n == 0 {
+                    rsp = "false"
+                } else { rsp = "true" }
+            } else if _, ok := q["email"]; ok {
+                var n int
+                err := s.db.QueryRow("SELECT COUNT(*) FROM email WHERE address = $1", q.Get("email")).Scan(&n)
+                if err != nil { log.Panic(err) }
+                if n == 0 {
+                    rsp = "false"
+                } else { rsp = "true" }
             }
             w.Write([]byte(rsp))
         }
@@ -77,10 +98,6 @@ func (s *Http_server) join () {
 }
 
 /*
-    // salt := make([]byte, 16)
-    // _, err := rand.Read(salt)
-    // if err != nil {}
-    // scrypt.Key([]byte(password), salt, 16384, 8, 1, 32);
 
 func memberHandler (w http.ResponseWriter, r *http.Request) {
     tmpl := template.Must(template.ParseFiles(os.Getenv("MAKERSPACE_DIR") + "/site/templates/main.tmpl"))
@@ -91,15 +108,16 @@ func memberHandler (w http.ResponseWriter, r *http.Request) {
 }
 
 */
-func Serve (address, dir string) *Http_server {
+func Serve (address, dir string, db *sql.DB) *Http_server {
     s := new(Http_server)
     s.srv.Addr = address
-    s.dir = dir
     s.mux = http.NewServeMux()
     s.srv.Handler = s.mux
+    s.dir = dir
+    s.db = db
+    //s.tmpl = template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
     s.root()
     s.join()
-    //s.tmpl = template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
     go log.Panic(s.srv.ListenAndServe())
     return s
 }

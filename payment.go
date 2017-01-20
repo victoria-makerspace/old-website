@@ -1,10 +1,10 @@
 package main
 
 import (
-    "log"
-    beanstream "github.com/Beanstream/beanstream-go"
-    "github.com/Beanstream/beanstream-go/paymentMethods"
+    // beanstream "github.com/Beanstream/beanstream-go"
+    _ "github.com/Beanstream/beanstream-go/paymentMethods"
 )
 
-config := beanstream.DefaultConfig()
-
+func init () {
+    //config := beanstream.DefaultConfig()
+}

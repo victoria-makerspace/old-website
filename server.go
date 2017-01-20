@@ -10,6 +10,9 @@ import (
 
 var Config struct{
     Dir string
+    Database struct{
+        Conninfo map[string]string
+    }
     Beanstream struct{
         Api_key string
         Merchant_id string
@@ -30,5 +33,6 @@ func init () {
 }
 
 func main () {
-    site.Serve(":1080", Config.Dir + "/site")
+    db := Database(Config.Database.Conninfo)
+    site.Serve(":1080", Config.Dir + "/site", db)
 }
