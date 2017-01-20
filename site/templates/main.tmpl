@@ -230,22 +230,14 @@
     <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
-{{if eq .Name "join"}}
     <script>
-        $("#join input[name=rate]").change(function() {
-            var checked = $("#student-rate").prop("checked");
-            $("#student").prop("disabled", !checked);
-            $("#student").toggleClass("text-muted", !checked);
-            $("#student input").prop("required", checked);
-            if (!checked) {
-                $("#student .form-group").removeClass("has-danger has-success").find(".form-control-feedback").text("").hide();
-                $("#student .form-control").removeClass("form-control-danger form-control-success").val("");
-            }
+        $("#signin").on("shown.bs.modal", function() {
+            $("#signin-form input[name=username]").focus();
         });
-        $("#join .form-control").focus(function() {
-            $(this).parents(".form-group").removeClass("has-danger has-warning has-success").find(".form-control-feedback").text("").hide();
-            $(this).removeClass("form-control-danger form-control-warning form-control-success");
+        $("#signin-form [type=submit]").click(function() {
+            
         });
+
         var highlight = function(type, elem) {
             $(elem).addClass("form-control-" + type).parents(".form-group").addClass("has-" + type);
         };
@@ -272,8 +264,9 @@
                 if (id == "graduation") return "Please enter a valid graduation date.";
             }
         };
+        var check = function(elem, callback) { $.getJSON("/check?" + $(elem).attr("id") + "=" + $(elem).val()).done(callback); };
         var check_exists = function(elem, msg, taken_msg) {
-            $.getJSON("/check?" + $(elem).attr("id") + "=" + $(elem).val()).done(function(data) {
+            check(elem, function(data) {
                 if (data) {
                     elem.setCustomValidity(taken_msg);
                     msg = taken_msg;
@@ -281,26 +274,50 @@
                 display_error(elem, msg);
             });
         };
-        $("#join .form-control").blur(function() {
-            msg = message(this);
-            if ($(this).is("#username"))
-                check_exists(this, msg, "Username is already taken.");
-            else if ($(this).is("#email")) {
-                if (this.validity.typeMismatch) display_error(this, "Invalid e-mail address.");
-                else check_exists(this, msg, "E-mail address is already in use.");
-            } else display_error(this, msg);
+        var clear_error = function(elem) {
+            $(elem).parents(".form-group").removeClass("has-danger has-warning has-success").find(".form-control-feedback").text("").hide();
+            $(elem).removeClass("form-control-danger form-control-warning form-control-success");
+            elem.setCustomValidity("");
+        };
+        $("#join input[name=rate]").change(function() {
+            var checked = $("#student-rate").prop("checked");
+            $("#student").prop("disabled", !checked);
+            $("#student").toggleClass("text-muted", !checked);
+            $("#student input").prop("required", checked);
+            if (!checked) {
+                $("#student .form-group").removeClass("has-danger has-success").find(".form-control-feedback").text("").hide();
+                $("#student .form-control").removeClass("form-control-danger form-control-success").val("");
+            }
         });
-        $("#join [type=submit]").click(function() {
-            $("#join .form-control:required").each(function() {
-                var type = error_class(this);
-                if (type != "success") display_error(this, message(this), type);
+        var validate = function(elem) {
+            msg = message(elem);
+            if ($(elem).is("#username"))
+                check_exists(elem, msg, "Username is already taken.");
+            else if ($(elem).is("#email")) {
+                if (elem.validity.typeMismatch) display_error(elem, "Invalid e-mail address.");
+                else check_exists(elem, msg, "E-mail address is already in use.");
+            } else display_error(elem, msg);
+        };
+        $("#join .form-control").focus(function() { clear_error(this); });
+        $("#join .form-control").blur(function() { validate(this); });
+        $("#join [type=submit]").click(function(e) {
+            $("#join .form-control").off("focus blur");
+            $("#join .form-control").change(function() {
+                clear_error(this);
+                validate(this);
             });
-        });
-        
-        $("#signin").on("shown.bs.modal", function() {
-            $("#signin-form input[name=username]").focus();
+            if ($(document.activeElement).is("#join .form-control"))
+                validate(document.activeElement);
+            var invalid = false;
+            $("#join .form-control").each(function() {
+                if (!this.validity.valid) {
+                    if (invalid) return;
+                    this.focus();
+                    invalid = true;
+                }
+            });
+            if (invalid) e.preventDefault();
         });
     </script>
-{{end}}
 </body>
 </html>
