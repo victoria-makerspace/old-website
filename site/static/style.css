@@ -105,6 +105,13 @@ label {
 .form-control-feedback {
     display: none;
 }
+#join input[type=month] {
+    width: inherit;
+}
+.has-danger .form-control-danger,
+.has-success .form-control-success {
+    background-image: none;
+}
 
 @media (max-width: 576px) {
     .container {

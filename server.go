@@ -30,8 +30,5 @@ func init () {
 }
 
 func main () {
-    var site site.Http_server
-    site.Addr = ":1080"
-    site.Dir = Config.Dir + "/site"
-    site.Serve()
+    site.Serve(":1080", Config.Dir + "/site")
 }

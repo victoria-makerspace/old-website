@@ -11,12 +11,11 @@ import (
 )
 
 type Http_server struct {
-    http.Server
-    Mux *http.ServeMux
-    Dir string
+    srv http.Server
+    mux *http.ServeMux
+    dir string
+    tmpl template.Template
 }
-
-//var tmpl = template.Must(template.ParseGlob(os.Getenv("MAKERSPACE_DIR") + "/site/templates/*"))
 
 type page struct {
     Name string
@@ -28,26 +27,26 @@ func authenticate_form (post url.Values) bool {
 }
 
 func (s *Http_server) root () {
-    s.Mux.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
+    s.mux.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
         if r.URL.Path == "/" {
             p := page{"index", ""}
             if r.PostFormValue("signin") == "true" && !authenticate_form(r.PostForm) {
             }
-            tmpl := template.Must(template.ParseFiles(s.Dir + "/templates/main.tmpl"))
+            tmpl := template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
             tmpl.Execute(w, p)
         } else {
-            http.FileServer(http.Dir(s.Dir + "/static/")).ServeHTTP(w, r)
+            http.FileServer(http.Dir(s.dir + "/static/")).ServeHTTP(w, r)
         }
     })
 }
 
 func (s *Http_server) join () {
-    s.Mux.HandleFunc("/join", func (w http.ResponseWriter, r *http.Request) {
+    s.mux.HandleFunc("/join", func (w http.ResponseWriter, r *http.Request) {
         p := page{"join", "Join"}
-        tmpl := template.Must(template.ParseFiles(s.Dir + "/templates/main.tmpl"))
+        tmpl := template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
         tmpl.Execute(w, p)
     })
-    s.Mux.HandleFunc("/check", func (w http.ResponseWriter, r *http.Request) {
+    s.mux.HandleFunc("/check", func (w http.ResponseWriter, r *http.Request) {
         if (r.URL.Path == "/check") {
             q := r.URL.Query();
             rsp := "nil"
@@ -79,31 +78,16 @@ func memberHandler (w http.ResponseWriter, r *http.Request) {
     })
 }
 
-func joinHandler (w http.ResponseWriter, r *http.Request) {
-}
-
-func checkHandler(w http.ResponseWriter, r *http.Request) {
-    if (r.URL.Path == "/check") {
-        q := r.URL.Query();
-        if u, ok := q["username"]; ok {
-            if u[0] == "victor" {
-                w.Write([]byte("true"))
-                return
-            }
-        } else if e, ok := q["email"]; ok {
-            if e[0] == "vvanpoppelen@gmail.com" {
-                w.Write([]byte("true"))
-                return
-            }
-        }
-        w.Write([]byte("false"))
-        return;
-    }
-}
 */
-func (s *Http_server) Serve () {
-    s.Mux = http.DefaultServeMux
+func Serve (address, dir string) *Http_server {
+    s := new(Http_server)
+    s.srv.Addr = address
+    s.dir = dir
+    s.mux = http.NewServeMux()
+    s.srv.Handler = s.mux
     s.root()
     s.join()
-    log.Panic(s.ListenAndServe())
+    //s.tmpl = template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
+    go log.Panic(s.srv.ListenAndServe())
+    return s
 }
