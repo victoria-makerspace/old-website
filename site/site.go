@@ -2,7 +2,6 @@ package site
 
 import (
     "html/template"
-    _ "encoding/json"
     "log"
     "net/http"
     "net/url"
@@ -28,15 +27,28 @@ func authenticate_form (post url.Values) bool {
 
 func (s *Http_server) root () {
     s.mux.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
-        if r.URL.Path == "/" {
-            p := page{"index", ""}
-            if r.PostFormValue("signin") == "true" && !authenticate_form(r.PostForm) {
-            }
-            tmpl := template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
-            tmpl.Execute(w, p)
-        } else {
+        if r.URL.Path != "/" {
             http.FileServer(http.Dir(s.dir + "/static/")).ServeHTTP(w, r)
+            return
         }
+        p := page{"index", ""}
+        if r.PostFormValue("signin") == "true" && !authenticate_form(r.PostForm) {
+        }
+        tmpl := template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
+        tmpl.Execute(w, p)
+    })
+    s.mux.HandleFunc("/authenticate", func (w http.ResponseWriter, r *http.Request) {
+        if r.URL.Path != "/authenticate" { return };
+        r.ParseForm()
+        username := r.PostForm.Get("username");
+        password := r.PostForm.Get("password");
+        rsp := "success"
+        if username != "victor" {
+            rsp = "invalid username"
+        } else if password != "abc" {
+            rsp = "incorrect password"
+        }
+        w.Write([]byte("\"" + rsp + "\""))
     })
 }
 

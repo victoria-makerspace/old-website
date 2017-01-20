@@ -89,6 +89,10 @@ body {
 .modal-open > .fixed-top {
     margin-right: 10px;
 }
+.modal-header {
+    padding-bottom: 0;
+    border: 0;
+}
 .modal-content {
     background: rgba(247,247,247,0.9);
 }

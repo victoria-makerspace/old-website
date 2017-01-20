@@ -22,12 +22,18 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form class="modal-body" id="signin-form" action="/" method="post">
-                    <div class="form-group input-group">
-                        <span class="input-group-addon">@</span>
-                        <input type="text" class="form-control" name="username" placeholder="Username" required>
+                <form class="modal-body" action="/" method="post" novalidate>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">@</span>
+                            <input type="text" class="form-control" name="username" placeholder="Username" required>
+                        </div>
+                        <small class="form-control-feedback"></small>
                     </div>
-                    <input type="password" class="form-group form-control" name="password" placeholder="Password" required>
+                    <div class="form-group">
+                        <input type="password" class="form-control" name="password" placeholder="Password" required>
+                        <small class="form-control-feedback"></small>
+                    </div>
                     <div class="float-left">
                         <label class="custom-control custom-checkbox">
                             <input type="checkbox" name="save_session" class="custom-control-input" checked>
@@ -231,19 +237,71 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
     <script>
-        $("#signin").on("shown.bs.modal", function() {
-            $("#signin-form input[name=username]").focus();
-        });
-        $("#signin-form [type=submit]").click(function() {
-            
-        });
-
         var highlight = function(type, elem) {
             $(elem).addClass("form-control-" + type).parents(".form-group").addClass("has-" + type);
         };
         var show_message = function(elem, msg) {
             if (msg) $(elem).parents(".form-group").find(".form-control-feedback").text(msg).show();
         };
+        var check = function(elem, name, callback) { $.getJSON("/check?" + name + "=" + $(elem).val()).done(callback); };
+
+        var username = $("#signin form [name=username]")[0];
+        var password = $("#signin form [name=password]")[0];
+        $("#signin").on("shown.bs.modal", function() {
+            $(username).focus();
+        });
+        var invalid_username;
+        $(username).change(function() {
+            invalid_username = false;
+            $(username).parents(".form-group").removeClass("has-warning").find(".form-control-feedback").text("").hide();
+            $(username).removeClass("form-control-warning");
+            check(username, "username", function(data) {
+                if (!data) {
+                    invalid_username = true;
+                    highlight("warning", username);
+                }
+            });
+        });
+        $(password).change(function() {
+            $(password).parents(".form-group").removeClass("has-danger").find(".form-control-feedback").text("").hide();
+            $(password).removeClass("form-control-danger");
+        });
+        var submit = false;
+        $("#signin form").submit(function(event) {
+            if (!submit) event.preventDefault();
+            if (invalid_username) {
+                show_message(username, "Username does not exist.");
+                username.focus();
+                return;
+            }
+            $.ajax("/authenticate", {
+                data: $("#signin form").serialize(),
+                dataType: "json",
+                method: "POST",
+                success: function(data) {
+                    switch (data) {
+                    case "invalid username":
+                        highlight("warning", username);
+                        show_message(username, "Username does not exist.");
+                        submit = false;
+                        break;
+                    case "incorrect password":
+                        $(password).val("").focus();
+                        highlight("danger", password);
+                        show_message(password, "Incorrect password.");
+                        submit = false;
+                        break;
+                    case "success":
+                        $(location).attr("href", "/");
+                    }
+                },
+                error: function(j, status, error) {
+                    submit = true;
+                    $("#signin form").submit();
+                }
+            });
+        });
+
         var error_class = function(elem) {
             if (!elem.validity.valid) {
                 if ($(elem).val()) return "warning";
@@ -264,9 +322,8 @@
                 if (id == "graduation") return "Please enter a valid graduation date.";
             }
         };
-        var check = function(elem, callback) { $.getJSON("/check?" + $(elem).attr("id") + "=" + $(elem).val()).done(callback); };
         var check_exists = function(elem, msg, taken_msg) {
-            check(elem, function(data) {
+            check(elem, $(elem).attr("id"), function(data) {
                 if (data) {
                     elem.setCustomValidity(taken_msg);
                     msg = taken_msg;
@@ -300,7 +357,7 @@
         };
         $("#join .form-control").focus(function() { clear_error(this); });
         $("#join .form-control").blur(function() { validate(this); });
-        $("#join [type=submit]").click(function(e) {
+        $("#join [type=submit]").click(function(event) {
             $("#join .form-control").off("focus blur");
             $("#join .form-control").change(function() {
                 clear_error(this);
@@ -316,7 +373,7 @@
                     invalid = true;
                 }
             });
-            if (invalid) e.preventDefault();
+            if (invalid) event.preventDefault();
         });
     </script>
 </body>
