@@ -40,19 +40,32 @@ func (s *Http_server) root () {
         }
     })
 }
-/*
-func rootHandler (w http.ResponseWriter, r *http.Request) {
-    if r.URL.Path == "/" {
-        p := page{"index", ""}
-        if r.PostFormValue("signin") == "true" && !authenticate_form(r.PostForm) {
-        }
+
+func (s *Http_server) join () {
+    s.Mux.HandleFunc("/join", func (w http.ResponseWriter, r *http.Request) {
+        p := page{"join", "Join"}
         tmpl := template.Must(template.ParseFiles(s.Dir + "/templates/main.tmpl"))
         tmpl.Execute(w, p)
-    } else {
-        http.FileServer(http.Dir(os.Getenv("MAKERSPACE_DIR") + "/site/static/")).ServeHTTP(w, r)
-    }
+    })
+    s.Mux.HandleFunc("/check", func (w http.ResponseWriter, r *http.Request) {
+        if (r.URL.Path == "/check") {
+            q := r.URL.Query();
+            rsp := "nil"
+            if u, ok := q["username"]; ok {
+                if rsp = "false"; u[0] == "victor" {
+                    rsp = "true"
+                }
+            } else if e, ok := q["email"]; ok {
+                if rsp = "false"; e[0] == "vvanpoppelen@gmail.com" {
+                    rsp = "true"
+                }
+            }
+            w.Write([]byte(rsp))
+        }
+    })
 }
 
+/*
     // salt := make([]byte, 16)
     // _, err := rand.Read(salt)
     // if err != nil {}
@@ -67,10 +80,6 @@ func memberHandler (w http.ResponseWriter, r *http.Request) {
 }
 
 func joinHandler (w http.ResponseWriter, r *http.Request) {
-    p := page{"join", "Join"}
-    tmpl := template.Must(template.ParseFiles(os.Getenv("MAKERSPACE_DIR") + "/site/templates/main.tmpl"))
-
-    tmpl.Execute(w, p)
 }
 
 func checkHandler(w http.ResponseWriter, r *http.Request) {
@@ -95,5 +104,6 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Http_server) Serve () {
     s.Mux = http.DefaultServeMux
     s.root()
+    s.join()
     log.Panic(s.ListenAndServe())
 }

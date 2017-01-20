@@ -272,7 +272,7 @@
             if ($(this).is("#username")) {
                 var username = this;
                 $.getJSON("/check?username=" + $(this).val()).done(function(data) {
-                    if (!data) {
+                    if (data) {
                         username.setCustomValidity("Username is already taken.");
                         $(username).data("error", "Username is already taken.");
                     } else {
@@ -284,7 +284,7 @@
             } else if ($(this).is("#email")) {
                 var email = this;
                 $.getJSON("/check?email=" + $(this).val()).done(function(data) {
-                    if (!data) {
+                    if (data) {
                         email.setCustomValidity("E-mail address is already in use.");
                         $(email).data("error", "E-mail address is already in use.");
                     } else {

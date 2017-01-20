@@ -113,6 +113,9 @@ label {
     .carousel {
         display: none;
     }
+    #student:disabled {
+        display: none;
+    }
 }
 @media (min-width: 576px) {
     .carousel + .container {
