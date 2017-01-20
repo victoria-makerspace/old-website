@@ -238,7 +238,7 @@
             $("#student").toggleClass("text-muted", !checked);
             $("#student input").prop("required", checked);
             if (!checked) {
-                $("#student .form-group").removeClass("has-danger has-success");
+                $("#student .form-group").removeClass("has-danger has-success").find(".form-control-feedback").text("").hide();
                 $("#student .form-control").removeClass("form-control-danger form-control-success").val("");
             }
         });
@@ -263,37 +263,31 @@
             show_message(elem, msg);
         };
         var message = function(elem) {
+            var id = $(elem).attr("id");
             if (elem.validity.valueMissing) {
-                if ($(elem).attr("id") == "username") return "Username cannot be blank.";
-                if ($(elem).attr("id") == "email") return "E-mail address cannot be blank.";
-                if ($(elem).attr("id") == "password") return "Password cannot be blank.";
-                if ($(elem).attr("id") == "institution") return "Institution name is a required field for student members.";
-                if ($(elem).attr("id") == "graduation") return "Please enter a valid graduation date.";
+                if (id == "username") return "Username cannot be blank.";
+                if (id == "email") return "E-mail address cannot be blank.";
+                if (id == "password") return "Password cannot be blank.";
+                if (id == "institution") return "Institution name is a required field for student members.";
+                if (id == "graduation") return "Please enter a valid graduation date.";
             }
+        };
+        var check_exists = function(elem, msg, taken_msg) {
+            $.getJSON("/check?" + $(elem).attr("id") + "=" + $(elem).val()).done(function(data) {
+                if (data) {
+                    elem.setCustomValidity(taken_msg);
+                    msg = taken_msg;
+                } else elem.setCustomValidity("");
+                display_error(elem, msg);
+            });
         };
         $("#join .form-control").blur(function() {
             msg = message(this);
-            if ($(this).is("#username")) {
-                var username = this;
-                $.getJSON("/check?username=" + $(this).val()).done(function(data) {
-                    if (data) {
-                        msg = "Username is already taken.";
-                        username.setCustomValidity(msg);
-                    } else username.setCustomValidity("");
-                    display_error(username, msg);
-                });
-            } else if ($(this).is("#email")) {
+            if ($(this).is("#username"))
+                check_exists(this, msg, "Username is already taken.");
+            else if ($(this).is("#email")) {
                 if (this.validity.typeMismatch) display_error(this, "Invalid e-mail address.");
-                else {
-                    var email = this;
-                    $.getJSON("/check?email=" + $(this).val()).done(function(data) {
-                        if (data) {
-                            msg = "E-mail address is already in use.";
-                            email.setCustomValidity(msg);
-                        } else email.setCustomValidity("");
-                        display_error(email, msg);
-                    });
-                }
+                else check_exists(this, msg, "E-mail address is already in use.");
             } else display_error(this, msg);
         });
         $("#join [type=submit]").click(function() {
