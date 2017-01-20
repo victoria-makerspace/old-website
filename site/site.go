@@ -1,8 +1,8 @@
 package site
 
 import (
-    "bytes"
     "database/sql"
+    "encoding/hex"
     "html/template"
     "log"
     "net/http"
@@ -21,18 +21,24 @@ type Http_server struct {
 type page struct {
     Name string
     Title string
+    Member struct {
+        Authenticated bool
+        Username string
+    }
 }
 
-func salt() []byte {
+func salt () string {
     salt := make([]byte, 32)
     _, err := rand.Read(salt)
     if err != nil { log.Panic(err) }
-    return salt
+    return hex.EncodeToString(salt)
 }
-func key(password string, salt []byte) []byte {
-    key, err := scrypt.Key([]byte(password), salt, 16384, 8, 1, 32);
+func key (password, salt string) string {
+    s, err := hex.DecodeString(salt)
+    if err != nil { log.Panicf("Invalid salt: %s", err) }
+    key, err := scrypt.Key([]byte(password), s, 16384, 8, 1, 32);
     if err != nil { log.Panic(err) }
-    return key
+    return hex.EncodeToString(key)
 }
 
 func (s *Http_server) root () {
@@ -41,7 +47,7 @@ func (s *Http_server) root () {
             http.FileServer(http.Dir(s.dir + "/static/")).ServeHTTP(w, r)
             return
         }
-        p := page{"index", ""}
+        p := page{Name: "index"}
         tmpl := template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
         tmpl.Execute(w, p)
     })
@@ -49,15 +55,15 @@ func (s *Http_server) root () {
         if r.URL.Path != "/authenticate" { return };
         r.ParseForm()
         var password struct{
-            password_key []byte
-            password_salt []byte
+            key string
+            salt string
         }
-        err := s.db.QueryRow("SELECT password_key, password_salt FROM member WHERE username = $1", r.PostForm.Get("username")).Scan(&password)
+        err := s.db.QueryRow("SELECT password_key, password_salt FROM member WHERE username = $1", r.PostForm.Get("username")).Scan(&password.key, &password.salt)
         rsp := "success"
         if err == sql.ErrNoRows {
             rsp = "invalid username"
         } else {
-            if !bytes.Equal(password.password_key, key(r.PostForm.Get("password"), password.password_salt)) {
+            if password.key != key(r.PostForm.Get("password"), password.salt) {
                 rsp = "incorrect password"
             } else {
                 http.SetCookie(w, &http.Cookie{Name: "session", Value: r.PostForm.Get("username")})
@@ -69,7 +75,7 @@ func (s *Http_server) root () {
 
 func (s *Http_server) join () {
     s.mux.HandleFunc("/join", func (w http.ResponseWriter, r *http.Request) {
-        p := page{"join", "Join"}
+        p := page{Name: "join", Title: "Join"}
         tmpl := template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
         tmpl.Execute(w, p)
     })
