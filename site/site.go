@@ -15,7 +15,7 @@ type Http_server struct {
     mux *http.ServeMux
     dir string
     db *sql.DB
-    tmpl template.Template
+    tmpl *template.Template
 }
 
 type page struct {
@@ -48,8 +48,7 @@ func (s *Http_server) root () {
             return
         }
         p := page{Name: "index"}
-        tmpl := template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
-        tmpl.Execute(w, p)
+        s.tmpl.Execute(w, p)
     })
     s.mux.HandleFunc("/authenticate", func (w http.ResponseWriter, r *http.Request) {
         if r.URL.Path != "/authenticate" { return };
@@ -76,11 +75,10 @@ func (s *Http_server) root () {
 func (s *Http_server) join () {
     s.mux.HandleFunc("/join", func (w http.ResponseWriter, r *http.Request) {
         p := page{Name: "join", Title: "Join"}
-        tmpl := template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
-        tmpl.Execute(w, p)
+        s.tmpl.Execute(w, p)
     })
-    s.mux.HandleFunc("/check", func (w http.ResponseWriter, r *http.Request) {
-        if (r.URL.Path == "/check") {
+    s.mux.HandleFunc("/exists", func (w http.ResponseWriter, r *http.Request) {
+        if (r.URL.Path == "/exists") {
             q := r.URL.Query()
             rsp := "nil"
             if _, ok := q["username"]; ok {
@@ -121,7 +119,7 @@ func Serve (address, dir string, db *sql.DB) *Http_server {
     s.srv.Handler = s.mux
     s.dir = dir
     s.db = db
-    //s.tmpl = template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
+    s.tmpl = template.Must(template.ParseFiles(s.dir + "/templates/main.tmpl"))
     s.root()
     s.join()
     go log.Panic(s.srv.ListenAndServe())
