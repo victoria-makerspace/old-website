@@ -31,6 +31,9 @@ body {
     height: 2.5rem;
     transition: all 0.2s ease-in-out;
 }
+.nav-link.glyphicons {
+    font-weight: normal;
+}
 .nav-link:hover, .nav-link:focus,
 .nav-link.active:hover, .nav-link.active:focus {
     color: rgba(0,0,0,0.9) !important;
@@ -133,10 +136,13 @@ label {
         padding-top: 0;
     }
 }
-@media (max-width: 768px) {
-    .navbar-nav, .nav-item:last-child > .nav-link {
-        border-bottom-left-radius: 0.25rem;
-        border-bottom-right-radius: 0.25rem;
+@media (max-width: 767px) {
+    .navbar-nav > .container {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .navbar-nav.navbar-collapse, .navbar-collapse .nav-item:last-child > .nav-link {
+        border-radius: 0.25rem;
     }
 }
 @media (min-width: 768px) {

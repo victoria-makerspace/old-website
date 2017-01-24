@@ -37,7 +37,7 @@ $("#signin form").submit(function(event) {
         username.focus();
         return;
     }
-    $.ajax("/authenticate", {
+    $.ajax("/signin.json", {
         data: $("#signin form").serialize(),
         dataType: "json",
         method: "POST",

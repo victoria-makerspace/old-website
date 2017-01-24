@@ -4,7 +4,7 @@ psql makerspace <<EOF
 
 DROP TABLE IF EXISTS member CASCADE;
 DROP TABLE IF EXISTS session_http CASCADE;
-DROP TABLE IF EXISTS email CASCADE;
+DROP TABLE IF EXISTS administrator CASCADE;
 DROP TABLE IF EXISTS student CASCADE;
 DROP TABLE IF EXISTS storage CASCADE;
 
@@ -12,19 +12,20 @@ CREATE TABLE member (
     username text PRIMARY KEY,
     name text NOT NULL,
     password_key character(64) NOT NULL,
-    password_salt character(64) NOT NULL UNIQUE
+    password_salt character(64) NOT NULL UNIQUE,
+    email text NOT NULL UNIQUE,
+    email_validated boolean NOT NULL DEFAULT false,
+    registered timestamp DEFAULT now()
 );
 CREATE TABLE session_http (
-    key text PRIMARY KEY,
+    token character(64) PRIMARY KEY,
     username text NOT NULL REFERENCES member,
-    sign_in_time timestamp NOT NULL,
-    last_seen timestamp NOT NULL
+    sign_in_time timestamp NOT NULL DEFAULT now(),
+    last_seen timestamp NOT NULL DEFAULT now(),
+    expired boolean NOT NULL DEFAULT false
 );
-CREATE TABLE email (
-    address text PRIMARY KEY,
-    member text NOT NULL REFERENCES member,
-    "primary" boolean DEFAULT true NOT NULL,
-    validated boolean DEFAULT false NOT NULL
+CREATE TABLE administrator (
+    username text PRIMARY KEY REFERENCES member
 );
 CREATE TABLE student (
     username text PRIMARY KEY REFERENCES member,
@@ -38,6 +39,5 @@ CREATE TABLE storage (
     description text,
     PRIMARY KEY (location, number)
 );
-CREATE UNIQUE INDEX ON email (member, "primary") WHERE ("primary" = true);
 
 EOF
