@@ -7,12 +7,12 @@ import (
     "net/http"
 )
 
-const Domain = "" //"makerspace.ca"
 var Templates = [...]string{"main", "index", "join"}
 
 type Http_server struct {
     srv http.Server
     mux *http.ServeMux
+    domain string
     dir string
     db *sql.DB
     tmpl *template.Template
@@ -26,13 +26,22 @@ type page struct {
 
 func (s *Http_server) root () {
     s.mux.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
+
+s.parse_templates()
+
         if r.URL.Path != "/" {
             http.FileServer(http.Dir(s.dir + "/static/")).ServeHTTP(w, r)
             return
         }
         p := page{Name: "index"}
-        if ok, username := s.authenticate(w, r); ok {
-            p.Member.Username = username
+        if r.PostFormValue("signin") == "true" {
+            if username, password := s.sign_in(w, r); username && password {
+            }
+        } else {
+            s.authenticate(w, r, &p.Member)
+            if signout := r.PostFormValue("signout"); signout != "" && signout == p.Member.Username {
+                s.sign_out(w, &p.Member)
+            }
         }
         s.tmpl.Execute(w, p)
     })
@@ -67,13 +76,7 @@ func (s *Http_server) join () {
     })
 }
 
-func Serve (address, dir string, db *sql.DB) *Http_server {
-    s := new(Http_server)
-    s.srv.Addr = address
-    s.mux = http.NewServeMux()
-    s.srv.Handler = s.mux
-    s.dir = dir
-    s.db = db
+func (s *Http_server) parse_templates () {
     s.tmpl = template.Must(template.ParseFiles(func () []string {
         files := make([]string, len(Templates))
         for i := range Templates {
@@ -81,8 +84,19 @@ func Serve (address, dir string, db *sql.DB) *Http_server {
         }
         return files
     }()...))
+}
+
+func Serve (domain, address, dir string, db *sql.DB) *Http_server {
+    s := new(Http_server)
+    s.domain = domain
+    s.srv.Addr = address
+    s.mux = http.NewServeMux()
+    s.srv.Handler = s.mux
+    s.dir = dir
+    s.db = db
+    s.parse_templates()
     s.root()
-    s.sign_in()
+    s.signin()
     s.join()
     go log.Panic(s.srv.ListenAndServe())
     return s

@@ -9,6 +9,7 @@ import (
 )
 
 var Config struct{
+    Domain string
     Dir string
     Database struct{
         Conninfo map[string]string
@@ -34,5 +35,5 @@ func init () {
 
 func main () {
     db := Database(Config.Database.Conninfo)
-    site.Serve(":1080", Config.Dir + "/site", db)
+    site.Serve(Config.Domain, ":1080", Config.Dir + "/site", db)
 }

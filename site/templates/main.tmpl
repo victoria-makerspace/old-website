@@ -73,12 +73,13 @@
         </div>
     </nav>
 {{else}}
-    <nav class="navbar navbar-toggleable-xs navbar-light fixed-top">
+    <nav class="navbar navbar-toggleable navbar-light fixed-top">
         <div class="container">
+            <a class="navbar-toggler navbar-toggler-right nav-link glyphicons glyphicons-menu-hamburger" role="button" data-toggle="collapse" data-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation"></a>
             <a class="navbar-brand" href="/">
                 <img src="/logo-simple-text.svg" alt="Victoria Makerspace">
             </a>
-            <ul class="navbar-nav navbar-collapse justify-content-end" id="navbar">
+            <ul class="collapse navbar-collapse navbar-nav justify-content-end" id="navbar">
                 <li class="nav-item">
                     <a class="nav-link glyphicons glyphicons-conversation" href="/talk" title="Talk forum"></a>
                 </li>
@@ -92,7 +93,9 @@
                     <a class="nav-link glyphicons glyphicons-user" href="/member" title="Dashboard"></a>
                 </li>
                 <li class="nav-item">
-                    <a id="sign-out" class="nav-link glyphicons glyphicons-log-out" href="/signout" title="Sign out"></a>
+                    <form>
+                        <button id="sign-out" name="signout" type="submit" value="{{.Member.Username}}" formaction="/" formmethod="post" class="nav-link glyphicons glyphicons-log-out" title="Sign out"></button>
+                    </form>
                 </li>
             </ul>
         </div>

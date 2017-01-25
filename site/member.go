@@ -8,10 +8,12 @@ import (
     "net/http"
     "time"
     "golang.org/x/crypto/scrypt"
+    "github.com/lib/pq"
 )
 
 type Member struct {
     Username string
+    Session string
 }
 
 func rand256 () string {
@@ -29,43 +31,75 @@ func key (password, salt string) string {
     return hex.EncodeToString(key)
 }
 
-func (s *Http_server) authenticate (w http.ResponseWriter, r *http.Request) (ok bool, username string) {
-    unset_cookie := func () {
-        http.SetCookie(w, &http.Cookie{Name: "session", Value: "", Expires: time.Unix(0, 0), MaxAge: -1})
-    }
+func (s *Http_server) authenticate (w http.ResponseWriter, r *http.Request, member *Member) {
     cookie, err := r.Cookie("session")
     if err != nil { return }
     var (
         uname string
-        expired bool
+        expires pq.NullTime
     )
-    err = s.db.QueryRow("SELECT username, expired FROM session_http WHERE token = $1", cookie.Value).Scan(&uname, &expired)
+    err = s.db.QueryRow("SELECT username, expires FROM session_http WHERE token = $1", cookie.Value).Scan(&uname, &expires)
     if err == sql.ErrNoRows {
-        unset_cookie()
+        s.sign_out(w, member)
         return
     } else if err != nil {
         log.Panic(err)
-    } else if expired {
-        unset_cookie()
+    } else if expires.Valid && expires.Time.Before(time.Now()) {
+        s.sign_out(w, member)
         return
     }
     new_token := rand256()
-    _, err = s.db.Exec("UPDATE session_http SET token = $1, last_seen = now() WHERE token = $2", new_token, cookie.Value)
+    rsp_cookie := http.Cookie{Name: "session", Value: new_token, Path: "/", Domain: s.domain, /* Secure: true,*/ HttpOnly: true}
+    if expires.Valid {
+        expires_unix := time.Now().AddDate(1, 0, 0)
+        rsp_cookie.Expires = expires_unix
+        _, err = s.db.Exec("UPDATE session_http SET token = $1, last_seen = now(), expires = $2 WHERE token = $3", new_token, expires_unix, cookie.Value)
+    } else {
+        _, err = s.db.Exec("UPDATE session_http SET token = $1, last_seen = now() WHERE token = $2", new_token, cookie.Value)
+    }
     if err != nil { log.Panic(err) }
-    http.SetCookie(w, &http.Cookie{Name: "session", Value: new_token, Path: "/", Domain: Domain, /* Secure: true,*/ HttpOnly: true})
-    return true, uname
+    member.Username = uname
+    member.Session = new_token
+    http.SetCookie(w, &rsp_cookie)
 }
 
-func (s *Http_server) sign_out (w http.ResponseWriter, r *http.Request) {
-    cookie, err := r.Cookie("session")
-    if err == nil {
-        _, err = s.db.Exec("UPDATE session_http SET expired = true WHERE token = $1", cookie.Value)
+func (s *Http_server) sign_in (w http.ResponseWriter, r *http.Request) (username, password bool) {
+    uname := r.PostFormValue("username")
+    var (
+        password_key string
+        password_salt string
+    )
+    err := s.db.QueryRow("SELECT password_key, password_salt FROM member WHERE username = $1", uname).Scan(&password_key, &password_salt)
+    if err == sql.ErrNoRows {
+        return false, false
+    } else if password_key != key(r.PostFormValue("password"), password_salt) {
+        return true, false
+    }
+    token := rand256()
+    _, err = s.db.Exec("INSERT INTO session_http (token, username) VALUES ($1, $2)", token, uname)
+    if err != nil { log.Panic(err) }
+    cookie := &http.Cookie{Name: "session", Value: token, Path: "/", Domain: s.domain, /* Secure: true,*/ HttpOnly: true}
+    if r.PostFormValue("save_session") == "on" {
+        cookie.Expires = time.Now().AddDate(1, 0, 0)
+        _, err = s.db.Exec("UPDATE session_http SET expires = $1 WHERE token = $2", cookie.Expires, token)
         if err != nil { log.Panic(err) }
     }
-    http.SetCookie(w, &http.Cookie{Name: "session", Value: "", MaxAge: -1})
+    http.SetCookie(w, cookie)
+    return true, true
 }
 
-func (s *Http_server) sign_in () {
+func (s *Http_server) sign_out (w http.ResponseWriter, member *Member) {
+    member.Username = ""
+    if member.Session != "" {
+        _, err := s.db.Exec("UPDATE session_http SET expires = 'epoch' WHERE token = $1", member.Session)
+        if err != nil { log.Panic(err) }
+    }
+    member.Session = ""
+    w.Header().Del("Set-Cookie")
+    http.SetCookie(w, &http.Cookie{Name: "session", Value: " ", Path: "/", Domain: s.domain, Expires: time.Unix(0, 0), MaxAge: -1, /* Secure: true,*/ HttpOnly: true})
+}
+
+func (s *Http_server) signin () {
     s.mux.HandleFunc("/signin", func (w http.ResponseWriter, r *http.Request) {
         if r.URL.Path != "/signin" {
             http.Error(w, "", http.StatusNotFound)
@@ -78,28 +112,14 @@ func (s *Http_server) sign_in () {
         }
     })
     s.mux.HandleFunc("/signin.json", func (w http.ResponseWriter, r *http.Request) {
-        username := r.PostFormValue("username")
-        var (
-            password_key string
-            password_salt string
-        )
-        err := s.db.QueryRow("SELECT password_key, password_salt FROM member WHERE username = $1", username).Scan(&password_key, &password_salt)
-        rsp := "success"
-        if err == sql.ErrNoRows {
-            rsp = "invalid username"
-        } else if password_key != key(r.PostFormValue("password"), password_salt) {
+        username, password := s.sign_in(w, r)
+        var rsp string
+        if username && password {
+            rsp = "success"
+        } else if username {
             rsp = "incorrect password"
         } else {
-            _, err = s.db.Exec("UPDATE session_http SET expired = true WHERE username = $1 AND expired = false", username)
-            if err != nil { log.Panic(err) }
-            token := rand256()
-            _, err = s.db.Exec("INSERT INTO session_http (token, username) VALUES ($1, $2)", token, username)
-            if err != nil { log.Panic(err) }
-            cookie := &http.Cookie{Name: "session", Value: token, Path: "/", Domain: Domain, /* Secure: true,*/ HttpOnly: true}
-            if r.PostFormValue("save_session") == "on" {
-                cookie.Expires = time.Now().AddDate(1, 0, 0)
-            }
-            http.SetCookie(w, cookie)
+            rsp = "invalid username"
         }
         w.Write([]byte("\"" + rsp + "\""))
     })
