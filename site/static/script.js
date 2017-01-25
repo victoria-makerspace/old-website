@@ -1,4 +1,11 @@
 
+$("#navbar").on("show.bs.collapse", function() {
+    $(".navbar-toggler").addClass("active");
+});
+$("#navbar").on("hidden.bs.collapse", function() {
+    $(".navbar-toggler").removeClass("active");
+});
+
 var highlight = function(type, elem) {
     $(elem).addClass("form-control-" + type).parents(".form-group").addClass("has-" + type);
 };
