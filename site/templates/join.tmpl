@@ -1,4 +1,5 @@
-       <h2>Join Makerspace</h2>
+    <div class="container">
+        <h2>Join Makerspace</h2>
         <p>Open-house nights are on the 2nd and 4th Tuesday of each month, from 7 to 9pm.</p>
        <address>Find us at <a href="https://goo.gl/maps/e9HWSv2j3yk" target="_blank">4476 Markham St., Saanich, BC</a>.</address>
         <form id="join" method="post" action="/join">
@@ -64,5 +65,18 @@
                     </div>
                 </fieldset>
             </div>
+            <div class="row">
+                <div class="col-md-9 col-lg-7 col-xl-6">
+                    <div class="form-group row">
+                        <label for="waiver" class="col-sm-2 col-form-label">Waiver</label>
+                        <div class="col-10">
+                            <input type="file" accept=".pdf" class="form-control" id="waiver" name="waiver" required>
+                            <div class="form-control-feedback"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
+{{template "footer"}}
+    </div>

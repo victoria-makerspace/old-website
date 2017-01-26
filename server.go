@@ -8,17 +8,18 @@ import (
     "github.com/vvanpo/makerspace/site"
 )
 
-var Config struct{
+var Config struct {
     Domain string
+    Port int
     Dir string
-    Database struct{
+    Database struct {
         Conninfo map[string]string
     }
-    Beanstream struct{
+    Beanstream struct {
         Api_key string
         Merchant_id string
     }
-    Discourse struct{
+    Discourse struct {
         Api_key string
     }
 }
@@ -35,5 +36,12 @@ func init () {
 
 func main () {
     db := Database(Config.Database.Conninfo)
-    site.Serve(Config.Domain, ":1080", Config.Dir + "/site", db)
+    config := site.Config{
+        Config.Domain,
+        Config.Port,
+        Config.Dir + "/site/templates/",
+        Config.Dir + "/site/static/",
+        Config.Dir + "/database/data/",
+    }
+    site.Serve(config, db)
 }

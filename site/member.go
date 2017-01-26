@@ -49,7 +49,7 @@ func (s *Http_server) authenticate (w http.ResponseWriter, r *http.Request, memb
         return
     }
     new_token := rand256()
-    rsp_cookie := http.Cookie{Name: "session", Value: new_token, Path: "/", Domain: s.domain, /* Secure: true,*/ HttpOnly: true}
+    rsp_cookie := http.Cookie{Name: "session", Value: new_token, Path: "/", Domain: s.config.Domain, /* Secure: true,*/ HttpOnly: true}
     if expires.Valid {
         expires_unix := time.Now().AddDate(1, 0, 0)
         rsp_cookie.Expires = expires_unix
@@ -78,7 +78,7 @@ func (s *Http_server) sign_in (w http.ResponseWriter, r *http.Request) (username
     token := rand256()
     _, err = s.db.Exec("INSERT INTO session_http (token, username) VALUES ($1, $2)", token, uname)
     if err != nil { log.Panic(err) }
-    cookie := &http.Cookie{Name: "session", Value: token, Path: "/", Domain: s.domain, /* Secure: true,*/ HttpOnly: true}
+    cookie := &http.Cookie{Name: "session", Value: token, Path: "/", Domain: s.config.Domain, /* Secure: true,*/ HttpOnly: true}
     if r.PostFormValue("save_session") == "on" {
         cookie.Expires = time.Now().AddDate(1, 0, 0)
         _, err = s.db.Exec("UPDATE session_http SET expires = $1 WHERE token = $2", cookie.Expires, token)
@@ -96,7 +96,7 @@ func (s *Http_server) sign_out (w http.ResponseWriter, member *Member) {
     }
     member.Session = ""
     w.Header().Del("Set-Cookie")
-    http.SetCookie(w, &http.Cookie{Name: "session", Value: " ", Path: "/", Domain: s.domain, Expires: time.Unix(0, 0), MaxAge: -1, /* Secure: true,*/ HttpOnly: true})
+    http.SetCookie(w, &http.Cookie{Name: "session", Value: " ", Path: "/", Domain: s.config.Domain, Expires: time.Unix(0, 0), MaxAge: -1, /* Secure: true,*/ HttpOnly: true})
 }
 
 func (s *Http_server) signin () {
@@ -122,5 +122,16 @@ func (s *Http_server) signin () {
             rsp = "invalid username"
         }
         w.Write([]byte("\"" + rsp + "\""))
+    })
+}
+
+func (s *Http_server) dashboard_handler () {
+    s.mux.HandleFunc("/member", func (w http.ResponseWriter, r *http.Request) {
+//////
+s.parse_templates()
+/////
+        p := page{Name: "dashboard", Title: "Dashboard"}
+        s.authenticate(w, r, &p.Member)
+        s.tmpl.Execute(w, p)
     })
 }

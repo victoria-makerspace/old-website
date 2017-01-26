@@ -2,18 +2,27 @@ package site
 
 import (
     "database/sql"
+    "fmt"
     "html/template"
     "log"
     "net/http"
 )
 
-var Templates = [...]string{"main", "index", "join"}
+var Templates = [...]string{"main", "index", "sign-in", "join", "dashboard"}
+
+type Config struct {
+    Domain string
+    Port int
+    Templates_dir string
+    Static_dir string
+    Data_dir string
+}
+
 
 type Http_server struct {
     srv http.Server
     mux *http.ServeMux
-    domain string
-    dir string
+    config Config
     db *sql.DB
     tmpl *template.Template
 }
@@ -30,7 +39,7 @@ func (s *Http_server) root () {
 s.parse_templates()
 
         if r.URL.Path != "/" {
-            http.FileServer(http.Dir(s.dir + "/static/")).ServeHTTP(w, r)
+            http.FileServer(http.Dir(s.config.Static_dir)).ServeHTTP(w, r)
             return
         }
         p := page{Name: "index"}
@@ -69,9 +78,16 @@ s.parse_templates()
     })
 }
 
+func (s *Http_server) data_handler () {
+    s.mux.HandleFunc("/member/data/", func (w http.ResponseWriter, r *http.Request) {
+        http.StripPrefix("/member/data", http.FileServer(http.Dir(s.config.Data_dir))).ServeHTTP(w, r)
+    })
+}
+
 func (s *Http_server) join () {
     s.mux.HandleFunc("/join", func (w http.ResponseWriter, r *http.Request) {
         p := page{Name: "join", Title: "Join"}
+        s.authenticate(w, r, &p.Member)
         s.tmpl.Execute(w, p)
     })
 }
@@ -80,24 +96,25 @@ func (s *Http_server) parse_templates () {
     s.tmpl = template.Must(template.ParseFiles(func () []string {
         files := make([]string, len(Templates))
         for i := range Templates {
-            files[i] = s.dir + "/templates/" + Templates[i] + ".tmpl"
+            files[i] = s.config.Templates_dir + Templates[i] + ".tmpl"
         }
         return files
     }()...))
 }
 
-func Serve (domain, address, dir string, db *sql.DB) *Http_server {
+func Serve (config Config, db *sql.DB) *Http_server {
     s := new(Http_server)
-    s.domain = domain
-    s.srv.Addr = address
+    s.config = config
+    s.srv.Addr = config.Domain + ":" + fmt.Sprint(config.Port)
     s.mux = http.NewServeMux()
     s.srv.Handler = s.mux
-    s.dir = dir
     s.db = db
     s.parse_templates()
     s.root()
+    s.data_handler()
     s.signin()
     s.join()
+    s.dashboard_handler()
     go log.Panic(s.srv.ListenAndServe())
     return s
 }

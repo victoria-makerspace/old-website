@@ -27,9 +27,12 @@ body {
 .nav-link {
     font-weight: bold;
     line-height: 2rem;
-    padding: 0.25rem 0.5rem 0 0.5rem !important;
+    padding: 0.25rem 0.5rem 0 0.5rem ;
     height: 2.5rem;
     transition: all 0.2s ease-in-out;
+}
+.navbar-nav .nav-link {
+    padding: 0.25rem 0.5rem 0 0.5rem ;
 }
 .nav-link.glyphicons {
     font-weight: normal;
@@ -56,11 +59,21 @@ button.nav-link {
     color: rgba(0,0,0,0.7) !important;
     background-color: rgba(2, 117, 216, 0.7);
 }
+.nav-link .glyphicons + span {
+    display: none;
+}
 .navbar-toggler {
-    right: 0;
+    float: right;
     margin-top: 0.5rem;
     border: 0;
     border-radius: 0.25rem 0.25rem 0 0;
+}
+#member-icon {
+
+}
+#member-menu .dropdown-menu {
+    left: inherit;
+    right: 0;
 }
 
 .carousel {
@@ -130,23 +143,32 @@ label {
     .navbar > .container {
         margin: 0;
     }
-    .navbar-toggleable .collapsing,
-    .navbar-toggleable .collapse.show {
-        width: 2.2rem;
-        margin-left: auto;
+    #navbar-member .navbar-collapse {
+        position: absolute;
+        right: 0;
+        border-radius: 0 0 0.25rem 0.25rem;
         padding: 0;
         background: rgba(247,247,247,0.8);
     }
-    .navbar-toggleable .navbar-collapse,
-    .navbar-toggleable .navbar-collapse .nav-item:last-child .nav-link {
-        border-radius: 0 0 0.25rem 0.25rem;
+    #navbar-member .navbar-nav {
+        flex-direction: row;
+        margin: 0 0 0 auto;
+    }
+    #navbar-member .nav-item:first-child .nav-link {
+        border-bottom-left-radius: 0.25rem;
+    }
+    #navbar-member .nav-item:last-child .nav-link {
+        border-bottom-right-radius: 0.25rem;
+    }
+    #navbar-member .nav-link .glyphicons + span {
+        display: inline;
     }
     #student:disabled {
         display: none;
     }
 }
 @media (min-width: 576px) {
-    .navbar-toggleable .nav-link {
+    #navbar-member .nav-link {
         border-radius: 0.25rem 0.25rem 0 0;
     }
     .carousel + .container {
@@ -154,18 +176,22 @@ label {
     }
 }
 @media (max-width: 767px) {
-    .navbar-toggleable-sm .collapsing,
-    .navbar-toggleable-sm .collapse.show {
+    #navbar-guest .navbar-collapse {
+        position: absolute;
+        right: 0;
         padding: 0;
         background: rgba(247,247,247,0.8);
     }
-    .navbar-toggleable-sm .navbar-collapse,
-    .navbar-toggleable-sm .navbar-collapse .nav-item:last-child > .nav-link {
+    #navbar-guest .navbar-nav .nav-link {
+        padding: 0.25rem 1rem 0 1rem ;
+    }
+    #navbar-guest .navbar-collapse,
+    #navbar-guest .nav-item:last-child .nav-link {
         border-radius: 0 0 0.25rem 0.25rem;
     }
 }
 @media (min-width: 768px) {
-    .navbar-toggleable-sm .nav-link {
+    #navbar-guest .nav-link {
         border-radius: 0.25rem 0.25rem 0 0;
     }
     .carousel-item, .carousel-item > img {
