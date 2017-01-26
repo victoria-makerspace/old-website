@@ -99,19 +99,30 @@ func (s *Http_server) sign_out (w http.ResponseWriter, member *Member) {
     http.SetCookie(w, &http.Cookie{Name: "session", Value: " ", Path: "/", Domain: s.config.Domain, Expires: time.Unix(0, 0), MaxAge: -1, /* Secure: true,*/ HttpOnly: true})
 }
 
-func (s *Http_server) signin_handler () {
-    s.mux.HandleFunc("/signin", func (w http.ResponseWriter, r *http.Request) {
-        if r.URL.Path != "/signin" {
-            http.Error(w, "", http.StatusNotFound)
-            return
+func (s *Http_server) dashboard_handler () {
+    s.mux.HandleFunc("/member", func (w http.ResponseWriter, r *http.Request) {
+//////
+s.parse_templates()
+/////
+        p := page{Name: "dashboard", Title: "Dashboard"}
+        if r.PostFormValue("sign-in") == "true" {
+            if username, password := s.sign_in(w, r); username && password {
+            }
         }
-        if r.PostFormValue("signin") != "true" {
-            p := page{Name: "signin", Title: "Sign in"}
-            s.tmpl.Execute(w, p)
-            return
+        s.authenticate(w, r, &p.Member)
+        if p.Member.Username == "" {
+            if r.PostFormValue("sign-in") != "true" {
+                p := page{Name: "sign-in", Title: "Sign in"}
+                s.tmpl.Execute(w, p)
+                return
+            } else {
+                http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+                return
+            }
         }
+        s.tmpl.Execute(w, p)
     })
-    s.mux.HandleFunc("/signin.json", func (w http.ResponseWriter, r *http.Request) {
+    s.mux.HandleFunc("/sign-in.json", func (w http.ResponseWriter, r *http.Request) {
         username, password := s.sign_in(w, r)
         var rsp string
         if username && password {
@@ -122,20 +133,5 @@ func (s *Http_server) signin_handler () {
             rsp = "invalid username"
         }
         w.Write([]byte("\"" + rsp + "\""))
-    })
-}
-
-func (s *Http_server) dashboard_handler () {
-    s.mux.HandleFunc("/member", func (w http.ResponseWriter, r *http.Request) {
-//////
-s.parse_templates()
-/////
-        p := page{Name: "dashboard", Title: "Dashboard"}
-        if r.PostFormValue("signin") == "true" {
-            if username, password := s.sign_in(w, r); username && password {
-            }
-        }
-        s.authenticate(w, r, &p.Member)
-        s.tmpl.Execute(w, p)
     })
 }

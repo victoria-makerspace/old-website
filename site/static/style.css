@@ -30,13 +30,12 @@ body {
     padding: 0.25rem 0.5rem 0 0.5rem;
     height: 2.5rem;
     transition: all 0.2s ease-in-out;
-    color: rgba(0,0,0,0.5);
+    color: rgba(0,0,0,0.5) !important;
 }
 .navbar-nav .nav-link {
     padding: 0.25rem 0.5rem 0 0.5rem;
 }
 .nav-link.glyphicons {
-    font-weight: normal;
     width: 2.2rem;
     text-align: center;
 }
@@ -93,9 +92,37 @@ button.nav-link {
     position: absolute;
     right: 0;
     top: 100%;
-    border-radius: 0 0 0.25rem 0.25rem;
+    border-radius: 0 0 0.75rem 0.25rem;
     padding: 0;
     background: rgba(247,247,247,0.8);
+    width: 16rem;
+}
+#member-menu-toolbar {
+    display: flex;
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+}
+#member-menu-toolbar .nav-link:last-child {
+    float: right;
+}
+#sign-out {
+    text-align: right;
+}
+#sign-out label {
+    cursor: pointer;
+    font-weight: bold;
+    color: rgba(0,0,0,0.3);
+    transition: all 0.2s ease-in-out;
+}
+#sign-out label:hover, #sign-out label:focus {
+    color: rgba(0,0,0,0.7);
+}
+#sign-out .nav-link {
+    display: inline-block;
+    border-radius: 0.75rem 0;
+    border-width: 1px 0 0 1px;
+    border-color: rgba(0,0,0,0.2);
+    height: inherit;
+    padding: 0 0.5rem;
 }
 
 .carousel {

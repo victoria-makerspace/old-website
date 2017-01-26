@@ -79,6 +79,10 @@ func (s *Http_server) join_handler () {
     s.mux.HandleFunc("/join", func (w http.ResponseWriter, r *http.Request) {
         p := page{Name: "join", Title: "Join"}
         s.authenticate(w, r, &p.Member)
+        if p.Member.Username != "" {
+            http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+            return
+        }
         s.tmpl.Execute(w, p)
     })
 }
@@ -103,7 +107,6 @@ func Serve (config Config, db *sql.DB) *Http_server {
     s.parse_templates()
     s.root_handler()
     s.data_handler()
-    s.signin_handler()
     s.join_handler()
     s.dashboard_handler()
     go log.Panic(s.srv.ListenAndServe())

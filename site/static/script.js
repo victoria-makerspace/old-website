@@ -37,9 +37,9 @@ var clear_highlight = function(elem) {
 };
 var exists = function(elem, name, callback) { $.getJSON("/exists?" + name + "=" + $(elem).val()).done(callback); };
 
-var username = $("#signin form [name=username]")[0];
-var password = $("#signin form [name=password]")[0];
-$("#signin").on("shown.bs.modal", function() {
+var username = $("#sign-in form [name=username]")[0];
+var password = $("#sign-in form [name=password]")[0];
+$("#sign-in").on("shown.bs.modal", function() {
     $(username).focus();
 });
 var invalid_username;
@@ -55,15 +55,15 @@ $(username).change(function() {
 });
 $(password).change(function() { clear_highlight(password) });
 var submit = false;
-$("#signin form").submit(function(event) {
+$("#sign-in form").submit(function(event) {
     if (!submit) event.preventDefault();
     if (invalid_username) {
         show_message(username, "Username does not exist.");
         username.focus();
         return;
     }
-    $.ajax("/signin.json", {
-        data: $("#signin form").serialize(),
+    $.ajax("/sign-in.json", {
+        data: $("#sign-in form").serialize(),
         dataType: "json",
         method: "POST",
         success: function(data) {
@@ -85,7 +85,7 @@ $("#signin form").submit(function(event) {
         },
         error: function(j, status, error) {
             submit = true;
-            $("#signin form").submit();
+            $("#sign-in form").submit();
         }
     });
 });

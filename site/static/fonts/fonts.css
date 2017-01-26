@@ -31,7 +31,7 @@
     font-size: 1.2rem;
     vertical-align: middle;
     font-style: normal;
-    font-weight: normal;
+    font-weight: normal !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }

@@ -14,7 +14,7 @@
 </head>
 <body>
 {{if eq .Member.Username ""}}
-    <div class="modal fade" id="signin" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade" id="sign-in" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -23,7 +23,7 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form class="modal-body" action="/" method="post" novalidate>
+                <form class="modal-body" action="/member" method="post" novalidate>
                     <div class="form-group">
                         <div class="input-group">
                             <span class="input-group-addon">@</span>
@@ -42,7 +42,7 @@
                             <span class="custom-control-description">Remember me</span>
                         </label>
                     </div>
-                    <button type="submit" name="signin" value="true" class="float-right btn btn-primary">Sign in</button>
+                    <button type="submit" name="sign-in" value="true" class="float-right btn btn-primary">Sign in</button>
                 </form>
             </div>
         </div>
@@ -68,7 +68,7 @@
                         <a class="nav-link{{if eq .Name "join"}} active{{end}}" href="/join"><span class="glyphicons glyphicons-user-add"></span> &nbsp;join</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/signin" data-toggle="modal" data-target="#signin"><span class="glyphicons glyphicons-log-in"></span> sign in</a>
+                        <a class="nav-link" href="/member" data-toggle="modal" data-target="#sign-in"><span class="glyphicons glyphicons-log-in"></span> sign in</a>
                     </li>
                 </ul>
             </div>
@@ -99,28 +99,24 @@
             </div>
             <div class="collapse" id="member-menu">
                 <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="dropdown-item nav-link glyphicons glyphicons-user" href="/member/profile" title="Profile"></a>
+                    <li class="nav-item" id="member-menu-toolbar">
+                        <a class="nav-link glyphicons glyphicons-user" href="/member/profile" title="Profile"></a>
+                        <a class="nav-link glyphicons glyphicons-message-empty {{- /*"glyphicons-message-full"*/}}" href="/member/messages" title="Messages"></a>
+                        <a class="nav-link glyphicons glyphicons-bookmark" href="/member/bookmarks" title="Bookmarks"></a>
+                        <a class="nav-link ml-auto glyphicons glyphicons-cogwheel" href="/member/preferences" title="Preferences"></a>
                     </li>
                     <li class="nav-item">
-                        <a class="dropdown-item nav-link glyphicons glyphicons-message-empty {{- /*"glyphicons-message-full"*/}}" href="/member/messages" title="Messages"></a>
+                        <a class="nav-link" href="/member/tools"><span class="glyphicons glyphicons-claw-hammer"></span>&nbsp; tools</a>
                     </li>
                     <li class="nav-item">
-                        <a class="dropdown-item nav-link glyphicons glyphicons-bookmark" href="/member/bookmarks" title="Bookmarks"></a>
+                        <a class="nav-link" href="/member/billing"><span class="glyphicons glyphicons-pen"></span>&nbsp; billing</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="dropdown-item nav-link glyphicons glyphicons-cogwheel" href="/member/preferences" title="Preferences"></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="dropdown-item nav-link glyphicons glyphicons-claw-hammer" href="/member/tools" title="Tools"></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="dropdown-item nav-link glyphicons glyphicons-pen" href="/member/billing" title="Billing"></a>
-                    </li>
-                    <li class="nav-item">
+                    <li class="nav-item" id="sign-out">
                         <form action="/" method="post">
-                            <button id="sign-out" name="signout" type="submit" value="{{.Member.Username}}" class="dropdown-item nav-link glyphicons glyphicons-log-out" title="Sign out">
-                            </button>
+                            <label>
+                                sign out
+                                <button name="sign-out" type="submit" value="{{.Member.Username}}" class="nav-link glyphicons glyphicons-log-out"></button>
+                            </label>
                         </form>
                     </li>
                 </ul>
