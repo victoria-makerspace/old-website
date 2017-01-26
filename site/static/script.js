@@ -1,21 +1,23 @@
 
-$("#member-menu").on("shown.bs.collapse", function() {
+$("#member-menu").on("show.bs.collapse", function() {
+    $("#general-menu.show").collapse("hide");
     $("#member-icon").addClass("active");
 });
-$("#general-menu").on("shown.bs.collapse", function() {
+$("#member-menu").on("hide.bs.collapse", function() {
+    $("#member-icon").removeClass("active");
+});
+$("#general-menu").on("show.bs.collapse", function() {
+    $("#member-menu.show").collapse("hide");
     $("#general-toggler").addClass("active");
+});
+$("#general-menu").on("hide.bs.collapse", function() {
+    $("#general-toggler").removeClass("active");
 });
 $("#navbar-guest .navbar-collapse").on("shown.bs.collapse", function() {
     $(".navbar-toggler").addClass("active");
 });
 $("#navbar-guest .navbar-collapse").on("hidden.bs.collapse", function() {
     $(".navbar-toggler").removeClass("active");
-});
-$("#member-menu").on("hidden.bs.collapse", function() {
-    $("#member-icon").removeClass("active");
-});
-$("#general-menu").on("hidden.bs.collapse", function() {
-    $("#general-toggler").removeClass("active");
 });
 
 if ($("#shop-features").length) {
@@ -78,7 +80,7 @@ $("#signin form").submit(function(event) {
                 submit = false;
                 break;
             case "success":
-                $(location).attr("href", "/");
+                $(location).attr("href", "/member");
             }
         },
         error: function(j, status, error) {

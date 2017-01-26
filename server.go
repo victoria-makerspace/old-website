@@ -5,6 +5,8 @@ import (
     "flag"
     "io/ioutil"
     "log"
+    "os"
+    "path"
     "github.com/vvanpo/makerspace/site"
 )
 
@@ -25,10 +27,13 @@ var Config struct {
 }
 
 func init () {
-    var config_filename string
-    flag.StringVar(&config_filename, "c", "", "-c [file]")
+    var config_filepath string
+    flag.StringVar(&config_filepath, "c", "", "-c [file]")
     flag.Parse()
-    config_file, err := ioutil.ReadFile(config_filename)
+    if config_filepath == "" {
+        config_filepath = path.Dir(os.Args[0]) + "/config.json"
+    }
+    config_file, err := ioutil.ReadFile(config_filepath)
     if err != nil { log.Fatal("Config file error: ",  err) }
     err = json.Unmarshal(config_file, &Config)
     if err != nil { log.Fatal("Config file error: ",  err) }
