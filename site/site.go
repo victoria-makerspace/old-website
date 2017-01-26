@@ -39,14 +39,9 @@ func (s *Http_server) root_handler () {
             return
         }
         p := page{Name: "index"}
-        if r.PostFormValue("signin") == "true" {
-            if username, password := s.sign_in(w, r); username && password {
-            }
-        } else {
-            s.authenticate(w, r, &p.Member)
-            if signout := r.PostFormValue("signout"); signout != "" && signout == p.Member.Username {
-                s.sign_out(w, &p.Member)
-            }
+        s.authenticate(w, r, &p.Member)
+        if signout := r.PostFormValue("signout"); signout != "" && signout == p.Member.Username {
+            s.sign_out(w, &p.Member)
         }
         s.tmpl.Execute(w, p)
     })
@@ -76,7 +71,7 @@ func (s *Http_server) root_handler () {
 
 func (s *Http_server) data_handler () {
     s.mux.HandleFunc("/member/data/", func (w http.ResponseWriter, r *http.Request) {
-        http.StripPrefix("/member/data", http.FileServer(http.Dir(s.config.Data_dir))).ServeHTTP(w, r)
+        http.StripPrefix("/member/data/", http.FileServer(http.Dir(s.config.Data_dir))).ServeHTTP(w, r)
     })
 }
 
@@ -107,6 +102,7 @@ func Serve (config Config, db *sql.DB) *Http_server {
     s.db = db
     s.parse_templates()
     s.root_handler()
+    s.data_handler()
     s.signin_handler()
     s.join_handler()
     s.dashboard_handler()

@@ -1,9 +1,21 @@
 
-$(".navbar-collapse").on("show.bs.collapse", function() {
+$("#member-menu").on("shown.bs.collapse", function() {
+    $("#member-icon").addClass("active");
+});
+$("#general-menu").on("shown.bs.collapse", function() {
+    $("#general-toggler").addClass("active");
+});
+$("#navbar-guest .navbar-collapse").on("shown.bs.collapse", function() {
     $(".navbar-toggler").addClass("active");
 });
-$(".navbar-collapse").on("hidden.bs.collapse", function() {
+$("#navbar-guest .navbar-collapse").on("hidden.bs.collapse", function() {
     $(".navbar-toggler").removeClass("active");
+});
+$("#member-menu").on("hidden.bs.collapse", function() {
+    $("#member-icon").removeClass("active");
+});
+$("#general-menu").on("hidden.bs.collapse", function() {
+    $("#general-toggler").removeClass("active");
 });
 
 if ($("#shop-features").length) {

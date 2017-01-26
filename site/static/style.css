@@ -27,12 +27,13 @@ body {
 .nav-link {
     font-weight: bold;
     line-height: 2rem;
-    padding: 0.25rem 0.5rem 0 0.5rem ;
+    padding: 0.25rem 0.5rem 0 0.5rem;
     height: 2.5rem;
     transition: all 0.2s ease-in-out;
+    color: rgba(0,0,0,0.5);
 }
 .navbar-nav .nav-link {
-    padding: 0.25rem 0.5rem 0 0.5rem ;
+    padding: 0.25rem 0.5rem 0 0.5rem;
 }
 .nav-link.glyphicons {
     font-weight: normal;
@@ -57,23 +58,44 @@ button.nav-link {
 }
 .nav-link.active {
     color: rgba(0,0,0,0.7) !important;
-    background-color: rgba(2, 117, 216, 0.7);
+    background-color: rgba(2, 117, 216, 0.5);
 }
 .nav-link .glyphicons + span {
     display: none;
 }
 .navbar-toggler {
-    float: right;
-    margin-top: 0.5rem;
     border: 0;
     border-radius: 0.25rem 0.25rem 0 0;
 }
-#member-icon {
-
-}
-#member-menu .dropdown-menu {
-    left: inherit;
+#navbar-guest .navbar-toggler {
+    margin-top: 0.5rem;
     right: 0;
+}
+#general-toggler {
+    margin-top: 0.5rem;
+    right: 3rem;
+}
+#member-icon {
+    height: 3rem;
+    width: 3rem;
+    padding: 0.25rem;
+    display: block !important;
+    right: 0;
+}
+#member-icon img {
+    width: 100%;
+    border-radius: 50%;
+}
+#member-menu .navbar-nav {
+    flex-direction: column;
+}
+#member-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    border-radius: 0 0 0.25rem 0.25rem;
+    padding: 0;
+    background: rgba(247,247,247,0.8);
 }
 
 .carousel {
@@ -85,7 +107,7 @@ button.nav-link {
 }
 .carousel-item {
     height: 22rem;
-    background-color: #777;
+    background: rgba(119,119,119,1);
 }
 .carousel-item > img {
     position: absolute;
@@ -94,7 +116,6 @@ button.nav-link {
     transform: translateX(-50%);
     height: 22rem;
 }
-
 #shop-features {
     padding-top: 4rem;
     margin-top: -4rem;
@@ -143,24 +164,24 @@ label {
     .navbar > .container {
         margin: 0;
     }
-    #navbar-member .navbar-collapse {
+    #general-menu {
         position: absolute;
         right: 0;
         border-radius: 0 0 0.25rem 0.25rem;
         padding: 0;
         background: rgba(247,247,247,0.8);
     }
-    #navbar-member .navbar-nav {
+    #general-menu .navbar-nav {
         flex-direction: row;
         margin: 0 0 0 auto;
     }
-    #navbar-member .nav-item:first-child .nav-link {
+    #general-menu .nav-item:first-child .nav-link {
         border-bottom-left-radius: 0.25rem;
     }
-    #navbar-member .nav-item:last-child .nav-link {
+    #general-menu .nav-item:last-child .nav-link {
         border-bottom-right-radius: 0.25rem;
     }
-    #navbar-member .nav-link .glyphicons + span {
+    #general-menu .nav-link .glyphicons + span {
         display: inline;
     }
     #student:disabled {
@@ -168,7 +189,10 @@ label {
     }
 }
 @media (min-width: 576px) {
-    #navbar-member .nav-link {
+    #general-menu {
+        margin-right: 3rem;
+    }
+    #general-menu .nav-link {
         border-radius: 0.25rem 0.25rem 0 0;
     }
     .carousel + .container {

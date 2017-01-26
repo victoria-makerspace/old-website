@@ -131,6 +131,10 @@ func (s *Http_server) dashboard_handler () {
 s.parse_templates()
 /////
         p := page{Name: "dashboard", Title: "Dashboard"}
+        if r.PostFormValue("signin") == "true" {
+            if username, password := s.sign_in(w, r); username && password {
+            }
+        }
         s.authenticate(w, r, &p.Member)
         s.tmpl.Execute(w, p)
     })
