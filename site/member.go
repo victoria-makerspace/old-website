@@ -99,7 +99,7 @@ func (s *Http_server) sign_out (w http.ResponseWriter, member *Member) {
     http.SetCookie(w, &http.Cookie{Name: "session", Value: " ", Path: "/", Domain: s.config.Domain, Expires: time.Unix(0, 0), MaxAge: -1, /* Secure: true,*/ HttpOnly: true})
 }
 
-func (s *Http_server) signin () {
+func (s *Http_server) signin_handler () {
     s.mux.HandleFunc("/signin", func (w http.ResponseWriter, r *http.Request) {
         if r.URL.Path != "/signin" {
             http.Error(w, "", http.StatusNotFound)

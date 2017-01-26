@@ -18,7 +18,6 @@ type Config struct {
     Data_dir string
 }
 
-
 type Http_server struct {
     srv http.Server
     mux *http.ServeMux
@@ -33,11 +32,8 @@ type page struct {
     Member Member
 }
 
-func (s *Http_server) root () {
+func (s *Http_server) root_handler () {
     s.mux.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
-
-s.parse_templates()
-
         if r.URL.Path != "/" {
             http.FileServer(http.Dir(s.config.Static_dir)).ServeHTTP(w, r)
             return
@@ -84,7 +80,7 @@ func (s *Http_server) data_handler () {
     })
 }
 
-func (s *Http_server) join () {
+func (s *Http_server) join_handler () {
     s.mux.HandleFunc("/join", func (w http.ResponseWriter, r *http.Request) {
         p := page{Name: "join", Title: "Join"}
         s.authenticate(w, r, &p.Member)
@@ -110,10 +106,9 @@ func Serve (config Config, db *sql.DB) *Http_server {
     s.srv.Handler = s.mux
     s.db = db
     s.parse_templates()
-    s.root()
-    s.data_handler()
-    s.signin()
-    s.join()
+    s.root_handler()
+    s.signin_handler()
+    s.join_handler()
     s.dashboard_handler()
     go log.Panic(s.srv.ListenAndServe())
     return s
