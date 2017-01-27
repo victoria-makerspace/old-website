@@ -47,6 +47,8 @@ func main () {
         Config.Dir + "/site/templates/",
         Config.Dir + "/site/static/",
         Config.Dir + "/database/data/",
+        Config.Beanstream.Merchant_id,
+        Config.Beanstream.Api_key,
     }
     site.Serve(config, db)
 }

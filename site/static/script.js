@@ -24,6 +24,32 @@ if ($("#shop-features").length) {
     $("body").scrollspy({ target: "#navbar-guest" });
 }
 
+$(this).on("beanstream_payfields_loaded", function() {
+    $("#credit-card input").each(function() {
+        $(this).addClass("form-control");
+    });
+});
+$(this).on("beanstream_payfields_inputValidityChanged", function(e) {
+    var args = e.originalEvent.eventDetail;
+    var elem;
+    if (args.fieldType == "number")
+        elem = $("input[data-beanstream-id='ccNumber']");
+    if (args.fieldType == "expiry")
+        elem = $("input[data-beanstream-id='ccExp']");
+    if (args.fieldType == "cvv")
+        elem = $("input[data-beanstream-id='ccCvv']");
+    if (args.isValid) {
+        $(elem).parents(".form-group").removeClass("has-warning").find(".form-control-feedback").hide();
+        $(elem).removeClass("form-control-warning");
+        highlight("success", elem);
+    } else {
+        $(elem).parents(".form-group").removeClass("has-success");
+        $(elem).removeClass("form-control-success");
+        highlight("warning", elem);
+        elem.parents(".form-group").find(".form-control-feedback").show();
+    }
+});
+
 var highlight = function(type, elem) {
     $(elem).addClass("form-control-" + type).parents(".form-group").addClass("has-" + type);
 };

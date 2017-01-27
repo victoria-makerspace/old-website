@@ -8,7 +8,7 @@ import (
     "net/http"
 )
 
-var Templates = [...]string{"main", "index", "sign-in", "join", "dashboard"}
+var Templates = [...]string{"main", "index", "sign-in", "join", "dashboard", "billing"}
 
 type Config struct {
     Domain string
@@ -16,6 +16,8 @@ type Config struct {
     Templates_dir string
     Static_dir string
     Data_dir string
+    Merchant_id string
+    Payment_api_key string
 }
 
 type Http_server struct {
@@ -24,6 +26,7 @@ type Http_server struct {
     config Config
     db *sql.DB
     tmpl *template.Template
+    payment *Payment_api
 }
 
 type page struct {
@@ -105,10 +108,12 @@ func Serve (config Config, db *sql.DB) *Http_server {
     s.srv.Handler = s.mux
     s.db = db
     s.parse_templates()
+    s.payment = Payment(config.Merchant_id, config.Payment_api_key)
     s.root_handler()
     s.data_handler()
     s.join_handler()
     s.dashboard_handler()
+    s.billing_handler()
     go log.Panic(s.srv.ListenAndServe())
     return s
 }

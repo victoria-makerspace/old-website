@@ -1,0 +1,40 @@
+    <div class="container">
+        <div class="row">
+        </div>
+        <form action="" id="credit-card">
+            <div class="row">
+                <div class="col-md-10 col-lg-8 col-xl-7">
+                    <div class="form-group row">
+                        <label class="col-sm-4 col-form-label">Card number</label>
+                        <div class="col-10 col-sm-8">
+                            <div class="input-group" data-beanstream-target="ccNumber_input">
+                                <span class="input-group-addon glyphicons glyphicons-credit-card"></span>
+                            </div>
+                            <div data-beanstream-target="ccNumber_error" class="form-control-feedback"></div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="card-expiry" class="col-sm-4 col-form-label">Expiry <span class="font-weight-normal">(mm/yyyy)</span></label>
+                        <div class="col-10 col-sm-8">
+                            <div class="input-group" data-beanstream-target="ccExp_input">
+                                <span class="input-group-addon glyphicons glyphicons-calendar"></span>
+                            </div>
+                            <div data-beanstream-target="ccExp_error" class="form-control-feedback"></div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="card-cvv" class="col-sm-4 col-form-label">CVV</label>
+                        <div class="col-10 col-sm-8">
+                            <div class="input-group" data-beanstream-target="ccCvv_input">
+                                <span class="input-group-addon glyphicons glyphicons-lock"></span>
+                            </div>
+                            <div data-beanstream-target="ccCvv_error" class="form-control-feedback"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script src="https://payform.beanstream.com/payfields/beanstream_payfields.js" data-submitForm="true"></script>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+{{template "footer"}}
+    </div>
