@@ -6,6 +6,7 @@ import (
     "html/template"
     "log"
     "net/http"
+    "net/http/httputil"
 )
 
 var Templates = [...]string{"main", "index", "sign-in", "join", "dashboard", "billing"}
@@ -16,8 +17,6 @@ type Config struct {
     Templates_dir string
     Static_dir string
     Data_dir string
-    Merchant_id string
-    Payment_api_key string
 }
 
 type Http_server struct {
@@ -26,13 +25,17 @@ type Http_server struct {
     config Config
     db *sql.DB
     tmpl *template.Template
-    payment *Payment_api
 }
 
 type page struct {
     Name string
     Title string
     Member Member
+}
+
+func (p *page) Authenticated () bool {
+    if p.Member.Session == "" { return false }
+    return true
 }
 
 func (s *Http_server) root_handler () {
@@ -72,6 +75,16 @@ func (s *Http_server) root_handler () {
     })
 }
 
+func (s *Http_server) talk_handler () {
+    rp := new(httputil.ReverseProxy)
+    rp.Director = func (r *http.Request) {
+
+    }
+    s.mux.HandleFunc("/talk/", func (w http.ResponseWriter, r *http.Request) {
+
+    })
+}
+
 func (s *Http_server) data_handler () {
     s.mux.HandleFunc("/member/data/", func (w http.ResponseWriter, r *http.Request) {
         http.StripPrefix("/member/data/", http.FileServer(http.Dir(s.config.Data_dir))).ServeHTTP(w, r)
@@ -82,10 +95,17 @@ func (s *Http_server) join_handler () {
     s.mux.HandleFunc("/join", func (w http.ResponseWriter, r *http.Request) {
         p := page{Name: "join", Title: "Join"}
         s.authenticate(w, r, &p.Member)
-        if p.Member.Username != "" {
+        if p.Authenticated() {
             http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
             return
         }
+        s.tmpl.Execute(w, p)
+    })
+}
+
+func (s *Http_server) classes_handler () {
+    s.mux.HandleFunc("/classes", func (w http.ResponseWriter, r *http.Request) {
+        p := page{Name: "classes", Title: "Classes"}
         s.tmpl.Execute(w, p)
     })
 }
@@ -108,11 +128,13 @@ func Serve (config Config, db *sql.DB) *Http_server {
     s.srv.Handler = s.mux
     s.db = db
     s.parse_templates()
-    s.payment = Payment(config.Merchant_id, config.Payment_api_key)
     s.root_handler()
+    s.talk_handler()
     s.data_handler()
     s.join_handler()
+    s.classes_handler()
     s.dashboard_handler()
+    s.tools_handler()
     s.billing_handler()
     go log.Panic(s.srv.ListenAndServe())
     return s

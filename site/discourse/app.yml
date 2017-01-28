@@ -20,8 +20,8 @@ templates:
 ## If you want Discourse to share a port with another webserver like Apache or nginx,
 ## see https://meta.discourse.org/t/17247 for details
 expose:
-  - "4000:80"   # http
-  - "1080:1080"
+  - "80:1081"   # http
+  - "1080:1082"   # mailcatcher
 
 params:
   db_default_text_search_config: "pg_catalog.english"
@@ -45,7 +45,9 @@ env:
   #UNICORN_WORKERS: 3
 
   ## TODO: The domain name this Discourse instance will respond to
-  DISCOURSE_HOSTNAME: 'localhost:4000'
+  DISCOURSE_HOSTNAME: 'localhost:1081'
+
+  DISCOURSE_RELATIVE_URL_ROOT: /talk
   
   ## Uncomment if you want the container to be started with the same
   ## hostname (-h option) as specified above (default "$hostname-$config")
@@ -98,9 +100,31 @@ run:
   ## After getting the first signup email, re-comment the line. It only needs to run once.
   #- exec: rails r "SiteSetting.notification_email='info@unconfigured.discourse.org'"
   - file:
-     path: /etc/service/mailcatcher/run
-     chmod: "+x"
-     contents: |
-        #!/bin/sh
-        mailcatcher --http-ip=0.0.0.0
+      path: /etc/service/mailcatcher/run
+      chmod: "+x"
+      contents: |
+          #!/bin/sh
+          mailcatcher --http-ip=0.0.0.0
+  - exec:
+      cd: $home
+      cmd:
+          - mkdir -p public/talk
+          - cd public/talk && ln -s ../uploads && ln -s ../backups
+          - rm public/uploads
+          - rm public/backups
+  - replace:
+      global: true
+      filename: /etc/nginx/conf.d/discourse.conf
+      from: proxy_pass http://discourse;
+      to: |
+        rewrite ^/(.*)$ /talk/$1 break;
+        proxy_pass http://discourse;
+  - replace:
+      filename: /etc/nginx/conf.d/discourse.conf
+      from: etag off;
+      to: |
+        etag off;
+        location /talk {
+          rewrite ^/talk/?(.*)$ /$1
+        }
   - exec: echo "End of custom commands"

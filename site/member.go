@@ -12,8 +12,9 @@ import (
 )
 
 type Member struct {
-    Username string
     Session string
+    Username string
+    Name string
 }
 
 func rand256 () string {
@@ -110,7 +111,7 @@ s.parse_templates()
             }
         }
         s.authenticate(w, r, &p.Member)
-        if p.Member.Username == "" {
+        if !p.Authenticated() {
             if r.PostFormValue("sign-in") != "true" {
                 p := page{Name: "sign-in", Title: "Sign in"}
                 s.tmpl.Execute(w, p)
@@ -133,5 +134,12 @@ s.parse_templates()
             rsp = "invalid username"
         }
         w.Write([]byte("\"" + rsp + "\""))
+    })
+}
+
+func (s *Http_server) tools_handler () {
+    s.mux.HandleFunc("/member/tools", func (w http.ResponseWriter, r *http.Request) {
+        p := page{Name: "tools", Title: "Tools"}
+        s.tmpl.Execute(w, p)
     })
 }

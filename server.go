@@ -18,8 +18,9 @@ var Config struct {
         Conninfo map[string]string
     }
     Beanstream struct {
-        Api_key string
         Merchant_id string
+        Payments_api_key string
+        Profiles_api_key string
     }
     Discourse struct {
         Api_key string
@@ -47,8 +48,7 @@ func main () {
         Config.Dir + "/site/templates/",
         Config.Dir + "/site/static/",
         Config.Dir + "/database/data/",
-        Config.Beanstream.Merchant_id,
-        Config.Beanstream.Api_key,
     }
+    site.Billing_setup(Config.Beanstream.Merchant_id, Config.Beanstream.Payments_api_key, Config.Beanstream.Profiles_api_key)
     site.Serve(config, db)
 }

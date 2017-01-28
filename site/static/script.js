@@ -28,6 +28,7 @@ $(this).on("beanstream_payfields_loaded", function() {
     $("#credit-card input").each(function() {
         $(this).addClass("form-control");
     });
+    $("input[data-beanstream-id='ccNumber']").focus();
 });
 $(this).on("beanstream_payfields_inputValidityChanged", function(e) {
     var args = e.originalEvent.eventDetail;
@@ -39,9 +40,11 @@ $(this).on("beanstream_payfields_inputValidityChanged", function(e) {
     if (args.fieldType == "cvv")
         elem = $("input[data-beanstream-id='ccCvv']");
     if (args.isValid) {
-        $(elem).parents(".form-group").removeClass("has-warning").find(".form-control-feedback").hide();
-        $(elem).removeClass("form-control-warning");
-        highlight("success", elem);
+        $(elem).parents(".form-group").removeClass("has-warning has-success").find(".form-control-feedback").hide();
+        $(elem).removeClass("form-control-warning form-control-success");
+        if (!elem.is(":focus")) {
+            highlight("success", elem);
+        }
     } else {
         $(elem).parents(".form-group").removeClass("has-success");
         $(elem).removeClass("form-control-success");

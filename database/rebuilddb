@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS member CASCADE;
 DROP TABLE IF EXISTS session_http CASCADE;
 DROP TABLE IF EXISTS administrator CASCADE;
 DROP TABLE IF EXISTS student CASCADE;
+DROP TABLE IF EXISTS billing_profile CASCADE;
 DROP TABLE IF EXISTS storage CASCADE;
 
 CREATE TABLE member (
@@ -32,6 +33,9 @@ CREATE TABLE student (
     institution text,
     graduation_date date
 );
+CREATE TABLE billing_profile (
+    username text PRIMARY KEY REFERENCES member
+);
 CREATE TABLE storage (
     location text NOT NULL,
     number integer NOT NULL,
@@ -41,3 +45,5 @@ CREATE TABLE storage (
 );
 
 EOF
+
+psql makerspace < ./data.sql
