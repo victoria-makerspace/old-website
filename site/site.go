@@ -76,13 +76,12 @@ func (s *Http_server) root_handler () {
 }
 
 func (s *Http_server) talk_handler () {
-    rp := new(httputil.ReverseProxy)
+    rp := &httputil.ReverseProxy{}
     rp.Director = func (r *http.Request) {
-
+        r.URL.Scheme = "http"
+        r.URL.Host = s.config.Domain + ":1081"
     }
-    s.mux.HandleFunc("/talk/", func (w http.ResponseWriter, r *http.Request) {
-
-    })
+    s.mux.HandleFunc("/talk/", rp.ServeHTTP)
 }
 
 func (s *Http_server) data_handler () {
@@ -121,12 +120,9 @@ func (s *Http_server) parse_templates () {
 }
 
 func Serve (config Config, db *sql.DB) *Http_server {
-    s := new(Http_server)
-    s.config = config
+    s := &Http_server{config: config, mux: http.NewServeMux(), db: db}
     s.srv.Addr = config.Domain + ":" + fmt.Sprint(config.Port)
-    s.mux = http.NewServeMux()
     s.srv.Handler = s.mux
-    s.db = db
     s.parse_templates()
     s.root_handler()
     s.talk_handler()
