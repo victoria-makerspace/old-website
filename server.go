@@ -14,17 +14,9 @@ var Config struct {
     Domain string
     Port int
     Dir string
-    Database struct {
-        Conninfo map[string]string
-    }
-    Beanstream struct {
-        Merchant_id string
-        Payments_api_key string
-        Profiles_api_key string
-    }
-    Discourse struct {
-        Api_key string
-    }
+    Database map[string]string
+    Beanstream map[string]string
+    Discourse map[string]string
 }
 
 func init () {
@@ -41,7 +33,7 @@ func init () {
 }
 
 func main () {
-    db := Database(Config.Database.Conninfo)
+    db := Database(Config.Database)
     config := site.Config{
         Config.Domain,
         Config.Port,
@@ -49,6 +41,6 @@ func main () {
         Config.Dir + "/site/static/",
         Config.Dir + "/database/data/",
     }
-    site.Billing_setup(Config.Beanstream.Merchant_id, Config.Beanstream.Payments_api_key, Config.Beanstream.Profiles_api_key)
+    site.Billing_setup(Config.Beanstream)
     site.Serve(config, db)
 }

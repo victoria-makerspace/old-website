@@ -15,6 +15,10 @@ type Member struct {
     Session string
     Username string
     Name string
+    Billing struct {
+        Card_number string
+        Card_expiry string
+    }
 }
 
 func rand256 () string {

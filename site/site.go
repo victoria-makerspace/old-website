@@ -75,7 +75,7 @@ func (s *Http_server) root_handler () {
     })
 }
 
-func (s *Http_server) talk_handler () {
+func (s *Http_server) talk_proxy () {
     rp := &httputil.ReverseProxy{}
     rp.Director = func (r *http.Request) {
         r.URL.Scheme = "http"
@@ -125,7 +125,7 @@ func Serve (config Config, db *sql.DB) *Http_server {
     s.srv.Handler = s.mux
     s.parse_templates()
     s.root_handler()
-    s.talk_handler()
+    s.talk_proxy()
     s.data_handler()
     s.join_handler()
     s.classes_handler()
