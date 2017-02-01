@@ -34,7 +34,8 @@ CREATE TABLE student (
     graduation_date date
 );
 CREATE TABLE billing_profile (
-    username text PRIMARY KEY REFERENCES member
+    username text PRIMARY KEY REFERENCES member,
+    id text UNIQUE NOT NULL
 );
 CREATE TABLE storage (
     location text NOT NULL,

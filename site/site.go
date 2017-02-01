@@ -7,6 +7,7 @@ import (
     "log"
     "net/http"
     "net/http/httputil"
+    "regexp"
 )
 
 var Templates = [...]string{"main", "index", "sign-in", "join", "dashboard", "billing"}
@@ -33,11 +34,6 @@ type page struct {
     Member Member
 }
 
-func (p *page) Authenticated () bool {
-    if p.Member.Session == "" { return false }
-    return true
-}
-
 func (s *Http_server) root_handler () {
     s.mux.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
         if r.URL.Path != "/" {
@@ -46,32 +42,10 @@ func (s *Http_server) root_handler () {
         }
         p := page{Name: "index"}
         s.authenticate(w, r, &p.Member)
-        if signout := r.PostFormValue("signout"); signout != "" && signout == p.Member.Username {
+        if signout := r.PostFormValue("sign-out"); signout != "" && signout == p.Member.Username {
             s.sign_out(w, &p.Member)
         }
         s.tmpl.Execute(w, p)
-    })
-    s.mux.HandleFunc("/exists", func (w http.ResponseWriter, r *http.Request) {
-        if (r.URL.Path == "/exists") {
-            q := r.URL.Query()
-            rsp := "nil"
-            if _, ok := q["username"]; ok {
-                var n int
-                err := s.db.QueryRow("SELECT COUNT(*) FROM member WHERE username = $1", q.Get("username")).Scan(&n)
-                if err != nil { log.Panic(err) }
-                if n == 0 {
-                    rsp = "false"
-                } else { rsp = "true" }
-            } else if _, ok := q["email"]; ok {
-                var n int
-                err := s.db.QueryRow("SELECT COUNT(*) FROM member WHERE email = $1", q.Get("email")).Scan(&n)
-                if err != nil { log.Panic(err) }
-                if n == 0 {
-                    rsp = "false"
-                } else { rsp = "true" }
-            }
-            w.Write([]byte(rsp))
-        }
     })
 }
 
@@ -91,14 +65,47 @@ func (s *Http_server) data_handler () {
 }
 
 func (s *Http_server) join_handler () {
+    username_rexp := regexp.MustCompile("^[\\pL\\pN\\pM\\pP]+$")
+    name_rexp := regexp.MustCompile("^(?:[\\pL\\pN\\pM\\pP]+ ?)+$")
     s.mux.HandleFunc("/join", func (w http.ResponseWriter, r *http.Request) {
+s.parse_templates()
         p := page{Name: "join", Title: "Join"}
         s.authenticate(w, r, &p.Member)
-        if p.Authenticated() {
+        if p.Member.Authenticated() {
             http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
             return
         }
-        s.tmpl.Execute(w, p)
+        q := r.URL.Query()
+        if _, ok := q["exists"]; ok {
+            rsp := "nil"
+            if _, ok := q["username"]; ok {
+                var n int
+                err := s.db.QueryRow("SELECT COUNT(*) FROM member WHERE username = $1", q.Get("username")).Scan(&n)
+                if err != nil { log.Panic(err) }
+                if n == 0 {
+                    rsp = "false"
+                } else { rsp = "true" }
+            } else if _, ok := q["email"]; ok {
+                var n int
+                err := s.db.QueryRow("SELECT COUNT(*) FROM member WHERE email = $1", q.Get("email")).Scan(&n)
+                if err != nil { log.Panic(err) }
+                if n == 0 {
+                    rsp = "false"
+                } else { rsp = "true" }
+            }
+            w.Write([]byte(rsp))
+        } else if r.PostFormValue("join") == "true" {
+            if !username_rexp.MatchString(r.PostFormValue("username")) {
+            } else if !name_rexp.MatchString(r.PostFormValue("name")) {
+            } else if s.join(r.PostFormValue("username"), r.PostFormValue("name"), r.PostFormValue("email"), r.PostFormValue("password")) {
+                s.sign_in(w, r)
+                w.Write([]byte("success"))
+            } else {
+            }
+            return
+        } else {
+            s.tmpl.Execute(w, p)
+        }
     })
 }
 

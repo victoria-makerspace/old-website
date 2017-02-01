@@ -20,23 +20,23 @@ $("#navbar-guest .navbar-collapse").on("hidden.bs.collapse", function() {
     $(".navbar-toggler").removeClass("active");
 });
 
-$(document).ready(function() {
+/*$(document).ready(function() {
     $.getJSON("/talk/notifications.json", function(data) {
         $.each(data["notifications"], function(i, v) {
             $("#member-menu-toolbar").after("<li>" + v["data"]["topic_title"] + "</li>");
         });
     });
-});
+});*/
 
 if ($("#shop-features").length) {
     $("body").scrollspy({ target: "#navbar-guest" });
 }
 
 $(this).on("beanstream_payfields_loaded", function() {
-    $("#credit-card input").each(function() {
+    $("#credit-card input[data-beanstream-id]").each(function() {
         $(this).addClass("form-control");
+        $(this).attr("id", $(this).attr("data-beanstream-id"))
     });
-    $("input[data-beanstream-id='ccNumber']").focus();
 });
 $(this).on("beanstream_payfields_inputValidityChanged", function(e) {
     var args = e.originalEvent.eventDetail;
@@ -72,7 +72,7 @@ var clear_highlight = function(elem) {
     $(elem).removeClass("form-control-danger form-control-warning form-control-success");
     elem.setCustomValidity("");
 };
-var exists = function(elem, name, callback) { $.getJSON("/exists?" + name + "=" + $(elem).val()).done(callback); };
+var exists = function(elem, name, callback) { $.getJSON("/join?exists&" + name + "=" + $(elem).val()).done(callback); };
 
 var username = $("#sign-in form [name=username]")[0];
 var password = $("#sign-in form [name=password]")[0];
@@ -140,11 +140,17 @@ var display_error = function(elem, msg, type = error_class(elem)) {
 var message = function(elem) {
     var id = $(elem).attr("id");
     if (elem.validity.valueMissing) {
-        if (id == "username") return "Username cannot be blank.";
-        if (id == "email") return "E-mail address cannot be blank.";
-        if (id == "password") return "Password cannot be blank.";
-        if (id == "institution") return "Institution name is a required field for student members.";
-        if (id == "graduation") return "Please enter a valid graduation date.";
+        if ($(elem).is("#join input")) {
+            if (id == "name") return "Name cannot be blank.";
+            if (id == "username") return "Username cannot be blank.";
+            if (id == "email") return "E-mail address cannot be blank.";
+            if (id == "password") return "Password cannot be blank.";
+        } else if ($(elem).is("#billing input")) {
+            if (id == "institution") return "Institution name is a required field for student members.";
+            if (id == "graduation") return "Please enter a valid graduation date.";
+        } else if ($(elem).is("#credit-card input")) {
+            if (id == "name") return "Card holder name cannot be blank.";
+        }
     }
 };
 var taken = function(elem, msg, taken_msg) {
@@ -156,42 +162,61 @@ var taken = function(elem, msg, taken_msg) {
         display_error(elem, msg);
     });
 };
-$("#join input[name=rate]").change(function() {
+$("#billing input[name=rate]").change(function() {
     var checked = $("#student-rate").prop("checked");
+    var input = $("#student input");
     $("#student").prop("disabled", !checked);
     $("#student").toggleClass("text-muted", !checked);
-    $("#student input").prop("required", checked);
+    input.prop("required", checked);
     if (!checked) {
         $("#student .form-group").removeClass("has-danger has-success").find(".form-control-feedback").text("").hide();
-        $("#student .form-control").removeClass("form-control-danger form-control-success").val("");
+        input.removeClass("form-control-danger form-control-success")
+        if (!input.attr("value")) input.val("");
     }
 });
 var validate = function(elem) {
     msg = message(elem);
-    if ($(elem).is("#username"))
+    if ($(elem).is("#join #username"))
         taken(elem, msg, "Username is already taken.");
-    else if ($(elem).is("#email")) {
+    else if ($(elem).is("#join #email")) {
         if (elem.validity.typeMismatch) display_error(elem, "Invalid e-mail address.");
         else taken(elem, msg, "E-mail address is already in use.");
     } else display_error(elem, msg);
 };
-$("#join .form-control").focus(function() { clear_highlight(this); });
-$("#join .form-control").blur(function() { validate(this); });
-$("#join [type=submit]").click(function(event) {
-    $("#join .form-control").off("focus blur");
-    $("#join .form-control").change(function() {
+var form_control = $("#join .form-control, #billing .form-control, #credit-card .form-control");
+var form_submit = $("#join [type=submit], #billing [type=submit], #credit-card [type=submit]");
+form_control.focus(function() { clear_highlight(this); });
+form_control.blur(function() { validate(this); });
+form_submit.click(function(event) {
+    var form = $(this).closest("form");
+    var control = form.find(".form_control")
+    control.off("focus blur");
+    control.change(function() {
         clear_highlight(this);
         validate(this);
     });
-    if ($(document.activeElement).is("#join .form-control"))
-        validate(document.activeElement);
+    if ($(this).is(":focus")) validate(this);
     var invalid = false;
-    $("#join .form-control").each(function() {
-        if (!this.validity.valid) {
-            if (invalid) return;
-            this.focus();
-            invalid = true;
+    control.each(function() {
+        if (!invalid) {
+            if (!this.validity.valid) {
+                $(this).focus();
+                invalid = true;
+            }
         }
     });
-    if (invalid) event.preventDefault();
+    event.preventDefault();
+    if (!invalid && form.is("#join")) {
+        $.ajax("/join", {
+            data: $("#join").serialize() + "&join=true",
+            dataType: "json",
+            method: "POST",
+            success: function(data) {
+                if (data == "success") $(location).attr("href", "/member");
+            },
+            error: function(j, status, error) {
+                $("#join").submit();
+            }
+        });
+    }
 });

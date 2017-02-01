@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-{{if eq .Member.Username ""}}
+{{if not .Member.Authenticated}}
     <div class="modal fade" id="sign-in" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -142,8 +142,8 @@
 {{if eq .Name "index"}}{{template "index.tmpl"}}{{end}}
 {{if eq .Name "sign-in"}}{{template "sign-in.tmpl"}}{{end}}
 {{if eq .Name "join"}}{{template "join.tmpl"}}{{end}}
-{{if eq .Name "dashboard"}}{{template "dashboard.tmpl"}}{{end}}
-{{if eq .Name "billing"}}{{template "billing.tmpl"}}{{end}}
+{{if eq .Name "dashboard"}}{{template "dashboard.tmpl" .}}{{end}}
+{{if eq .Name "billing"}}{{template "billing.tmpl" .}}{{end}}
 
     <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>

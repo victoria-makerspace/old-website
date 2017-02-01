@@ -16,67 +16,38 @@
                         </div>
                     </div>
                     <div class="form-group row">
+                        <label for="name" class="col-sm-2 col-form-label">Name</label>
+                        <div class="col-10">
+                            <div class="input-group">
+                                <span class="input-group-addon glyphicons glyphicons-user"></span>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                            <div class="form-control-feedback"></div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
                         <label for="email" class="col-sm-2 col-form-label">E-mail</label>
                         <div class="col-10">
-                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="input-group">
+                                <span class="input-group-addon glyphicons glyphicons-envelope"></span>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
                             <div class="form-control-feedback"></div>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="password" class="col-sm-2 col-form-label">Password</label>
                         <div class="col-10">
-                            <input type="password" class="form-control" id="password" name="password" required>
+                            <div class="input-group">
+                                <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
                             <div class="form-control-feedback"></div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-sm-6 col-lg-4">
-                    <fieldset class="form-group">
-                        <legend>Membership rate</legend>
-                        <div class="form-check">
-                            <label class="custom-control custom-radio">
-                                <input type="radio" name="rate" class="custom-control-input" value="regular" checked>
-                                <span class="custom-control-indicator"></span>
-                                <span class="custom-control-description"><b>Regular</b> ($50/month)</span>
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <label class="custom-control custom-radio">
-                                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student">
-                                <span class="custom-control-indicator"></span>
-                                <span class="custom-control-description"><b>Student</b> ($30/month)</span>
-                            </label>
-                        </div>
-                    </fieldset>
-                </div>
-                <fieldset id="student" class="col-10 col-sm-6 col-xl-5 text-muted" disabled>
-                    <legend>Student info</legend>
-                    <div class="form-group">
-                        <label for="institution" class="form-control-label">Institution name</label>
-                        <input type="text" class="form-control" id="institution" name="institution">
-                        <div class="form-control-feedback"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="graduation" class="form-control-label">Expected graduation</label>
-                        <input type="month" class="form-control" id="graduation" name="graduation">
-                        <div class="form-control-feedback"></div>
-                    </div>
-                </fieldset>
-            </div>
-            <div class="row">
-                <div class="col-md-9 col-lg-7 col-xl-6">
-                    <div class="form-group row">
-                        <label for="waiver" class="col-sm-2 col-form-label">Waiver</label>
-                        <div class="col-10">
-                            <input type="file" accept=".pdf" class="form-control" id="waiver" name="waiver" required>
-                            <div class="form-control-feedback"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" name="join" value="true" class="btn btn-primary">Submit</button>
         </form>
 {{template "footer"}}
     </div>

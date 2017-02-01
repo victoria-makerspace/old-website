@@ -45,7 +45,7 @@ env:
   #UNICORN_WORKERS: 3
 
   ## TODO: The domain name this Discourse instance will respond to
-  DISCOURSE_HOSTNAME: 'localhost'
+  DISCOURSE_HOSTNAME: 'localhost:1080'
 
   DISCOURSE_RELATIVE_URL_ROOT: /talk
   

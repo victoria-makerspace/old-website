@@ -16,7 +16,7 @@ var Config struct {
     Dir string
     Database map[string]string
     Beanstream map[string]string
-    Discourse map[string]string
+    Discourse map[string]interface{}
 }
 
 func init () {

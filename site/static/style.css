@@ -5,6 +5,15 @@ body {
     padding-bottom: 3rem;
     color: rgb(90,90,90);
 }
+a:focus, a:hover {
+    text-decoration: none;
+}
+form p {
+    margin-bottom: 0.5rem;
+}
+label {
+    margin: 0;
+}
 
 .navbar {
     background: rgba(247,247,247,0.8);
@@ -170,8 +179,8 @@ body > .container {
     padding-top: 5rem;
 }
 
-label {
-    margin: 0;
+.text-muted {
+    color: rgba(90,90,90,0.5) !important;
 }
 .col-form-label {
     font-weight: bold;
@@ -183,13 +192,19 @@ label {
     color: rgba(90,90,90,1);
     font-size: 1rem;
 }
+.input-group .form-control-file {
+    line-height: 2rem;
+}
 .has-danger .form-control-danger,
 .has-success .form-control-success {
     padding-right: 0.75rem;
     background-image: none;
 }
-#join input[type=month] {
+input[type=month] {
     width: 12rem;
+}
+#billing {
+    padding-bottom: 1rem;
 }
 #credit-card .form-control[data-beanstream-id] {
     background-image: none;

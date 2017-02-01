@@ -15,10 +15,13 @@ type Member struct {
     Session string
     Username string
     Name string
-    Billing struct {
-        Card_number string
-        Card_expiry string
-    }
+    Email string
+    Billing
+}
+
+func (m Member) Authenticated () bool {
+    if m.Session == "" { return false }
+    return true
 }
 
 func rand256 () string {
@@ -41,9 +44,11 @@ func (s *Http_server) authenticate (w http.ResponseWriter, r *http.Request, memb
     if err != nil { return }
     var (
         uname string
+        name string
+        email string
         expires pq.NullTime
     )
-    err = s.db.QueryRow("SELECT username, expires FROM session_http WHERE token = $1", cookie.Value).Scan(&uname, &expires)
+    err = s.db.QueryRow("SELECT m.username, m.name, m.email, s.expires FROM session_http s INNER JOIN member m ON s.username = m.username WHERE s.token = $1", cookie.Value).Scan(&uname, &name, &email, &expires)
     if err == sql.ErrNoRows {
         s.sign_out(w, member)
         return
@@ -63,8 +68,10 @@ func (s *Http_server) authenticate (w http.ResponseWriter, r *http.Request, memb
         _, err = s.db.Exec("UPDATE session_http SET token = $1, last_seen = now() WHERE token = $2", new_token, cookie.Value)
     }
     if err != nil { log.Panic(err) }
-    member.Username = uname
     member.Session = new_token
+    member.Username = uname
+    member.Name = name
+    member.Email = email
     http.SetCookie(w, &rsp_cookie)
 }
 
@@ -94,14 +101,26 @@ func (s *Http_server) sign_in (w http.ResponseWriter, r *http.Request) (username
 }
 
 func (s *Http_server) sign_out (w http.ResponseWriter, member *Member) {
-    member.Username = ""
-    if member.Session != "" {
+    if member.Authenticated() {
         _, err := s.db.Exec("UPDATE session_http SET expires = 'epoch' WHERE token = $1", member.Session)
         if err != nil { log.Panic(err) }
     }
     member.Session = ""
     w.Header().Del("Set-Cookie")
     http.SetCookie(w, &http.Cookie{Name: "session", Value: " ", Path: "/", Domain: s.config.Domain, Expires: time.Unix(0, 0), MaxAge: -1, /* Secure: true,*/ HttpOnly: true})
+}
+
+func (s *Http_server) join (username, name, email, password string) bool {
+    salt := rand256()
+    password_key := key(password, salt);
+    result, _ := s.db.Exec("INSERT INTO member (username, name, password_key, password_salt, email) VALUES ($1, $2, $3, $4, $5)", username, name, password_key, salt, email);
+    n, err := result.RowsAffected()
+    if n == 0 {
+        return false
+    } else if err != nil {
+        log.Panic(err)
+    }
+    return true
 }
 
 func (s *Http_server) dashboard_handler () {
@@ -115,7 +134,7 @@ s.parse_templates()
             }
         }
         s.authenticate(w, r, &p.Member)
-        if !p.Authenticated() {
+        if !p.Member.Authenticated() {
             if r.PostFormValue("sign-in") != "true" {
                 p := page{Name: "sign-in", Title: "Sign in"}
                 s.tmpl.Execute(w, p)
