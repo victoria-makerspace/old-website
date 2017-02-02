@@ -189,6 +189,7 @@ form_control.focus(function() { clear_highlight(this); });
 form_control.blur(function() { validate(this); });
 form_submit.click(function(event) {
     var form = $(this).closest("form");
+    console.log(form);
     var control = form.find(".form_control")
     control.off("focus blur");
     control.change(function() {
@@ -205,18 +206,21 @@ form_submit.click(function(event) {
             }
         }
     });
-    event.preventDefault();
-    if (!invalid && form.is("#join")) {
-        $.ajax("/join", {
-            data: $("#join").serialize() + "&join=true",
-            dataType: "json",
-            method: "POST",
-            success: function(data) {
-                if (data == "success") $(location).attr("href", "/member");
-            },
-            error: function(j, status, error) {
-                $("#join").submit();
-            }
-        });
+    if (form.is("#billing") && invalid) event.preventDefault();
+    if (form.is("#join")) {
+        event.preventDefault();
+        if (!invalid) {
+            $.ajax("/join", {
+                data: $("#join").serialize() + "&join=true",
+                dataType: "json",
+                method: "POST",
+                success: function(data) {
+                    if (data == "success") $(location).attr("href", "/member");
+                },
+                error: function(j, status, error) {
+                    $("#join").submit();
+                }
+            });
+        }
     }
 });

@@ -30,19 +30,18 @@ func Billing_setup (b map[string]string) {
     profiles = gateway.Profiles()
 }
 
-func (s *Http_server) billing_create_profile (token, name, username string) {
+func (s *Http_server) billing_create_profile (token, name, username string) (id string) {
     req := beanstream.Profile{
         Token: beanstream.Token{
             Token: token,
             Name: name},
         Custom: beanstream.CustomFields{Ref1: username}}
-    rsp, _ := profiles.CreateProfile(req)
-    id := rsp.Id
-    log.Println(id)
-    log.Println(rsp.Code)
-    log.Println(rsp.Message)
-    _, err := s.db.Exec("INSERT INTO billing_profile VALUES ($1, $2)", username, id)
+    rsp, err := profiles.CreateProfile(req)
     if err != nil { log.Panic(err) }
+    id = rsp.Id
+    _, err = s.db.Exec("INSERT INTO billing_profile VALUES ($1, $2)", username, id)
+    if err != nil { log.Panic(err) }
+    return
 }
 
 func (s *Http_server) billing_handler () {
@@ -54,26 +53,28 @@ s.parse_templates()
             http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
             return
         }
+        fetch_profile := func (id string) {
+            if profile, err := profiles.GetProfile(id); err != nil {
+                //berr := err.(*beanstream.BeanstreamApiException)
+                log.Panic(err)
+            } else {
+                p.Member.Billing.Card_number = profile.Card.Number
+                p.Member.Billing.Card_expiry = profile.Card.ExpiryMonth + "/20" + profile.Card.ExpiryYear
+            }
+        }
         var id string
         err := s.db.QueryRow("SELECT id FROM billing_profile WHERE username = $1", p.Member.Username).Scan(&id)
         if err == nil {
-            profile, _ := profiles.GetProfile(id)
-            if profile != nil {
-                p.Member.Billing.Card_number = profile.Card.Number
-                p.Member.Billing.Card_expiry = profile.Card.ExpiryMonth + "/20" + profile.Card.ExpiryYear
-            } else {
-                log.Println("missing beanstream profile " + id)
-                id = ""
-            }
-        } else if err != sql.ErrNoRows && err != nil { log.Panic(err) }
+            fetch_profile(id)
+        } else if err != sql.ErrNoRows && err != nil {
+            log.Panic(err)
+        }
         if token := r.PostFormValue("singleUseToken"); token != "" {
             if id != "" {
-                rsp, _ := profiles.DeleteCard(id, 1)
-                log.Println(rsp)
-                rsp, _ = profiles.AddTokenizedCard(id, r.PostFormValue("name"), token)
-                log.Println(rsp)
+                if _, err = profiles.DeleteCard(id, 1); err != nil { log.Panic(err) }
+                if _, err = profiles.AddTokenizedCard(id, r.PostFormValue("name"), token); err != nil { log.Panic(err) }
             } else {
-                s.billing_create_profile(token, p.Member.Name, p.Member.Username)
+                fetch_profile(s.billing_create_profile(token, p.Member.Name, p.Member.Username))
             }
         }
         var (
@@ -87,6 +88,28 @@ s.parse_templates()
             p.Member.Billing.Student = true
             p.Member.Billing.Student_institution = institution.String
             p.Member.Billing.Student_graduation_date = graduation_date.Time
+        }
+        if r.PostFormValue("billing") == "true" {
+            if r.PostFormValue("rate") == "student" && r.PostFormValue("institution") != "" && r.PostFormValue("graduation") != "" {
+                graduation, err := time.Parse("2006-01", r.PostFormValue("graduation"))
+                if err == nil && graduation.After(time.Now().AddDate(0, 1, 0)) {
+                    if p.Member.Billing.Student {
+                        _, err = s.db.Exec("UPDATE student SET institution = $2, graduation_date = $3 WHERE username = $1", p.Member.Username, r.PostFormValue("institution"), graduation)
+                    } else {
+                        _, err = s.db.Exec("INSERT INTO student (username, institution, graduation_date) VALUES ($1, $2, $3)", p.Member.Username, r.PostFormValue("institution"), graduation)
+                    }
+                    if err != nil { log.Panic(err) }
+                    p.Member.Billing.Student = true
+                    p.Member.Billing.Student_institution = r.PostFormValue("institution")
+                    p.Member.Billing.Student_graduation_date = graduation
+                }
+            } else if p.Member.Billing.Student && r.PostFormValue("rate") == "regular" {
+                _, err = s.db.Exec("DELETE FROM student WHERE username = $1", p.Member.Username)
+                if err != nil { log.Panic(err) }
+                p.Member.Billing.Student = false
+                p.Member.Billing.Student_institution = ""
+                p.Member.Billing.Student_graduation_date = time.Unix(0, 0)
+            }
         }
         s.tmpl.Execute(w, p)
     })
