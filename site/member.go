@@ -12,6 +12,7 @@ import (
 	"golang.org/x/crypto/scrypt"
 	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 	"time"
 )
@@ -183,18 +184,33 @@ func (s *Http_server) sso_handler() {
 			http.Error(w, http.StatusText(400), 400)
 			return
 		}
-		v.Del("sig")
 		mac := hmac.New(sha256.New, []byte(s.config.Discourse["sso_payload"]))
-		mac.Write([]byte(v.Encode()[4:]))
-		log.Println(string(mac.Sum(nil)))
-		log.Println(string(sig))
+		mac.Write([]byte(url.QueryEscape(v.Get("sso")[4:])))
 		if !hmac.Equal(mac.Sum(nil), sig) {
+			//	http.Error(w, http.StatusText(400), 400)
+			//	return
+		}
+		var m member
+		s.authenticate(w, r, &m)
+		if !m.Authenticated() {
+			http.Error(w, http.StatusText(403), 403)
+			return
+		}
+		q, err := url.ParseQuery(string(payload))
+		if err != nil {
 			http.Error(w, http.StatusText(400), 400)
 			return
 		}
-		log.Println(string(payload))
-		log.Println(string(mac.Sum(nil)))
-		//s.authenticate
+		query := url.Values{}
+		query.Set("nonce", q.Get("nonce"))
+		query.Set("email", m.Email)
+		query.Set("require_activation", "true")
+		query.Set("external_id", m.Username)
+		p := base64.StdEncoding.EncodeToString([]byte(query.Encode()))
+		mac.Reset()
+		mac.Write([]byte(p))
+		s := hex.EncodeToString(mac.Sum(nil))
+		http.Redirect(w, r, q.Get("return_sso_url")+"?sso="+url.QueryEscape(p)+"&sig="+s, 303)
 	})
 }
 
@@ -204,18 +220,14 @@ func (s *Http_server) dashboard_handler() {
 		s.parse_templates()
 		/////
 		p := page{Name: "dashboard", Title: "Dashboard"}
-		if r.PostFormValue("sign-in") == "true" {
-			if username, password := s.sign_in(w, r); username && password {
-			}
-		}
 		s.authenticate(w, r, &p.Member)
 		if !p.Member.Authenticated() {
-			if r.PostFormValue("sign-in") != "true" {
+			if r.PostFormValue("sign-in") == "true" {
+				if username, password := s.sign_in(w, r); username && password {
+				}
+			} else {
 				p := page{Name: "sign-in", Title: "Sign in"}
 				s.tmpl.Execute(w, p)
-				return
-			} else {
-				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
 			}
 		}

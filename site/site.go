@@ -10,7 +10,7 @@ import (
 	"regexp"
 )
 
-var Templates = [...]string{"main", "index", "sign-in", "join", "dashboard", "billing"}
+var templates = [...]string{"main", "index", "sign-in", "join", "dashboard", "billing"}
 
 type Config struct {
 	Domain        string
@@ -128,9 +128,9 @@ func (s *Http_server) classes_handler() {
 
 func (s *Http_server) parse_templates() {
 	s.tmpl = template.Must(template.ParseFiles(func() []string {
-		files := make([]string, len(Templates))
-		for i := range Templates {
-			files[i] = s.config.Templates_dir + Templates[i] + ".tmpl"
+		files := make([]string, len(templates))
+		for i := range templates {
+			files[i] = s.config.Templates_dir + templates[i] + ".tmpl"
 		}
 		return files
 	}()...))
