@@ -1,29 +1,47 @@
 package site
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/scrypt"
 	"log"
 	"net/http"
+	"regexp"
 	"time"
 )
 
-type Member struct {
-	Session  string
-	Username string
-	Name     string
-	Email    string
-	Billing  billing
+type member struct {
+	Session   string
+	Username  string
+	Name      string
+	Email     string
+	Talk_user struct {
+		User struct {
+			Id              int
+			Username        string
+			Avatar_template string
+			Admin           bool
+		}
+	}
+	Billing billing
 }
 
-func (m Member) Authenticated() bool {
+func (m member) Authenticated() bool {
 	if m.Session == "" {
 		return false
 	}
 	return true
+}
+
+func (m member) Avatar() string {
+	rexp := regexp.MustCompile("{size}")
+	return "/talk" + string(rexp.ReplaceAll([]byte(m.Talk_user.User.Avatar_template), []byte("120")))
 }
 
 func rand256() string {
@@ -47,7 +65,7 @@ func key(password, salt string) string {
 	return hex.EncodeToString(key)
 }
 
-func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, member *Member) {
+func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, member *member) {
 	cookie, err := r.Cookie("session")
 	if err != nil {
 		return
@@ -77,6 +95,17 @@ func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, membe
 	} else {
 		_, err = s.db.Exec("UPDATE session_http SET token = $1, last_seen = now() WHERE token = $2", new_token, cookie.Value)
 	}
+	if err != nil {
+		log.Panic(err)
+	}
+	////////////
+	rsp_talk, err := http.Get("http://localhost:1080/talk/users/" + uname + ".json")
+	/////
+	if err != nil {
+		log.Panic(err)
+	}
+	j := json.NewDecoder(rsp_talk.Body)
+	err = j.Decode(&member.Talk_user)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -116,7 +145,7 @@ func (s *Http_server) sign_in(w http.ResponseWriter, r *http.Request) (username,
 	return true, true
 }
 
-func (s *Http_server) sign_out(w http.ResponseWriter, member *Member) {
+func (s *Http_server) sign_out(w http.ResponseWriter, member *member) {
 	if member.Authenticated() {
 		_, err := s.db.Exec("UPDATE session_http SET expires = 'epoch' WHERE token = $1", member.Session)
 		if err != nil {
@@ -139,6 +168,34 @@ func (s *Http_server) join(username, name, email, password string) bool {
 		log.Panic(err)
 	}
 	return true
+}
+
+func (s *Http_server) sso_handler() {
+	s.mux.HandleFunc("/sso", func(w http.ResponseWriter, r *http.Request) {
+		v := r.URL.Query()
+		payload, err := base64.StdEncoding.DecodeString(v.Get("sso"))
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+		sig, err := hex.DecodeString(v.Get("sig"))
+		if err != nil {
+			http.Error(w, http.StatusText(400), 400)
+			return
+		}
+		v.Del("sig")
+		mac := hmac.New(sha256.New, []byte(s.config.Discourse["sso_payload"]))
+		mac.Write([]byte(v.Encode()[4:]))
+		log.Println(string(mac.Sum(nil)))
+		log.Println(string(sig))
+		if !hmac.Equal(mac.Sum(nil), sig) {
+			http.Error(w, http.StatusText(400), 400)
+			return
+		}
+		log.Println(string(payload))
+		log.Println(string(mac.Sum(nil)))
+		//s.authenticate
+	})
 }
 
 func (s *Http_server) dashboard_handler() {

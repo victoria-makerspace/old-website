@@ -16,7 +16,7 @@ var Config struct {
 	Dir        string
 	Database   map[string]string
 	Beanstream map[string]string
-	Discourse  map[string]interface{}
+	Discourse  map[string]string
 }
 
 func init() {
@@ -44,7 +44,7 @@ func main() {
 		Config.Dir + "/site/templates/",
 		Config.Dir + "/site/static/",
 		Config.Dir + "/database/data/",
-	}
+		Config.Discourse}
 	site.Billing_setup(Config.Beanstream)
 	site.Serve(config, db)
 }

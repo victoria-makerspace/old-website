@@ -18,6 +18,7 @@ type Config struct {
 	Templates_dir string
 	Static_dir    string
 	Data_dir      string
+	Discourse     map[string]string
 }
 
 type Http_server struct {
@@ -31,7 +32,7 @@ type Http_server struct {
 type page struct {
 	Name   string
 	Title  string
-	Member Member
+	Member member
 }
 
 func (s *Http_server) root_handler() {
@@ -103,7 +104,8 @@ func (s *Http_server) join_handler() {
 			}
 			w.Write([]byte(rsp))
 		} else if r.PostFormValue("join") == "true" {
-			if !username_rexp.MatchString(r.PostFormValue("username")) {
+			username_length := len([]rune(r.PostFormValue("username")))
+			if !username_rexp.MatchString(r.PostFormValue("username")) || username_length > 20 || username_length < 3 {
 			} else if !name_rexp.MatchString(r.PostFormValue("name")) {
 			} else if s.join(r.PostFormValue("username"), r.PostFormValue("name"), r.PostFormValue("email"), r.PostFormValue("password")) {
 				s.sign_in(w, r)
@@ -144,6 +146,7 @@ func Serve(config Config, db *sql.DB) *Http_server {
 	s.data_handler()
 	s.join_handler()
 	s.classes_handler()
+	s.sso_handler()
 	s.dashboard_handler()
 	s.tools_handler()
 	s.billing_handler()

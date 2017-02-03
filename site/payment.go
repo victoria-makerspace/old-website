@@ -82,8 +82,9 @@ func (s *Http_server) billing_handler() {
 					log.Panic(err)
 				}
 			} else {
-				fetch_profile(s.billing_create_profile(token, p.Member.Name, p.Member.Username))
+				id = s.billing_create_profile(token, p.Member.Name, p.Member.Username)
 			}
+			fetch_profile(id)
 		}
 		var (
 			institution     sql.NullString

@@ -20,13 +20,15 @@ $("#navbar-guest .navbar-collapse").on("hidden.bs.collapse", function() {
     $(".navbar-toggler").removeClass("active");
 });
 
-/*$(document).ready(function() {
+
+$(document).ready(function() {
+	var username = $("#sign-out button[name='sign-out']").val();
     $.getJSON("/talk/notifications.json", function(data) {
         $.each(data["notifications"], function(i, v) {
-            $("#member-menu-toolbar").after("<li>" + v["data"]["topic_title"] + "</li>");
+			//$("#member-menu-toolbar").after("<li>" + v["data"]["topic_title"] + "</li>");
         });
     });
-});*/
+});
 
 if ($("#shop-features").length) {
     $("body").scrollspy({ target: "#navbar-guest" });
