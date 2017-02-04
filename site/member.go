@@ -42,6 +42,9 @@ func (m member) Authenticated() bool {
 
 func (m member) Avatar() string {
 	rexp := regexp.MustCompile("{size}")
+	if m.Talk_user.User.Avatar_template == "" {
+		return "/member-icon-placeholder.png"
+	}
 	return "/talk" + string(rexp.ReplaceAll([]byte(m.Talk_user.User.Avatar_template), []byte("120")))
 }
 
@@ -108,7 +111,7 @@ func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, membe
 	j := json.NewDecoder(rsp_talk.Body)
 	err = j.Decode(&member.Talk_user)
 	if err != nil {
-		log.Panic(err)
+		log.Println("Unresponsive Talk server: " + err.Error())
 	}
 	member.Session = new_token
 	member.Username = uname
@@ -146,14 +149,14 @@ func (s *Http_server) sign_in(w http.ResponseWriter, r *http.Request) (username,
 	return true, true
 }
 
-func (s *Http_server) sign_out(w http.ResponseWriter, member *member) {
-	if member.Authenticated() {
-		_, err := s.db.Exec("UPDATE session_http SET expires = 'epoch' WHERE token = $1", member.Session)
+func (s *Http_server) sign_out(w http.ResponseWriter, m *member) {
+	if m.Authenticated() {
+		_, err := s.db.Exec("UPDATE session_http SET expires = 'epoch' WHERE token = $1", m.Session)
 		if err != nil {
 			log.Panic(err)
 		}
 	}
-	member.Session = ""
+	m.Session = ""
 	w.Header().Del("Set-Cookie")
 	http.SetCookie(w, &http.Cookie{Name: "session", Value: " ", Path: "/", Domain: s.config.Domain, Expires: time.Unix(0, 0), MaxAge: -1 /* Secure: true,*/, HttpOnly: true})
 }
@@ -174,6 +177,10 @@ func (s *Http_server) join(username, name, email, password string) bool {
 func (s *Http_server) sso_handler() {
 	s.mux.HandleFunc("/sso", func(w http.ResponseWriter, r *http.Request) {
 		v := r.URL.Query()
+		if v.Get("sso") == "" {
+			http.Redirect(w, r, "/talk/login", 303)
+			return
+		}
 		payload, err := base64.StdEncoding.DecodeString(v.Get("sso"))
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -184,16 +191,18 @@ func (s *Http_server) sso_handler() {
 			http.Error(w, http.StatusText(400), 400)
 			return
 		}
-		mac := hmac.New(sha256.New, []byte(s.config.Discourse["sso_payload"]))
-		mac.Write([]byte(url.QueryEscape(v.Get("sso")[4:])))
+		mac := hmac.New(sha256.New, []byte(s.config.Discourse["sso-secret"]))
+		mac.Write([]byte(v.Get("sso")))
 		if !hmac.Equal(mac.Sum(nil), sig) {
-			//	http.Error(w, http.StatusText(400), 400)
-			//	return
+			http.Error(w, http.StatusText(400), 400)
+			return
 		}
 		var m member
 		s.authenticate(w, r, &m)
 		if !m.Authenticated() {
-			http.Error(w, http.StatusText(403), 403)
+			w.WriteHeader(401)
+			p := page{Name: "sign-in", Title: "Sign in"}
+			s.tmpl.Execute(w, p)
 			return
 		}
 		q, err := url.ParseQuery(string(payload))
@@ -204,6 +213,7 @@ func (s *Http_server) sso_handler() {
 		query := url.Values{}
 		query.Set("nonce", q.Get("nonce"))
 		query.Set("email", m.Email)
+		query.Set("username", m.Username)
 		query.Set("require_activation", "true")
 		query.Set("external_id", m.Username)
 		p := base64.StdEncoding.EncodeToString([]byte(query.Encode()))

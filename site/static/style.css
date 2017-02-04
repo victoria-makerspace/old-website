@@ -140,7 +140,8 @@ button.nav-link {
 }
 .carousel-caption p {
     border-radius: 0.25rem;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.7);
+	padding: 0.25rem;
 }
 .carousel-item {
     height: 22rem;

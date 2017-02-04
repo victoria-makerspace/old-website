@@ -142,7 +142,7 @@
             <p class="float-right">&copy; 2017 Victoria Makerspace &middot; <a class="glyphicons-social glyphicons-social-gmail" href="mailto:admin@makerspace.ca" title="E-mail"></a> <a class="glyphicons-social glyphicons-social-twitter" href="https://twitter.com/VicMakerspace" title="Twitter"></a> <a class="glyphicons-social glyphicons-social-facebook" href="https://facebook.com/VicMakerspace" title="Facebook"></a></p>
         </footer>
 {{end}}
-{{if eq .Name "index"}}{{template "index.tmpl"}}{{end}}
+{{if eq .Name "index"}}{{template "index.tmpl" .}}{{end}}
 {{if eq .Name "sign-in"}}{{template "sign-in.tmpl"}}{{end}}
 {{if eq .Name "join"}}{{template "join.tmpl"}}{{end}}
 {{if eq .Name "dashboard"}}{{template "dashboard.tmpl" .}}{{end}}
