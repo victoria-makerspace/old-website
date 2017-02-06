@@ -61,7 +61,7 @@ func (s *Http_server) talk_proxy() {
 
 func (s *Http_server) data_handler() {
 	s.mux.HandleFunc("/member/data/", func(w http.ResponseWriter, r *http.Request) {
-		http.StripPrefix("/member/data/", http.FileServer(http.Dir(s.config.Data_dir))).ServeHTTP(w, r)
+		//http.StripPrefix("/member/data/", http.FileServer(http.Dir(s.config.Data_dir))).ServeHTTP(w, r)
 	})
 }
 

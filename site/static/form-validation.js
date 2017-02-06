@@ -64,6 +64,9 @@ var message = function(elem) {
         }
 	} else if (elem.validity.typeMismatch) {
 		if (id == "email") msg = "Invalid e-mail address.";
+	} else if (elem.validity.tooShort) {
+            if ($(elem).is("[name='username']"))
+				msg = "Username must be at least 3 characters.";
     }
 	return msg;
 };

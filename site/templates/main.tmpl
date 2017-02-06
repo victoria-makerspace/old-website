@@ -65,7 +65,7 @@
                         <a class="nav-link" href=""><span class="glyphicons glyphicons-book-open"></span> classes</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="https://talk.makerspace.ca"><span class="glyphicons glyphicons-conversation"></span> talk</a>
+                        <a class="nav-link" href="/talk"><span class="glyphicons glyphicons-conversation"></span> talk</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link{{if eq .Name "join"}} active{{end}}" href="/join"><span class="glyphicons glyphicons-user-add"></span> &nbsp;join</a>
@@ -96,7 +96,7 @@
                         <a class="nav-link" href="" title="Classes"><span class="glyphicons glyphicons-book-open"></span><span> classes</span></a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="https://talk.makerspace.ca" title="Talk forum"><span class="glyphicons glyphicons-conversation"></span><span> talk</span></a>
+                        <a class="nav-link" href="/talk" title="Talk forum"><span class="glyphicons glyphicons-conversation"></span><span> talk</span></a>
                     </li>
                 </ul>
             </div>
@@ -124,15 +124,6 @@
                     </li>
                 </ul>
             </div>
-            <!--
-            <div class="dropdown" id="member-menu">
-                <button class="nav-link" type="button" id="member-icon" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <img src="/member/data/images/profile/{{.Member.Username}}.jpeg">
-                </button>
-                <div class="dropdown-menu">
-                </div>
-            </div>
-            -->
         </div>
     </nav>
 {{end}}
