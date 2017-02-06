@@ -43,7 +43,7 @@ func (m member) Authenticated() bool {
 func (m member) Avatar() string {
 	rexp := regexp.MustCompile("{size}")
 	if m.Talk_user.User.Avatar_template == "" {
-		return "/member-icon-placeholder.png"
+		return ""
 	}
 	return "/talk" + string(rexp.ReplaceAll([]byte(m.Talk_user.User.Avatar_template), []byte("120")))
 }

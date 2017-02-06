@@ -10,7 +10,7 @@ import (
 	"regexp"
 )
 
-var templates = [...]string{"main", "index", "sign-in", "join", "dashboard", "billing"}
+var templates = [...]string{"main", "index", "sign-in", "join", "dashboard", "billing", "tools"}
 
 type Config struct {
 	Domain        string

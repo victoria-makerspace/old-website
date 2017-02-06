@@ -95,6 +95,19 @@ button.nav-link {
     width: 100%;
     border-radius: 50%;
 }
+#member-icon div {
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    color: #fff;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 2.5rem;
+}
+#member-icon div::before {
+    position: absolute;
+    left: 0.2rem;
+    bottom: 1px;
+}
 #member-menu .navbar-nav {
     flex-direction: column;
 }

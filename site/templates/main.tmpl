@@ -82,7 +82,11 @@
         <div class="container">
             <a id="general-toggler" class="navbar-toggler navbar-toggler-right nav-link glyphicons glyphicons-menu-hamburger" role="button" data-toggle="collapse" data-parent="#navbar-member" data-target="#general-menu" aria-expanded="false"></a>
             <a id="member-icon" class="navbar-toggler navbar-toggler-right nav-link" role="button" data-toggle="collapse" data-parent="#navbar-member" data-target="#member-menu" aria-expanded="false">
-				<img src="{{.Member.Avatar}}">
+{{if ($avatar := .Member.Avatar) | eq ""}}
+                <div class="glyphicons glyphicons-user"></div>
+{{else}}
+                <img src="{{$avatar}}">
+{{end}}
             </a>
             <a class="navbar-brand" href="/">
                 <img src="/logo-simple-text.svg" alt="Victoria Makerspace">
