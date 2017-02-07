@@ -24,10 +24,12 @@ type member struct {
 	Email     string
 	Talk_user struct {
 		User struct {
-			Id              int
-			Username        string
-			Avatar_template string
-			Admin           bool
+			Id                 int
+			Username           string
+			Avatar_template    string
+			Admin              bool
+			Profile_background string
+			Card_background    string
 		}
 	}
 	Billing billing
@@ -260,6 +262,10 @@ func (s *Http_server) dashboard_handler() {
 func (s *Http_server) tools_handler() {
 	s.mux.HandleFunc("/member/tools", func(w http.ResponseWriter, r *http.Request) {
 		p := page{Name: "tools", Title: "Tools"}
+		if !p.Member.Authenticated() {
+			http.Error(w, http.StatusText(403), 403)
+			return
+		}
 		s.tmpl.Execute(w, p)
 	})
 }

@@ -1,106 +1,104 @@
     <div class="container">
-        <h4>Recurring payments</h4>
+        <div class="row">
+            <div class="col-md-10 col-lg-8 col-xl-7">
 {{if eq .Member.Billing.Card_number ""}}
-        <p>You have no recurring payments.</p>
+                <p>Please register a credit card to set up membership billing.</p>
 {{else}}
-        <p>You have no recurring payments.</p>
+                <h4>Recurring payments</h4>
+                <p>You have no recurring payments.</p>
+
 {{end}}
-        <h5>Recent transactions</h5>
-        <p>You have no recent transactions.</p>
-        <h5>Missed payments</h5>
-        <p>You have no missed payments.</p>
-        <form id="billing" method="post" action="/member/billing">
-            <div class="row">
-                <fieldset class="col-sm-6 col-md-5 col-lg-4 col-xl-3 form-group">
-                    <legend class="h4">Membership rate</legend>
-                    <div class="form-check">
+                <h5>Recent transactions</h5>
+                <p>You have no recent transactions.</p>
+                <h5>Missed payments</h5>
+                <p>You have no missed payments.</p>
+                <form id="billing" method="post" action="/member/billing">
+                    <fieldset class="form-group mb-2 mb-sm-3">
+                        <legend class="h4">Membership rate</legend>
                         <label class="custom-control custom-radio">
                             <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not .Member.Billing.Student}} checked{{end}}>
                             <span class="custom-control-indicator"></span>
                             <span class="custom-control-description"><b>Regular</b> ($50/month)</span>
                         </label>
-                    </div>
-                    <div class="form-check">
                         <label class="custom-control custom-radio">
                             <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if .Member.Billing.Student}} checked{{end}}>
                             <span class="custom-control-indicator"></span>
                             <span class="custom-control-description"><b>Student</b> ($30/month)</span>
                         </label>
-                    </div>
-                </fieldset>
-                <fieldset id="student" class="col-10 col-sm-6 col-md-5 col-lg-4 col-xl-4{{if not .Member.Billing.Student}} text-muted" disabled{{else}}"{{end}}>
-                    <legend class="h4">Student info</legend>
-                    <div class="form-group"> 
-                        <label for="institution" class="form-control-label">Institution name</label>
-                        <input type="text" class="form-control" id="institution" name="institution"{{if .Member.Billing.Student}} value="{{.Member.Billing.Student_institution}}" required{{end}}>
-                        <small class="form-control-feedback"></small>
-                    </div>
-                    <div class="form-group">
-                        <label for="graduation" class="form-control-label">Expected graduation</label>
-                        <input type="month" class="form-control" id="graduation" name="graduation"{{if .Member.Billing.Student}} value="{{.Member.Billing.Student_graduation_date.Format "2006-01"}}" required{{end}}>
-                        <small class="form-control-feedback"></small>
-                    </div>
-                </fieldset>
-            </div>
-            <button type="submit" name="billing" value="true" class="btn btn-primary">Save</button>
-        </form>
-{{if eq .Member.Billing.Card_number ""}}
-        <h4>Register credit card</h4>
-        <div class="row">
-            <div class="col-md-10 col-lg-8 col-xl-7">
-{{else}}
-        <h4>Update credit card</h4>
-        <div class="row">
-            <div class="col-md-10 col-lg-8 col-xl-7">
-                <div class="row">
-                    <div class="col-sm-9">
-                        <p>Current card: {{.Member.Billing.Card_number}}<br>
-                        Expiry: {{.Member.Billing.Card_expiry}}</p>
-                    </div>
-                    <div class="col-sm-3 text-sm-right">
-                        <button type="submit" name="delete_card" class="btn btn-warning">Delete</button>
-                    </div>
-                </div>
-{{end}}
-                <form action="/member/billing" id="credit-card" method="post">
-                    <div class="form-group row">
-                        <label for="name" class="col-sm-4 col-form-label">Name</label>
-                        <div class="col-10 col-sm-8">
-                            <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required>
-                            <small class="form-control-feedback"></small>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="ccNumber" class="col-sm-4 col-form-label">Card number</label>
-                        <div class="col-10 col-sm-8">
-                            <div class="input-group" data-beanstream-target="ccNumber_input">
-                                <span class="input-group-addon glyphicons glyphicons-credit-card"></span>
+                    </fieldset>
+                    <fieldset id="student" class="px-2 px-sm-3" {{if not .Member.Billing.Student}}class="text-muted" disabled{{end}}>
+                        <legend class="h5 mb-0 mb-sm-2">Student info</legend>
+                        <div class="form-group row mb-2"> 
+                            <label for="institution" class="col-sm-4 col-form-label">Institution name</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="institution" name="institution" {{if .Member.Billing.Student}} value="{{.Member.Billing.Student_institution}}" required{{end}}>
+                                <small class="form-control-feedback"></small>
                             </div>
-                            <small data-beanstream-target="ccNumber_error" class="form-control-feedback"></small>
                         </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="ccExp" class="col-sm-4 col-form-label">Expiry <span class="font-weight-normal text-muted">(mm/yyyy)</span></label>
-                        <div class="col-10 col-sm-8">
-                            <div class="input-group" data-beanstream-target="ccExp_input">
-                                <span class="input-group-addon glyphicons glyphicons-calendar"></span>
+                        <div class="form-group row mb-sm-2">
+                            <label for="graduation" class="col-sm-4 col-form-label">Expected graduation</label>
+                            <div class="col-sm-8">
+                                <input type="month" class="form-control" id="graduation" name="graduation"{{if .Member.Billing.Student}} value="{{.Member.Billing.Student_graduation_date.Format "2006-01"}}" required{{end}}>
+                                <small class="form-control-feedback"></small>
                             </div>
-                            <small data-beanstream-target="ccExp_error" class="form-control-feedback"></small>
                         </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="ccCvv" class="col-sm-4 col-form-label">CVV</label>
-                        <div class="col-10 col-sm-8">
-                            <div class="input-group" data-beanstream-target="ccCvv_input">
-                                <span class="input-group-addon glyphicons glyphicons-lock"></span>
-                            </div>
-                            <small data-beanstream-target="ccCvv_error" class="form-control-feedback"></small>
-                        </div>
-                    </div>
-                    <script src="https://payform.beanstream.com/payfields/beanstream_payfields.js" data-submitForm="true"></script>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    </fieldset>
+                    <button type="submit" name="billing" value="true" class="ml-auto btn btn-primary">Save</button>
                 </form>
-            </div>
+                <section>
+{{if eq .Member.Billing.Card_number ""}}
+                    <h4>Register credit card</h4>
+{{else}}
+                    <h4>Update credit card</h4>
+                    <div class="row">
+                        <p class="col-sm-9 mb-2 mb-sm-3">
+                            Current card: {{.Member.Billing.Card_number}}<br>
+                            Expiry: {{.Member.Billing.Card_expiry}}
+                        </p>
+                        <div class="col-sm-3 mb-3 text-sm-right">
+                            <button type="submit" name="delete_card" class="btn btn-warning">Delete</button>
+                        </div>
+                    </div>
+{{end}}
+                        <form action="/member/billing" id="credit-card" method="post">
+                            <div class="form-group row mb-2 mb-sm-3">
+                                <label for="name" class="col-sm-4 col-form-label">Name</label>
+                                <div class="col-sm-8">
+                                    <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required>
+                                    <small class="form-control-feedback"></small>
+                                </div>
+                            </div>
+                            <div class="form-group row mb-2 mb-sm-3">
+                                <label for="ccNumber" class="col-sm-4 col-form-label">Card number</label>
+                                <div class="col-sm-8">
+                                    <div class="input-group" data-beanstream-target="ccNumber_input">
+                                        <span class="input-group-addon glyphicons glyphicons-credit-card"></span>
+                                    </div>
+                                    <small data-beanstream-target="ccNumber_error" class="form-control-feedback"></small>
+                                </div>
+                            </div>
+                            <div class="form-group row mb-2 mb-sm-3">
+                                <label for="ccExp" class="col-sm-4 col-form-label">Expiry <span class="font-weight-normal text-muted">(mm/yyyy)</span></label>
+                                <div class="col-sm-8">
+                                    <div class="input-group" data-beanstream-target="ccExp_input">
+                                        <span class="input-group-addon glyphicons glyphicons-calendar"></span>
+                                    </div>
+                                    <small data-beanstream-target="ccExp_error" class="form-control-feedback"></small>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="ccCvv" class="col-sm-4 col-form-label">CVV</label>
+                                <div class="col-sm-8">
+                                    <div class="input-group" data-beanstream-target="ccCvv_input">
+                                        <span class="input-group-addon glyphicons glyphicons-lock"></span>
+                                    </div>
+                                    <small data-beanstream-target="ccCvv_error" class="form-control-feedback"></small>
+                                </div>
+                            </div>
+                            <script src="https://payform.beanstream.com/payfields/beanstream_payfields.js" data-submitForm="true"></script>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </form>
+                </section>
         </div>
 {{template "footer"}}
     </div>
