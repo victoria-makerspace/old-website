@@ -3,6 +3,7 @@ package site
 import (
 	"database/sql"
 	"fmt"
+	"github.com/vvanpo/makerspace/billing"
 	"html/template"
 	"log"
 	"net/http"
@@ -22,11 +23,12 @@ type Config struct {
 }
 
 type Http_server struct {
-	srv    http.Server
-	mux    *http.ServeMux
-	config Config
-	db     *sql.DB
-	tmpl   *template.Template
+	srv     http.Server
+	mux     *http.ServeMux
+	config  Config
+	db      *sql.DB
+	billing *billing.Billing
+	tmpl    *template.Template
 }
 
 type page struct {
@@ -73,7 +75,7 @@ func (s *Http_server) join_handler() {
 		p := page{Name: "join", Title: "Join"}
 		s.authenticate(w, r, &p.Member)
 		if p.Member.Authenticated() {
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			http.Error(w, http.StatusText(403), 403)
 			return
 		}
 		q := r.URL.Query()
@@ -136,8 +138,8 @@ func (s *Http_server) parse_templates() {
 	}()...))
 }
 
-func Serve(config Config, db *sql.DB) *Http_server {
-	s := &Http_server{config: config, mux: http.NewServeMux(), db: db}
+func Serve(config Config, db *sql.DB, b *billing.Billing) *Http_server {
+	s := &Http_server{config: config, mux: http.NewServeMux(), db: db, billing: b}
 	s.srv.Addr = config.Domain + ":" + fmt.Sprint(config.Port)
 	s.srv.Handler = s.mux
 	s.parse_templates()

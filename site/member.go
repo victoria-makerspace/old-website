@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"github.com/lib/pq"
+	"github.com/vvanpo/makerspace/billing"
 	"golang.org/x/crypto/scrypt"
 	"log"
 	"net/http"
@@ -16,39 +17,6 @@ import (
 	"regexp"
 	"time"
 )
-
-type member struct {
-	Session   string
-	Username  string
-	Name      string
-	Email     string
-	Talk_user struct {
-		User struct {
-			Id                 int
-			Username           string
-			Avatar_template    string
-			Admin              bool
-			Profile_background string
-			Card_background    string
-		}
-	}
-	Billing billing
-}
-
-func (m member) Authenticated() bool {
-	if m.Session == "" {
-		return false
-	}
-	return true
-}
-
-func (m member) Avatar() string {
-	rexp := regexp.MustCompile("{size}")
-	if m.Talk_user.User.Avatar_template == "" {
-		return ""
-	}
-	return "/talk" + string(rexp.ReplaceAll([]byte(m.Talk_user.User.Avatar_template), []byte("120")))
-}
 
 func rand256() string {
 	n := make([]byte, 32)
@@ -71,6 +39,46 @@ func key(password, salt string) string {
 	return hex.EncodeToString(key)
 }
 
+type member struct {
+	Session   string
+	Username  string
+	Name      string
+	Email     string
+	Student   *student
+	Active    bool
+	Talk_user struct {
+		User struct {
+			Id                 int
+			Username           string
+			Avatar_template    string
+			Admin              bool
+			Profile_background string
+			Card_background    string
+		}
+	}
+	Billing *billing.Profile
+}
+
+func (m member) Authenticated() bool {
+	if m.Session == "" {
+		return false
+	}
+	return true
+}
+
+func (m member) Avatar() string {
+	rexp := regexp.MustCompile("{size}")
+	if m.Talk_user.User.Avatar_template == "" {
+		return ""
+	}
+	return "/talk" + string(rexp.ReplaceAll([]byte(m.Talk_user.User.Avatar_template), []byte("120")))
+}
+
+type student struct {
+	Institution string
+	Grad_date   time.Time
+}
+
 func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, member *member) {
 	cookie, err := r.Cookie("session")
 	if err != nil {
@@ -80,9 +88,10 @@ func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, membe
 		uname   string
 		name    string
 		email   string
+		active  bool
 		expires pq.NullTime
 	)
-	err = s.db.QueryRow("SELECT m.username, m.name, m.email, s.expires FROM session_http s INNER JOIN member m ON s.username = m.username WHERE s.token = $1", cookie.Value).Scan(&uname, &name, &email, &expires)
+	err = s.db.QueryRow("SELECT m.username, m.name, m.email, m.active, s.expires FROM session_http s INNER JOIN member m ON s.username = m.username WHERE s.token = $1", cookie.Value).Scan(&uname, &name, &email, &active, &expires)
 	if err == sql.ErrNoRows {
 		s.sign_out(w, member)
 		return
@@ -119,6 +128,7 @@ func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, membe
 	member.Username = uname
 	member.Name = name
 	member.Email = email
+	member.Active = active
 	http.SetCookie(w, &rsp_cookie)
 }
 
@@ -140,7 +150,7 @@ func (s *Http_server) sign_in(w http.ResponseWriter, r *http.Request) (username,
 		log.Panic(err)
 	}
 	cookie := &http.Cookie{Name: "session", Value: token, Path: "/", Domain: s.config.Domain /* Secure: true,*/, HttpOnly: true}
-	if r.PostFormValue("save_session") == "on" {
+	if r.PostFormValue("save-session") == "on" {
 		cookie.Expires = time.Now().AddDate(1, 0, 0)
 		_, err = s.db.Exec("UPDATE session_http SET expires = $1 WHERE token = $2", cookie.Expires, token)
 		if err != nil {

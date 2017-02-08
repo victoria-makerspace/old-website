@@ -1,70 +1,41 @@
     <div class="container">
         <div class="row">
             <div class="col-md-10 col-lg-8 col-xl-7">
-{{if eq .Member.Billing.Card_number ""}}
-                <p>Please register a credit card to set up membership billing.</p>
-{{else}}
-                <h4>Recurring payments</h4>
-                <p>You have no recurring payments.</p>
-
-{{end}}
-                <h5>Recent transactions</h5>
-                <p>You have no recent transactions.</p>
-                <h5>Missed payments</h5>
-                <p>You have no missed payments.</p>
-                <form id="billing" method="post" action="/member/billing">
-                    <fieldset class="form-group mb-2 mb-sm-3">
-                        <legend class="h4">Membership rate</legend>
-                        <label class="custom-control custom-radio">
-                            <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not .Member.Billing.Student}} checked{{end}}>
-                            <span class="custom-control-indicator"></span>
-                            <span class="custom-control-description"><b>Regular</b> ($50/month)</span>
-                        </label>
-                        <label class="custom-control custom-radio">
-                            <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if .Member.Billing.Student}} checked{{end}}>
-                            <span class="custom-control-indicator"></span>
-                            <span class="custom-control-description"><b>Student</b> ($30/month)</span>
-                        </label>
-                    </fieldset>
-                    <fieldset id="student" class="px-2 px-sm-3" {{if not .Member.Billing.Student}}class="text-muted" disabled{{end}}>
-                        <legend class="h5 mb-0 mb-sm-2">Student info</legend>
-                        <div class="form-group row mb-2"> 
-                            <label for="institution" class="col-sm-4 col-form-label">Institution name</label>
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control" id="institution" name="institution" {{if .Member.Billing.Student}} value="{{.Member.Billing.Student_institution}}" required{{end}}>
-                                <small class="form-control-feedback"></small>
-                            </div>
-                        </div>
-                        <div class="form-group row mb-sm-2">
-                            <label for="graduation" class="col-sm-4 col-form-label">Expected graduation</label>
-                            <div class="col-sm-8">
-                                <input type="month" class="form-control" id="graduation" name="graduation"{{if .Member.Billing.Student}} value="{{.Member.Billing.Student_graduation_date.Format "2006-01"}}" required{{end}}>
-                                <small class="form-control-feedback"></small>
-                            </div>
-                        </div>
-                    </fieldset>
-                    <button type="submit" name="billing" value="true" class="ml-auto btn btn-primary">Save</button>
-                </form>
                 <section>
-{{if eq .Member.Billing.Card_number ""}}
-                    <h4>Register credit card</h4>
-{{else}}
+                <h4>Transactions history</h4>
+                  <div class="px-2 px-sm-3">
+                    <p>You have no recent transactions.</p>
+                    {{if .Member.Active}}
+                    <h5>Recurring payments</h5>
+                    <p>You have no recurring payments.</p>
+                    {{end}}
+                    <h5>Missed payments</h5>
+                    <p>You have no missed payments.</p>
+                  </div>
+                </section>
+                <hr>
+                <section>
+                  {{with .Member.Billing}}
+                  {{with .Card}}
                     <h4>Update credit card</h4>
-                    <div class="row">
-                        <p class="col-sm-9 mb-2 mb-sm-3">
-                            Current card: {{.Member.Billing.Card_number}}<br>
-                            Expiry: {{.Member.Billing.Card_expiry}}
-                        </p>
-                        <div class="col-sm-3 mb-3 text-sm-right">
-                            <button type="submit" name="delete_card" class="btn btn-warning">Delete</button>
+                        <div class="row px-2 px-sm-3">
+                            <p class="col-sm-9 mb-2 mb-sm-3 text-muted">
+                                <strong>Current card:</strong> {{.Number}}<br>
+                                <strong>Expiry:</strong> {{.ExpiryMonth}}/20{{.ExpiryYear}}
+                            </p>
+                            <form action="/member/billing" method="post" class="col-sm-3 mb-3 text-sm-right">
+                                <button type="submit" name="delete-card" class="btn btn-warning">Delete</button>
+                            </form>
                         </div>
-                    </div>
-{{end}}
-                        <form action="/member/billing" id="credit-card" method="post">
+                    {{else}}
+                    <h4>Register credit card</h4>
+                    {{end}}
+                    {{end}}
+                        <form action="/member/billing" method="post" id="credit-card" class="px-2 px-sm-3">
                             <div class="form-group row mb-2 mb-sm-3">
                                 <label for="name" class="col-sm-4 col-form-label">Name</label>
                                 <div class="col-sm-8">
-                                    <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required>
+                                    <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if .Member.Billing}} autofocus{{end}}>
                                     <small class="form-control-feedback"></small>
                                 </div>
                             </div>
@@ -96,9 +67,56 @@
                                 </div>
                             </div>
                             <script src="https://payform.beanstream.com/payfields/beanstream_payfields.js" data-submitForm="true"></script>
-                            <button type="submit" class="btn btn-primary">Save</button>
+                            <button type="submit" class="btn btn-primary">
+                                {{if .Member.Billing}}Register{{else}}Update{{end}}
+                            </button>
                         </form>
                 </section>
+                <hr>
+                <section>
+                    <h4>Membership dues</h4>
+                    <form id="billing" class="px-2 px-sm-3" method="post" action="/member/billing">
+                        <fieldset class="form-group mb-2 mb-sm-3">
+                            <label class="custom-control custom-radio">
+                                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if .Member.Billing}} checked{{end}}>
+                                <span class="custom-control-indicator"></span>
+                                <span class="custom-control-description"><b>Regular</b> ($50/month)</span>
+                            </label>
+                            <label class="custom-control custom-radio">
+                                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if .Member.Student}} checked{{end}}>
+                                <span class="custom-control-indicator"></span>
+                                <span class="custom-control-description"><b>Student</b> ($30/month)</span>
+                            </label>
+                        </fieldset>
+                        <fieldset id="student"{{if not .Member.Student}}class="text-muted" disabled{{end}}>
+                            <legend class="h5 mb-0 mb-sm-2">Student info</legend>
+                            <div class="form-group row mb-2"> 
+                                <label for="institution" class="col-sm-4 col-form-label">Institution name</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="institution" name="institution" {{if .Member.Student}} value="{{.Member.Student.Institution}}" required{{end}}>
+                                    <small class="form-control-feedback"></small>
+                                </div>
+                            </div>
+                            <div class="form-group row mb-sm-2">
+                                <label for="graduation" class="col-sm-4 col-form-label">Expected graduation</label>
+                                <div class="col-sm-8">
+                                    <input type="month" class="form-control" id="graduation" name="graduation"{{if .Member.Student}} value="{{.Member.Student.Grad_date.Format "2006-01"}}" required{{end}}>
+                                    <small class="form-control-feedback"></small>
+                                </div>
+                            </div>
+                        </fieldset>
+                        <button type="submit" name="register" class="btn btn-primary"{{if or (not .Member.Billing) (not .Member.Billing.Card)}} disabled{{end}}>
+                            {{if .Member.Active}}Update{{else}}Register{{end}}
+                        </button>
+                        {{if or (not .Member.Billing) (not .Member.Billing.Card)}}
+                        <span class="text-danger ml-3">You must register a credit card.</span>
+                        {{end}}
+                        {{if .Member.Active}}
+                        <button type="submit" name="terminate" class="btn btn-danger">Terminate</button>
+                        {{end}}
+                    </form>
+                </section>
+            </div>
         </div>
 {{template "footer"}}
     </div>

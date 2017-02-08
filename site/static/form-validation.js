@@ -79,18 +79,6 @@ var taken = function(elem, msg) {
 		display_error(elem);
     });
 };
-$("#billing input[name=rate]").change(function() {
-    var checked = $("#student-rate").prop("checked");
-    var input = $("#student input");
-    $("#student").prop("disabled", !checked);
-    $("#student").toggleClass("text-muted", !checked);
-    input.prop("required", checked);
-    if (!checked) {
-        $("#student .form-group").removeClass("has-danger has-success").find(".form-control-feedback").text("").hide();
-        input.removeClass("form-control-danger form-control-success")
-        if (!input.attr("value")) input.val("");
-    }
-});
 var validate = function(elem) {
     if ($(elem).is("#sign-in [name='username']") && elem.validity.valid) {
 		exists(elem, "username", function(data) {

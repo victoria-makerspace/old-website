@@ -217,9 +217,6 @@ body > .container {
 input[type=month] {
     width: 12rem;
 }
-#billing {
-    padding-bottom: 1rem;
-}
 #credit-card .form-control[data-beanstream-id] {
     background-image: none;
 }

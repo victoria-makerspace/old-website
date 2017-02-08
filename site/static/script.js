@@ -42,3 +42,17 @@ $(this).on("beanstream_payfields_loaded", function() {
         $(this).attr("id", $(this).attr("data-beanstream-id"))
     });
 });
+$("#billing input[name=rate]").change(function() {
+    var checked = $("#student-rate").prop("checked");
+    var input = $("#student input");
+    $("#student").prop("disabled", !checked);
+    $("#student").toggleClass("text-muted", !checked);
+    input.prop("required", checked);
+    if (!checked) {
+        $("#student .form-group").removeClass("has-danger has-success").find(".form-control-feedback").text("").hide();
+        input.removeClass("form-control-danger form-control-success")
+        if (!input.attr("value")) input.val("");
+    } else {
+        $("#institution").focus();
+    }
+});
