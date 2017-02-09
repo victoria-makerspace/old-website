@@ -44,7 +44,7 @@ type member struct {
 	Username  string
 	Name      string
 	Email     string
-	Active	bool
+	Active    bool
 	Student   *student
 	Talk_user struct {
 		User struct {

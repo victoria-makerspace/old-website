@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	beanstream "github.com/Beanstream/beanstream-go"
-	"log"
 	"github.com/lib/pq"
+	"log"
 	"math/rand"
 	"strconv"
 	"time"
@@ -17,7 +17,7 @@ type Billing struct {
 	gateway  beanstream.Gateway
 	payments beanstream.PaymentsAPI
 	profiles beanstream.ProfilesAPI
-	reports	 beanstream.ReportsAPI
+	reports  beanstream.ReportsAPI
 }
 
 func Billing_new(merchant_id, payments_api_key, profiles_api_key, reports_api_key string, db *sql.DB) *Billing {
@@ -107,7 +107,7 @@ func (p *Profile) Update_card(name, token string) {
 }
 
 func prorate_month(amount float64) float64 {
-	days_in_month := time.Now().AddDate(0, 1, 0 - time.Now().Day()).Day()
+	days_in_month := first_of_next_month().AddDate(0, 0, -1).Day()
 	days_left := days_in_month - time.Now().Day()
 	return amount * float64(days_left) / float64(days_in_month)
 }
@@ -123,8 +123,8 @@ func (p *Profile) Update_billing(name string, amount float64) {
 		if err != nil {
 			log.Panic(err)
 		}
-		// Pro-rate the current month's bill, do transaction immediately.
-		p.New_transaction(prorate_month(amount), name, "")
+		// Prorate the current month's bill, do transaction immediately.
+		p.New_transaction(prorate_month(amount), name + " (prorated)", "")
 		return
 	} else if err != nil {
 		log.Panic(err)
@@ -137,10 +137,10 @@ func (p *Profile) Update_billing(name string, amount float64) {
 	if prev_amount == amount {
 		return
 	}
-	// If a billing exists but the amount needs to be updated, expire the existing
-	//	billing at now(), and create a new billing with the same start_date as the
-	//	old one (so that there is no confusion about start date when looking at the
-	// 	list of billings).
+	// If a billing exists but the amount needs to be updated, expire the
+	//	existing billing at now(), and create a new billing with the same start
+	//	date as the old one (so that there is no confusion about start date when
+	//	looking at the list of billings).
 	p.Cancel_billing(name)
 	_, err = p.b.db.Exec("INSERT INTO billing (username, name, amount, start_date) VALUES ($1, $2, $3, $4)", p.username, name, amount, start_date)
 	if err != nil {
@@ -156,10 +156,10 @@ func (p *Profile) Cancel_billing(name string) {
 }
 
 type Recurring_billing struct {
-	Name string
-	Amount float64
+	Name       string
+	Amount     float64
 	Start_date time.Time
-	End_date pq.NullTime
+	End_date   pq.NullTime
 }
 
 func (p *Profile) Get_recurring_bills() (rb []Recurring_billing) {
@@ -186,9 +186,9 @@ func (p *Profile) Get_recurring_bills() (rb []Recurring_billing) {
 }
 
 type Missed_payment struct {
-	Name string
+	Name   string
 	Amount float64
-	Date time.Time
+	Date   time.Time
 }
 
 func (p *Profile) Get_missed_payments() (mp []Missed_payment) {
@@ -196,14 +196,14 @@ func (p *Profile) Get_missed_payments() (mp []Missed_payment) {
 }
 
 type Transaction struct {
-	id string
-	username string
-	Date time.Time
-	Approved bool
-	Order_id string
-	Amount float64
-	Name string	// "Membership dues", "Storage fees", etc.
-	Card string	// Last 4 digits
+	id         string
+	username   string
+	Date       time.Time
+	Approved   bool
+	Order_id   string
+	Amount     float64
+	Name       string // "Membership dues", "Storage fees", etc.
+	Card       string // Last 4 digits
 	Ip_address string
 	billing_id int
 }
@@ -229,14 +229,14 @@ func (p *Profile) New_transaction(amount float64, name, ip_address string) *Tran
 		log.Println("Payment of %.2f by %s failed", amount, p.username)
 	}
 	txn := &Transaction{id: rsp.ID,
-			username: p.username,
-			Date: time.Now(),
-			Approved: rsp.IsApproved(),
-			Order_id: rsp.OrderNumber,
-			Amount: amount,
-			Name: name,
-			Card: rsp.Card.LastFour,
-			Ip_address: ip_address}
+		username:   p.username,
+		Date:       time.Now(),
+		Approved:   rsp.IsApproved(),
+		Order_id:   rsp.OrderNumber,
+		Amount:     amount,
+		Name:       name,
+		Card:       rsp.Card.LastFour,
+		Ip_address: ip_address}
 	_, err = p.b.db.Exec("INSERT INTO transaction (id, username, approved, order_id, amount, name, card, ip_address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)", rsp.ID, p.username, txn.Approved, txn.Order_id, txn.Amount, txn.Name, txn.Card, txn.Ip_address)
 	if err != nil {
 		log.Panic(err)
@@ -258,10 +258,10 @@ func (p *Profile) Get_transactions(number int) []*Transaction {
 		txn := &Transaction{username: p.username}
 		txns = append(txns, txn)
 		var (
-			amount	string
-			name	sql.NullString
-			card	sql.NullString
-			ip_address	sql.NullString
+			amount     string
+			name       sql.NullString
+			card       sql.NullString
+			ip_address sql.NullString
 		)
 		if err := rows.Scan(&txn.id, &txn.Approved, &txn.Order_id, &amount, &name, &card, &ip_address, &txn.Date); err != nil {
 			log.Panic(err)

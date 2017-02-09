@@ -1,10 +1,16 @@
 package billing
 
 import (
-	"log"
 	"database/sql"
+	"log"
+	"strconv"
 	"time"
 )
+
+// first_of_next_month returns the time at 00:00 on the first day of next month
+func first_of_next_month() time.Time {
+	return time.Date(time.Now().Year(), time.Now().Month()+1, 1, 0, 0, 0, 0, time.Local)
+}
 
 func (b *Billing) payment_scheduler() {
 	for {
@@ -23,16 +29,16 @@ func (b *Billing) payment_scheduler() {
 				}
 				return
 			}
-			type payment struct{
+			type payment struct {
 				username string
-				name string
-				amount float64
+				name     string
+				amount   float64
 			}
 			var (
-				payments []payment
-				members map[string]*Profile
+				payments   []payment
+				members    map[string]*Profile
 				profile_id string
-				a string
+				a          string
 			)
 			for rows.Next() {
 				pmnt := payment{}
@@ -44,9 +50,9 @@ func (b *Billing) payment_scheduler() {
 				}
 				payments = append(payments, pmnt)
 				// Ensure no redundant profile queries are sent to Beanstream
-				if _, ok := members[username]; profile_id != "" && !ok {
+				if _, ok := members[pmnt.username]; profile_id != "" && !ok {
 					if prof := b.Get_profile(profile_id); prof != nil {
-						members[username] = prof
+						members[pmnt.username] = prof
 					}
 				}
 				// Start transactions
@@ -55,10 +61,8 @@ func (b *Billing) payment_scheduler() {
 	}
 }
 
-// Fires an event on the first of every month, first thing in the morning (00:00) at local time
+// Fires an event on the first of every month, first thing in the morning
+//	(00:00) at local time
 func monthly_timer() *time.Timer {
-	first_of_month := time.Date(time.Now().Year(), time.Now().Month() + 1, 1, 0, 0, 0, 0, time.Local)
-	d := first_of_month.Sub(time.Now())
-	return time.NewTimer(d)
+	return time.NewTimer(first_of_next_month().Sub(time.Now()))
 }
-

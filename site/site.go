@@ -32,9 +32,9 @@ type Http_server struct {
 }
 
 type page struct {
-	Name   string
-	Title  string
-	Member member
+	Name      string
+	Title     string
+	Member    member
 	Discourse map[string]string
 }
 
