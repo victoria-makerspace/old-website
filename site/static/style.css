@@ -223,6 +223,9 @@ input[type=month] {
 #credit-card .form-control-warning {
     padding-right: 0.75rem;
 }
+#monthly th:last-child {
+    width: 1%;
+}
 
 @media (max-width: 575px) {
     .navbar > .container {

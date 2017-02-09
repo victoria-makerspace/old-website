@@ -13,21 +13,16 @@
                   <th>Date</th>
                   <th>Amount</th>
                   <th>Name</th>
-                  <th>Approved</th>
+                  <th>Card</th>
                 </tr>
               </thead>
               <tbody>
                 {{range .}}
-                <tr>  
+                <tr{{if not .Approved}} title="This transaction was not approved." class="table-danger"{{end}}>
                   <td>{{.Date.Format "2006-01-02"}}</td>
                   <td>${{.Amount | printf "%.2f"}}</td>
                   <td>{{.Name}}</td>
-                  <td>
-                    {{if .Approved}}
-                    <span class="text-success">Yes</span>
-                    {{else}}
-                    <span class="text-danger">No</span>
-                    {{end}}
+                  <td><small>x-{{.Card}}</small></td>
                   </td>
                 </tr>
                 {{end}}
@@ -37,13 +32,15 @@
             <p>You have no recent transactions.</p>
             {{end}}
             {{with .Member.Billing.Get_recurring_bills}}
-            <h5>Recurring payments</h5>
+            <h5>Monthly payments</h5>
+            <form action="/member/billing" method="post" id="monthly">
             <table class="table table-sm">
               <thead>
                 <tr>
                   <th>Name</th>
                   <th>Amount</th>
-                  <th>Start</th>
+                  <th>Start date</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -52,13 +49,34 @@
                   <td>{{.Name}}</td>
                   <td>${{.Amount | printf "%.2f"}}</td>
                   <td>{{.Start_date.Format "2006-01-02"}}</td>
+                  <td>
+                    <button type="submit" name="terminate" value="{{.Name}}" class="btn btn-sm btn-danger">Terminate</button>
+                  </td>
                 </tr>
               {{end}}
               </tbody>
             </table>
+            </form>
             {{end}}
-            <h5>Missed payments</h5>
-            <p>You have no missed payments.</p>
+            {{with .Member.Billing.Get_missed_payments}}
+            <h5 class="text-danger">Missed payments</h5>
+            <table class="table table-sm table-danger">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>  
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            {{end}}
           </div>
         </section>
         <hr>
@@ -157,9 +175,6 @@
                         </button>
                         {{if not $card}}
                         <span class="text-danger ml-3">You must register a credit card.</span>
-                        {{end}}
-                        {{if .Member.Active}}
-                        <button type="submit" name="terminate" class="btn btn-danger" disabled>Terminate</button>
                         {{end}}
                     </form>
                 </section>

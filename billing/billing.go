@@ -29,12 +29,8 @@ func Billing_new(merchant_id, payments_api_key, profiles_api_key, reports_api_ke
 	b.payments = b.gateway.Payments()
 	b.profiles = b.gateway.Profiles()
 	b.reports = b.gateway.Reports()
-	go b.schedule_payments()
+	go b.payment_scheduler()
 	return b
-}
-
-func (b *Billing) schedule_payments() {
-
 }
 
 type Profile struct {
@@ -152,6 +148,13 @@ func (p *Profile) Update_billing(name string, amount float64) {
 	}
 }
 
+func (p *Profile) Cancel_billing(name string) {
+	_, err := p.b.db.Exec("UPDATE billing SET end_date = now() WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.username, name)
+	if err != nil {
+		log.Panic(err)
+	}
+}
+
 type Recurring_billing struct {
 	Name string
 	Amount float64
@@ -182,11 +185,14 @@ func (p *Profile) Get_recurring_bills() (rb []Recurring_billing) {
 	return
 }
 
-func (p *Profile) Cancel_billing(name string) {
-	_, err := p.b.db.Exec("UPDATE billing SET end_date = now() WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.username, name)
-	if err != nil {
-		log.Panic(err)
-	}
+type Missed_payment struct {
+	Name string
+	Amount float64
+	Date time.Time
+}
+
+func (p *Profile) Get_missed_payments() (mp []Missed_payment) {
+	return
 }
 
 type Transaction struct {

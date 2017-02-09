@@ -9,6 +9,8 @@ DROP TABLE IF EXISTS student CASCADE;
 DROP TABLE IF EXISTS billing_profile CASCADE;
 DROP TABLE IF EXISTS transaction CASCADE;
 DROP TABLE IF EXISTS billing CASCADE;
+DROP TABLE IF EXISTS payment_scheduler_log CASCADE;
+DROP TABLE IF EXISTS missed_payments CASCADE;
 DROP TABLE IF EXISTS storage CASCADE;
 
 CREATE TABLE member (
@@ -59,6 +61,15 @@ CREATE TABLE transaction (
     ip_address text,
     billing integer REFERENCES billing,
     time timestamp(0) NOT NULL DEFAULT now()
+);
+CREATE TABLE payment_scheduler_log (
+    time timestamp(0) NOT NULL DEFAULT now()
+);
+CREATE TABLE missed_payments (
+    date date NOT NULL DEFAULT now(),
+    billing integer NOT NULL REFERENCES billing,
+    transaction integer REFERENCES transaction,
+    amount money
 );
 CREATE TABLE storage (
     location text NOT NULL,
