@@ -5,6 +5,7 @@ import (
 	"fmt"
 	beanstream "github.com/Beanstream/beanstream-go"
 	"log"
+	"github.com/lib/pq"
 	"math/rand"
 	"strconv"
 	"time"
@@ -110,7 +111,7 @@ func (p *Profile) Update_card(name, token string) {
 }
 
 func prorate_month(amount float64) float64 {
-	days_in_month := time.Now().AddDate(0, 1, 1 - time.Now().Day()).Day()
+	days_in_month := time.Now().AddDate(0, 1, 0 - time.Now().Day()).Day()
 	days_left := days_in_month - time.Now().Day()
 	return amount * float64(days_left) / float64(days_in_month)
 }
@@ -118,7 +119,8 @@ func prorate_month(amount float64) float64 {
 func (p *Profile) Update_billing(name string, amount float64) {
 	var id int
 	var a string
-	err := p.b.db.QueryRow("SELECT id, amount FROM billing WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.username, name).Scan(&id, &a)
+	var start_date time.Time
+	err := p.b.db.QueryRow("SELECT id, amount, start_date FROM billing WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.username, name).Scan(&id, &a, &start_date)
 	if err == sql.ErrNoRows {
 		// Register member
 		_, err = p.b.db.Exec("INSERT INTO billing (username, name, amount) VALUES ($1, $2, $3)", p.username, name, amount)
@@ -140,12 +142,44 @@ func (p *Profile) Update_billing(name string, amount float64) {
 		return
 	}
 	// If a billing exists but the amount needs to be updated, expire the existing
-	//	billing at now(), and start a new billing for next month.
+	//	billing at now(), and create a new billing with the same start_date as the
+	//	old one (so that there is no confusion about start date when looking at the
+	// 	list of billings).
 	p.Cancel_billing(name)
-	_, err = p.b.db.Exec("INSERT INTO billing (username, name, amount) VALUES ($1, $2, $3)", p.username, name, amount)
+	_, err = p.b.db.Exec("INSERT INTO billing (username, name, amount, start_date) VALUES ($1, $2, $3, $4)", p.username, name, amount, start_date)
 	if err != nil {
 		log.Panic(err)
 	}
+}
+
+type Recurring_billing struct {
+	Name string
+	Amount float64
+	Start_date time.Time
+	End_date pq.NullTime
+}
+
+func (p *Profile) Get_recurring_bills() (rb []Recurring_billing) {
+	rows, err := p.b.db.Query("SELECT name, amount, start_date, end_date FROM billing WHERE username = $1 AND (end_date > now() OR end_date IS NULL)", p.username)
+	defer rows.Close()
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Panic(err)
+		}
+		return
+	}
+	for rows.Next() {
+		var r Recurring_billing
+		var amount string
+		if err = rows.Scan(&r.Name, &amount, &r.Start_date, &r.End_date); err != nil {
+			log.Panic(err)
+		}
+		if r.Amount, err = strconv.ParseFloat(amount[1:], 32); err != nil {
+			log.Println(err)
+		}
+		rb = append(rb, r)
+	}
+	return
 }
 
 func (p *Profile) Cancel_billing(name string) {

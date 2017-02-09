@@ -36,10 +36,26 @@
             {{else}}
             <p>You have no recent transactions.</p>
             {{end}}
-            {{if .Member.Active}}
+            {{with .Member.Billing.Get_recurring_bills}}
             <h5>Recurring payments</h5>
-            <p>You have no recurring payments.</p>
-            {{else}}
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Amount</th>
+                  <th>Start</th>
+                </tr>
+              </thead>
+              <tbody>
+              {{range .}}
+                <tr>  
+                  <td>{{.Name}}</td>
+                  <td>${{.Amount | printf "%.2f"}}</td>
+                  <td>{{.Start_date.Format "2006-01-02"}}</td>
+                </tr>
+              {{end}}
+              </tbody>
+            </table>
             {{end}}
             <h5>Missed payments</h5>
             <p>You have no missed payments.</p>

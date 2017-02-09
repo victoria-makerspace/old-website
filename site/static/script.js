@@ -26,11 +26,14 @@ $(document).ready(function() {
 		$("body").scrollspy({ target: "#navbar-guest" });
 	}
 	var username = $("#sign-out button[name='sign-out']").val();
-    $.getJSON("/talk/notifications.json", function(data) {
-        $.each(data["notifications"], function(i, v) {
-			//$("#member-menu-toolbar").after("<li>" + v["data"]["topic_title"] + "</li>");
+    if (username.length) {
+        var talk_url = $("#general-menu .nav-link[title='Talk forum']").attr("href");
+        $.getJSON(talk_url + "/notifications.json", function(data) {
+            $.each(data["notifications"], function(i, v) {
+                //$("#member-menu-toolbar").after("<li>" + v["data"]["topic_title"] + "</li>");
+            });
         });
-    });
+    }
 });
 
 $("#sign-in").on("shown.bs.modal", function() {
