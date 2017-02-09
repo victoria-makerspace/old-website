@@ -11,7 +11,7 @@ import (
 	"regexp"
 )
 
-var templates = [...]string{"main", "index", "sign-in", "join", "dashboard", "billing", "tools"}
+var templates = [...]string{"main", "index", "sign-in", "join", "dashboard", "billing", "tools", "storage"}
 
 type Config struct {
 	Domain        string
@@ -149,9 +149,7 @@ func Serve(config Config, db *sql.DB, b *billing.Billing) *Http_server {
 	s.join_handler()
 	s.classes_handler()
 	s.sso_handler()
-	s.dashboard_handler()
-	s.tools_handler()
-	s.billing_handler()
+	s.member_handler()
 	go log.Panic(s.srv.ListenAndServe())
 	return s
 }

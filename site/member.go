@@ -44,8 +44,8 @@ type member struct {
 	Username  string
 	Name      string
 	Email     string
+	Active	bool
 	Student   *student
-	Active    bool
 	Talk_user struct {
 		User struct {
 			Id                 int
@@ -103,10 +103,9 @@ func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, membe
 		uname   string
 		name    string
 		email   string
-		active  bool
 		expires pq.NullTime
 	)
-	err = s.db.QueryRow("SELECT m.username, m.name, m.email, m.active, s.expires FROM session_http s INNER JOIN member m ON s.username = m.username WHERE s.token = $1", cookie.Value).Scan(&uname, &name, &email, &active, &expires)
+	err = s.db.QueryRow("SELECT m.username, m.name, m.email, s.expires FROM session_http s INNER JOIN member m ON s.username = m.username WHERE s.token = $1", cookie.Value).Scan(&uname, &name, &email, &expires)
 	if err == sql.ErrNoRows {
 		s.sign_out(w, member)
 		return
@@ -128,6 +127,15 @@ func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, membe
 	if err != nil {
 		log.Panic(err)
 	}
+	// Check if member is active
+	var n int
+	err = s.db.QueryRow("SELECT COUNT(*) FROM billing WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", uname, "Membership dues").Scan(&n)
+	if err != nil {
+		log.Panic(err)
+	}
+	if n == 1 {
+		member.Active = true
+	}
 	////////////
 	rsp_talk, err := http.Get("http://localhost:1080/talk/users/" + uname + ".json")
 	/////
@@ -143,7 +151,6 @@ func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, membe
 	member.Username = uname
 	member.Name = name
 	member.Email = email
-	member.Active = active
 	http.SetCookie(w, &rsp_cookie)
 }
 
@@ -251,7 +258,10 @@ func (s *Http_server) sso_handler() {
 	})
 }
 
-func (s *Http_server) dashboard_handler() {
+func (s *Http_server) member_handler() {
+	s.tools_handler()
+	s.billing_handler()
+	s.storage_handler()
 	s.mux.HandleFunc("/member", func(w http.ResponseWriter, r *http.Request) {
 		//////
 		s.parse_templates()
@@ -287,6 +297,22 @@ func (s *Http_server) dashboard_handler() {
 func (s *Http_server) tools_handler() {
 	s.mux.HandleFunc("/member/tools", func(w http.ResponseWriter, r *http.Request) {
 		p := page{Name: "tools", Title: "Tools"}
+		s.authenticate(w, r, &p.Member)
+		if !p.Member.Authenticated() {
+			http.Error(w, http.StatusText(403), 403)
+			return
+		}
+		s.tmpl.Execute(w, p)
+	})
+}
+
+func (s *Http_server) storage_handler() {
+	s.mux.HandleFunc("/member/storage", func(w http.ResponseWriter, r *http.Request) {
+		//////
+		s.parse_templates()
+		/////
+		p := page{Name: "storage", Title: "Storage"}
+		s.authenticate(w, r, &p.Member)
 		if !p.Member.Authenticated() {
 			http.Error(w, http.StatusText(403), 403)
 			return

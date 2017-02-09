@@ -110,21 +110,15 @@ func (p *Profile) Update_card(name, token string) {
 }
 
 func prorate_month(amount float64) float64 {
-	end_of_month := time.Now().AddDate(0, 1, 0 - time.Now().Day()).Day()
-	prorated := float64(end_of_month - time.Now().Day()) * amount
-	prorated /= float64(end_of_month)
-	return prorated
-}
-
-func prorate_month_start(amount float64) float64 {
-	prorated := float64(time.Now().Day()) * amount
-	return prorated
+	days_in_month := time.Now().AddDate(0, 1, 1 - time.Now().Day()).Day()
+	days_left := days_in_month - time.Now().Day()
+	return amount * float64(days_left) / float64(days_in_month)
 }
 
 func (p *Profile) Update_billing(name string, amount float64) {
 	var id int
 	var a string
-	err := p.b.db.QueryRow("SELECT id, amount FROM billing WHERE username = $1 AND name == $2", p.username, name).Scan(&id, &a)
+	err := p.b.db.QueryRow("SELECT id, amount FROM billing WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.username, name).Scan(&id, &a)
 	if err == sql.ErrNoRows {
 		// Register member
 		_, err = p.b.db.Exec("INSERT INTO billing (username, name, amount) VALUES ($1, $2, $3)", p.username, name, amount)
@@ -146,20 +140,19 @@ func (p *Profile) Update_billing(name string, amount float64) {
 		return
 	}
 	// If a billing exists but the amount needs to be updated, expire the existing
-	//	billing on the 1st of this month, pro-rate the transaction for the current
-	//  month, and start a new billing for next month.
-	end_date := time.Now().AddDate(0, 0, 1 - time.Now().Day())
-	_, err = p.b.db.Exec("UPDATE billing SET end_date = $1)", end_date)
-	if err != nil {
-		log.Panic(err)
-	}
+	//	billing at now(), and start a new billing for next month.
+	p.Cancel_billing(name)
 	_, err = p.b.db.Exec("INSERT INTO billing (username, name, amount) VALUES ($1, $2, $3)", p.username, name, amount)
 	if err != nil {
 		log.Panic(err)
 	}
-	prorated := prorate_month(amount) + prorate_month_start(prev_amount)
-	// Do transaction for this month with prorated amount
-	p.New_transaction(prorated, name, "")
+}
+
+func (p *Profile) Cancel_billing(name string) {
+	_, err := p.b.db.Exec("UPDATE billing SET end_date = now() WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.username, name)
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 type Transaction struct {
@@ -176,6 +169,9 @@ type Transaction struct {
 }
 
 func (p *Profile) New_transaction(amount float64, name, ip_address string) *Transaction {
+	if amount <= 0 {
+		return nil
+	}
 	order_id := fmt.Sprint(rand.Intn(1000000)) + "-" + p.username
 	req := beanstream.PaymentRequest{
 		PaymentMethod: "payment_profile",
@@ -210,7 +206,7 @@ func (p *Profile) New_transaction(amount float64, name, ip_address string) *Tran
 
 func (p *Profile) Get_transactions(number int) []*Transaction {
 	var txns []*Transaction
-	rows, err := p.b.db.Query("SELECT id, approved, order_id, amount, name, card, ip_address, time FROM transaction WHERE username = $1 LIMIT $2", p.username, number)
+	rows, err := p.b.db.Query("SELECT id, approved, order_id, amount, name, card, ip_address, time FROM transaction WHERE username = $1 ORDER BY time DESC LIMIT $2", p.username, number)
 	defer rows.Close()
 	if err != nil {
 		if err != sql.ErrNoRows {

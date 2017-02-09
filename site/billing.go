@@ -15,7 +15,6 @@ func (m *member) update_membership_rate(db *sql.DB) {
 	}
 	if m.Student != nil {
 		if n == 1 {
-			m.Student = &student{}
 			_, err = db.Exec("UPDATE student SET institution = $2, graduation_date = $3 WHERE username = $1", m.Username, m.Student.Institution, m.Student.Grad_date)
 		} else {
 			_, err = db.Exec("INSERT INTO student (username, institution, graduation_date) VALUES ($1, $2, $3)", m.Username, m.Student.Institution, m.Student.Grad_date)
@@ -53,12 +52,17 @@ func (s *Http_server) billing_handler() {
 		} else if _, ok := r.PostForm["delete-card"]; ok && p.Member.Billing != nil {
 			p.Member.Billing.Delete_card()
 		}
+		p.Member.get_student(s.db)
 		if _, ok := r.PostForm["register"]; ok {
 			if r.PostFormValue("rate") == "student" && r.PostFormValue("institution") != "" && r.PostFormValue("graduation") != "" {
 				graduation, err := time.Parse("2006-01", r.PostFormValue("graduation"))
 				if err == nil && graduation.After(time.Now().AddDate(0, 1, 0)) {
 					p.Member.Student = &student{r.PostFormValue("institution"), graduation}
+				} else {
+					p.Member.Student = nil
 				}
+			} else {
+				p.Member.Student = nil
 			}
 			p.Member.update_membership_rate(s.db)
 			//ip := r.RemoteAddr[:strings.LastIndexByte(r.RemoteAddr, ':')]
@@ -68,8 +72,8 @@ func (s *Http_server) billing_handler() {
 			}
 			p.Member.Billing.Update_billing("Membership dues", amount)
 			http.Redirect(w, r, "/member/billing", 303)
-		} else {
-			p.Member.get_student(s.db)
+		} else if _, ok := r.PostForm["terminate"]; ok {
+			////////// password check
 		}
 		s.tmpl.Execute(w, p)
 	})
