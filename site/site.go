@@ -35,6 +35,11 @@ type page struct {
 	Name   string
 	Title  string
 	Member member
+	Discourse map[string]string
+}
+
+func (s *Http_server) new_page(name, title string) page {
+	return page{Name: name, Title: title, Discourse: s.config.Discourse}
 }
 
 func (s *Http_server) root_handler() {
@@ -43,7 +48,7 @@ func (s *Http_server) root_handler() {
 			http.FileServer(http.Dir(s.config.Static_dir)).ServeHTTP(w, r)
 			return
 		}
-		p := page{Name: "index"}
+		p := s.new_page("index", "")
 		s.authenticate(w, r, &p.Member)
 		if signout := r.PostFormValue("sign-out"); signout != "" && signout == p.Member.Username {
 			s.sign_out(w, &p.Member)
@@ -72,7 +77,7 @@ func (s *Http_server) join_handler() {
 	name_rexp := regexp.MustCompile("^(?:[\\pL\\pN\\pM\\pP]+ ?)+$")
 	s.mux.HandleFunc("/join", func(w http.ResponseWriter, r *http.Request) {
 		s.parse_templates()
-		p := page{Name: "join", Title: "Join"}
+		p := s.new_page("join", "Join")
 		s.authenticate(w, r, &p.Member)
 		if p.Member.Authenticated() {
 			http.Error(w, http.StatusText(403), 403)
@@ -123,7 +128,7 @@ func (s *Http_server) join_handler() {
 
 func (s *Http_server) classes_handler() {
 	s.mux.HandleFunc("/classes", func(w http.ResponseWriter, r *http.Request) {
-		p := page{Name: "classes", Title: "Classes"}
+		p := s.new_page("classes", "Classes")
 		s.tmpl.Execute(w, p)
 	})
 }
@@ -144,7 +149,7 @@ func Serve(config Config, db *sql.DB, b *billing.Billing) *Http_server {
 	s.srv.Handler = s.mux
 	s.parse_templates()
 	s.root_handler()
-	s.talk_proxy()
+	//s.talk_proxy()
 	s.data_handler()
 	s.join_handler()
 	s.classes_handler()

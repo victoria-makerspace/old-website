@@ -34,7 +34,7 @@ func (m *member) update_membership_rate(db *sql.DB) {
 func (s *Http_server) billing_handler() {
 	s.mux.HandleFunc("/member/billing", func(w http.ResponseWriter, r *http.Request) {
 		s.parse_templates()
-		p := page{Name: "billing", Title: "Billing"}
+		p := s.new_page("billing", "Billing")
 		s.authenticate(w, r, &p.Member)
 		if !p.Member.Authenticated() {
 			http.Error(w, http.StatusText(403), 403)

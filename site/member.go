@@ -66,12 +66,12 @@ func (m member) Authenticated() bool {
 	return true
 }
 
-func (m member) Avatar() string {
+func (p page) Avatar() string {
 	rexp := regexp.MustCompile("{size}")
-	if m.Talk_user.User.Avatar_template == "" {
+	if p.Member.Talk_user.User.Avatar_template == "" {
 		return ""
 	}
-	return "/talk" + string(rexp.ReplaceAll([]byte(m.Talk_user.User.Avatar_template), []byte("120")))
+	return p.Discourse["url"] + string(rexp.ReplaceAll([]byte(p.Member.Talk_user.User.Avatar_template), []byte("120")))
 }
 
 type student struct {
@@ -137,7 +137,7 @@ func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, membe
 		member.Active = true
 	}
 	////////////
-	rsp_talk, err := http.Get("http://localhost:1080/talk/users/" + uname + ".json")
+	rsp_talk, err := http.Get(s.config.Discourse["url"] + "/users/" + uname + ".json")
 	/////
 	if err != nil {
 		log.Panic(err)
@@ -235,7 +235,7 @@ func (s *Http_server) sso_handler() {
 		s.authenticate(w, r, &m)
 		if !m.Authenticated() {
 			w.WriteHeader(401)
-			p := page{Name: "sign-in", Title: "Sign in"}
+			p := s.new_page("sign-in", "Sign in")
 			s.tmpl.Execute(w, p)
 			return
 		}
@@ -266,14 +266,14 @@ func (s *Http_server) member_handler() {
 		//////
 		s.parse_templates()
 		/////
-		p := page{Name: "dashboard", Title: "Dashboard"}
+		p := s.new_page("dashboard", "Dashboard")
 		s.authenticate(w, r, &p.Member)
 		if !p.Member.Authenticated() {
 			if r.PostFormValue("sign-in") == "true" {
 				if username, password := s.sign_in(w, r); username && password {
 				}
 			} else {
-				p := page{Name: "sign-in", Title: "Sign in"}
+				p := s.new_page("sign-in", "Sign in")
 				s.tmpl.Execute(w, p)
 				return
 			}
@@ -296,7 +296,7 @@ func (s *Http_server) member_handler() {
 
 func (s *Http_server) tools_handler() {
 	s.mux.HandleFunc("/member/tools", func(w http.ResponseWriter, r *http.Request) {
-		p := page{Name: "tools", Title: "Tools"}
+		p := s.new_page("tools", "Tools")
 		s.authenticate(w, r, &p.Member)
 		if !p.Member.Authenticated() {
 			http.Error(w, http.StatusText(403), 403)
@@ -311,7 +311,7 @@ func (s *Http_server) storage_handler() {
 		//////
 		s.parse_templates()
 		/////
-		p := page{Name: "storage", Title: "Storage"}
+		p := s.new_page("storage", "Storage")
 		s.authenticate(w, r, &p.Member)
 		if !p.Member.Authenticated() {
 			http.Error(w, http.StatusText(403), 403)
