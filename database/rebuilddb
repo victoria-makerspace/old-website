@@ -43,11 +43,10 @@ CREATE TABLE billing_profile (
 CREATE TABLE billing (
     id serial PRIMARY KEY,
     username text NOT NULL REFERENCES member,
+    name text NOT NULL,
     amount money NOT NULL,
-    description text,
-    registered date NOT NULL DEFAULT now(),
+    start_date date NOT NULL DEFAULT now(),
     monthly boolean NOT NULL DEFAULT true,
-    start_date date NOT NULL,
     end_date date
 );
 CREATE TABLE transaction (

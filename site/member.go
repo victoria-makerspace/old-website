@@ -79,6 +79,21 @@ type student struct {
 	Grad_date   time.Time
 }
 
+func (m *member) get_student(db *sql.DB) {
+	var (
+		institution sql.NullString
+		grad_date   pq.NullTime
+	)
+	err := db.QueryRow("SELECT institution, graduation_date FROM student WHERE username = $1", m.Username).Scan(&institution, &grad_date)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Panic(err)
+		}
+	} else {
+		m.Student = &student{institution.String, grad_date.Time}
+	}
+}
+
 func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, member *member) {
 	cookie, err := r.Cookie("session")
 	if err != nil {
