@@ -40,7 +40,7 @@ func init() {
 func main() {
 	db := Database(config.Database)
 	bs := config.Beanstream
-	b := billing.Billing_new(bs["merchant-id"], bs["payments-api-key"], bs["profiles-api-key"], bs["reporting-api-key"], db)
+	b := billing.Billing_new(bs["merchant-id"], bs["payments-api-key"], bs["profiles-api-key"], bs["reports-api-key"], db)
 	site.Serve(site.Config{
 		config.Domain,
 		config.Port,

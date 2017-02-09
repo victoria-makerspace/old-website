@@ -5,6 +5,7 @@ import (
 	"github.com/lib/pq"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -84,6 +85,7 @@ func (s *Http_server) billing_handler() {
 			} else {
 				p.Member.Billing = s.billing.New_profile(token, p.Member.Name, p.Member.Username)
 			}
+			http.Redirect(w, r, "/member/billing", 303)
 		} else if _, ok := r.PostForm["delete-card"]; ok && p.Member.Billing != nil {
 			p.Member.Billing.Delete_card()
 		}
@@ -95,8 +97,8 @@ func (s *Http_server) billing_handler() {
 				}
 			}
 			p.Member.update_membership_rate(s.db)
-			//ip := r.RemoteAddr[:strings.LastIndexByte(r.RemoteAddr, ':')]
-
+			ip := r.RemoteAddr[:strings.LastIndexByte(r.RemoteAddr, ':')]
+			p.Member.Billing.New_transaction(50, "Membership dues", ip)
 			http.Redirect(w, r, "/member/billing", 303)
 		} else {
 			var (

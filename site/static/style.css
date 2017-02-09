@@ -106,7 +106,7 @@ button.nav-link {
 #member-icon div::before {
     position: absolute;
     left: 0.2rem;
-    bottom: 1px;
+    bottom: 2px;
 }
 #member-menu .navbar-nav {
     flex-direction: column;

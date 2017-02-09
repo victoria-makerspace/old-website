@@ -6,6 +6,7 @@ import (
 	beanstream "github.com/Beanstream/beanstream-go"
 	"log"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -15,16 +16,18 @@ type Billing struct {
 	gateway  beanstream.Gateway
 	payments beanstream.PaymentsAPI
 	profiles beanstream.ProfilesAPI
+	reports	 beanstream.ReportsAPI
 }
 
-func Billing_new(merchant_id, payments_api_key, profiles_api_key, reporting_api_key string, db *sql.DB) *Billing {
+func Billing_new(merchant_id, payments_api_key, profiles_api_key, reports_api_key string, db *sql.DB) *Billing {
 	rand.Seed(time.Now().UTC().UnixNano())
 	b := &Billing{
 		db:     db,
-		config: beanstream.Config{merchant_id, payments_api_key, profiles_api_key, reporting_api_key, "www", "api", "v1", "-8:00"}}
+		config: beanstream.Config{merchant_id, payments_api_key, profiles_api_key, reports_api_key, "www", "api", "v1", "-8:00"}}
 	b.gateway = beanstream.Gateway{b.config}
 	b.payments = b.gateway.Payments()
 	b.profiles = b.gateway.Profiles()
+	b.reports = b.gateway.Reports()
 	go b.schedule_payments()
 	return b
 }
@@ -108,7 +111,19 @@ func (p *Profile) Update_card(name, token string) {
 	p.bs.Card = *card
 }
 
-func (p *Profile) Transaction(amount float32, comment, ip_address string) {
+type Transaction struct {
+	id string
+	username string
+	Date time.Time
+	Approved bool
+	Order_id string
+	Amount float32
+	Name string	// "Membership dues", "Storage fees", etc.
+	Card string	// Last 4 digits
+	Ip_address string
+}
+
+func (p *Profile) New_transaction(amount float32, comment, ip_address string) *Transaction {
 	order_id := fmt.Sprint(rand.Intn(1000000)) + "-" + p.username
 	req := beanstream.PaymentRequest{
 		PaymentMethod: "payment_profile",
@@ -122,7 +137,56 @@ func (p *Profile) Transaction(amount float32, comment, ip_address string) {
 	if err != nil {
 		log.Println(err)
 	}
-	if rsp.Approved != 1 {
+	if !rsp.IsApproved() {
 		log.Println("Payment of %.2f by %s failed", amount, p.username)
 	}
+	txn := &Transaction{id: rsp.ID,
+			username: p.username,
+			Date: time.Now(),
+			Approved: rsp.IsApproved(),
+			Order_id: rsp.OrderNumber,
+			Amount: amount,
+			Name: comment,
+			Card: rsp.Card.LastFour,
+			Ip_address: ip_address}
+	_, err = p.b.db.Exec("INSERT INTO transaction (id, username, approved, order_id, amount, name, card, ip_address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)", rsp.ID, p.username, txn.Approved, txn.Order_id, txn.Amount, txn.Name, txn.Card, txn.Ip_address)
+	if err != nil {
+		log.Panic(err)
+	}
+	return txn
+}
+
+func (p *Profile) Get_transactions(number int) []*Transaction {
+	var txns []*Transaction
+	rows, err := p.b.db.Query("SELECT id, approved, order_id, amount, name, card, ip_address, time FROM transaction WHERE username = $1", p.username)
+	defer rows.Close()
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Panic(err)
+		}
+		return txns
+	}
+	for i := 0; rows.Next(); i++ {
+		txn := &Transaction{username: p.username}
+		txns = append(txns, txn)
+		var (
+			amount	string
+			name	sql.NullString
+			card	sql.NullString
+			ip_address	sql.NullString
+		)
+		if err := rows.Scan(&txn.id, &txn.Approved, &txn.Order_id, &amount, &name, &card, &ip_address, &txn.Date); err != nil {
+			log.Panic(err)
+		}
+		if a, err := strconv.ParseFloat(amount[1:], 32); err == nil {
+			txn.Amount = float32(a)
+		}
+		txn.Name = name.String
+		txn.Card = card.String
+		txn.Ip_address = ip_address.String
+	}
+	if err := rows.Err(); err != nil {
+		log.Panic(err)
+	}
+	return txns
 }

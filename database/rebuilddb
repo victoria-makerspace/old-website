@@ -7,6 +7,8 @@ DROP TABLE IF EXISTS session_http CASCADE;
 DROP TABLE IF EXISTS administrator CASCADE;
 DROP TABLE IF EXISTS student CASCADE;
 DROP TABLE IF EXISTS billing_profile CASCADE;
+DROP TABLE IF EXISTS transaction CASCADE;
+DROP TABLE IF EXISTS billing CASCADE;
 DROP TABLE IF EXISTS storage CASCADE;
 
 CREATE TABLE member (
@@ -37,6 +39,28 @@ CREATE TABLE student (
 CREATE TABLE billing_profile (
     username text PRIMARY KEY REFERENCES member,
     id text UNIQUE NOT NULL
+);
+CREATE TABLE billing (
+    id serial PRIMARY KEY,
+    username text NOT NULL REFERENCES member,
+    amount money NOT NULL,
+    description text,
+    registered date NOT NULL DEFAULT now(),
+    monthly boolean NOT NULL DEFAULT true,
+    start_date date NOT NULL,
+    end_date date
+);
+CREATE TABLE transaction (
+    id integer PRIMARY KEY,
+    username text NOT NULL REFERENCES member,
+    approved boolean NOT NULL,
+    order_id text NOT NULL,
+    amount money NOT NULL,
+    name text,
+    card character(4),
+    ip_address text,
+    billing integer REFERENCES billing,
+    time timestamp(0) NOT NULL DEFAULT now()
 );
 CREATE TABLE storage (
     location text NOT NULL,

@@ -1,22 +1,54 @@
-    <div class="container">
-        <div class="row">
-            <div class="col-md-10 col-lg-8 col-xl-7">
-                <section>
-                <h4>Transactions history</h4>
-                  <div class="px-2 px-sm-3">
-                    <p>You have no recent transactions.</p>
-                    {{if .Member.Active}}
-                    <h5>Recurring payments</h5>
-                    <p>You have no recurring payments.</p>
+{{$card := and (.Member.Billing) (.Member.Billing.Card)}}
+  <div class="container">
+    <div class="row">
+      <div class="col-md-10 col-lg-8 col-xl-7">
+        {{if .Member.Billing}}
+        <section>
+          <h4>Transactions history</h4>
+          <div class="px-2 px-sm-3">
+            {{with .Member.Billing.Get_transactions 8}}
+            <table class="table table-sm table-striped">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Name</th>
+                  <th>Approved</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range .}}
+                <tr>  
+                  <td>{{.Date.Format "2006-01-02"}}</td>
+                  <td>${{.Amount | printf "%.2f"}}</td>
+                  <td>{{.Name}}</td>
+                  <td>
+                    {{if .Approved}}
+                    <span class="text-success">Yes</span>
+                    {{else}}
+                    <span class="text-danger">No</span>
                     {{end}}
-                    <h5>Missed payments</h5>
-                    <p>You have no missed payments.</p>
-                  </div>
-                </section>
-                <hr>
-                <section>
-                  {{with .Member.Billing}}
-                  {{with .Card}}
+                  </td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
+            {{else}}
+            <p>You have no recent transactions.</p>
+            {{end}}
+            {{if .Member.Active}}
+            <h5>Recurring payments</h5>
+            <p>You have no recurring payments.</p>
+            {{else}}
+            {{end}}
+            <h5>Missed payments</h5>
+            <p>You have no missed payments.</p>
+          </div>
+        </section>
+        <hr>
+        {{end}}
+        <section>
+          {{with $card}}
                     <h4>Update credit card</h4>
                         <div class="row px-2 px-sm-3">
                             <p class="col-sm-9 mb-2 mb-sm-3 text-muted">
@@ -30,12 +62,11 @@
                     {{else}}
                     <h4>Register credit card</h4>
                     {{end}}
-                    {{end}}
                         <form action="/member/billing" method="post" id="credit-card" class="px-2 px-sm-3">
                             <div class="form-group row mb-2 mb-sm-3">
                                 <label for="name" class="col-sm-4 col-form-label">Name</label>
                                 <div class="col-sm-8">
-                                    <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if .Member.Billing}} autofocus{{end}}>
+                                    <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if not $card}} autofocus{{end}}>
                                     <small class="form-control-feedback"></small>
                                 </div>
                             </div>
@@ -68,7 +99,7 @@
                             </div>
                             <script src="https://payform.beanstream.com/payfields/beanstream_payfields.js" data-submitForm="true"></script>
                             <button type="submit" class="btn btn-primary">
-                                {{if .Member.Billing}}Register{{else}}Update{{end}}
+                                {{if not $card}}Register{{else}}Update{{end}}
                             </button>
                         </form>
                 </section>
@@ -78,7 +109,7 @@
                     <form id="billing" class="px-2 px-sm-3" method="post" action="/member/billing">
                         <fieldset class="form-group mb-2 mb-sm-3">
                             <label class="custom-control custom-radio">
-                                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if .Member.Billing}} checked{{end}}>
+                                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not .Member.Student}} checked{{end}}>
                                 <span class="custom-control-indicator"></span>
                                 <span class="custom-control-description"><b>Regular</b> ($50/month)</span>
                             </label>
@@ -105,10 +136,10 @@
                                 </div>
                             </div>
                         </fieldset>
-                        <button type="submit" name="register" class="btn btn-primary"{{if or (not .Member.Billing) (not .Member.Billing.Card)}} disabled{{end}}>
+                        <button type="submit" name="register" class="btn btn-primary"{{if not $card}} disabled{{end}}>
                             {{if .Member.Active}}Update{{else}}Register{{end}}
                         </button>
-                        {{if or (not .Member.Billing) (not .Member.Billing.Card)}}
+                        {{if not $card}}
                         <span class="text-danger ml-3">You must register a credit card.</span>
                         {{end}}
                         {{if .Member.Active}}
