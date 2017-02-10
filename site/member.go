@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"github.com/lib/pq"
 	"github.com/vvanpo/makerspace/billing"
+	"github.com/vvanpo/makerspace/member"
 	"golang.org/x/crypto/scrypt"
 	"log"
 	"net/http"
@@ -18,62 +19,15 @@ import (
 	"time"
 )
 
-func rand256() string {
-	n := make([]byte, 32)
-	_, err := rand.Read(n)
-	if err != nil {
-		log.Panic(err)
-	}
-	return hex.EncodeToString(n)
-}
-
-func key(password, salt string) string {
-	s, err := hex.DecodeString(salt)
-	if err != nil {
-		log.Panicf("Invalid salt: %s", err)
-	}
-	key, err := scrypt.Key([]byte(password), s, 16384, 8, 1, 32)
-	if err != nil {
-		log.Panic(err)
-	}
-	return hex.EncodeToString(key)
-}
-
-type member struct {
-	Session   string
-	Username  string
-	Name      string
-	Email     string
-	Active    bool
-	Student   *student
-	Talk_user struct {
-		User struct {
-			Id                 int
-			Username           string
-			Avatar_template    string
-			Admin              bool
-			Profile_background string
-			Card_background    string
-		}
-	}
-	Billing *billing.Profile
-}
-
-func (m member) Authenticated() bool {
-	if m.Session == "" {
-		return false
-	}
-	return true
-}
-
 func (p page) Avatar() string {
 	rexp := regexp.MustCompile("{size}")
-	if p.Member.Talk_user.User.Avatar_template == "" {
+	if p.Member.Talk.Avatar_template == "" {
 		return ""
 	}
 	return p.Discourse["url"] + string(rexp.ReplaceAll([]byte(p.Member.Talk_user.User.Avatar_template), []byte("120")))
 }
 
+/*
 type student struct {
 	Institution string
 	Grad_date   time.Time
@@ -92,9 +46,9 @@ func (m *member) get_student(db *sql.DB) {
 	} else {
 		m.Student = &student{institution.String, grad_date.Time}
 	}
-}
+}*/
 
-func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request, member *member) {
+func (s *Http_server) authenticate(w http.ResponseWriter, r *http.Request) *member.Member {
 	cookie, err := r.Cookie("session")
 	if err != nil {
 		return
@@ -263,9 +217,6 @@ func (s *Http_server) member_handler() {
 	s.billing_handler()
 	s.storage_handler()
 	s.mux.HandleFunc("/member", func(w http.ResponseWriter, r *http.Request) {
-		//////
-		s.parse_templates()
-		/////
 		p := s.new_page("dashboard", "Dashboard")
 		s.authenticate(w, r, &p.Member)
 		if !p.Member.Authenticated() {
@@ -298,8 +249,9 @@ func (s *Http_server) tools_handler() {
 	s.mux.HandleFunc("/member/tools", func(w http.ResponseWriter, r *http.Request) {
 		p := s.new_page("tools", "Tools")
 		s.authenticate(w, r, &p.Member)
-		if !p.Member.Authenticated() {
-			http.Error(w, http.StatusText(403), 403)
+		if p.Member == nil {
+			s.page_error(p, 403, w)
+			//http.Error(w, http.StatusText(403), 403)
 			return
 		}
 		s.tmpl.Execute(w, p)
@@ -308,13 +260,11 @@ func (s *Http_server) tools_handler() {
 
 func (s *Http_server) storage_handler() {
 	s.mux.HandleFunc("/member/storage", func(w http.ResponseWriter, r *http.Request) {
-		//////
-		s.parse_templates()
-		/////
 		p := s.new_page("storage", "Storage")
 		s.authenticate(w, r, &p.Member)
 		if !p.Member.Authenticated() {
-			http.Error(w, http.StatusText(403), 403)
+			s.page_error(p, 403, w)
+			//http.Error(w, http.StatusText(403), 403)
 			return
 		}
 		s.tmpl.Execute(w, p)

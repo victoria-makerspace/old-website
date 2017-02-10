@@ -5,6 +5,7 @@ import (
 	"fmt"
 	beanstream "github.com/Beanstream/beanstream-go"
 	"github.com/lib/pq"
+	"github.com/vvanpo/makerspace/member"
 	"log"
 	"math/rand"
 	"strconv"
@@ -34,39 +35,39 @@ func Billing_new(merchant_id, payments_api_key, profiles_api_key, reports_api_ke
 }
 
 type Profile struct {
+	member	 *member.Member
 	b        *Billing
-	username string
 	bs       beanstream.Profile
 }
 
-func (b *Billing) New_profile(token, name, username string) *Profile {
-	p := &Profile{b: b, username: username}
+func (b *Billing) New_profile(token, name string, m *member.Member) *Profile {
+	p := &Profile{b: b, member: m}
 	p.bs.Token = beanstream.Token{
 		Token: token,
 		Name:  name}
-	p.bs.Custom = beanstream.CustomFields{Ref1: username}
+	p.bs.Custom = beanstream.CustomFields{Ref1: m.Username}
 	rsp, err := b.profiles.CreateProfile(p.bs)
 	if err != nil {
 		log.Println(err)
 	}
 	p.bs.Id = rsp.Id
-	_, err = b.db.Exec("INSERT INTO billing_profile VALUES ($1, $2)", username, rsp.Id)
+	_, err = b.db.Exec("INSERT INTO billing_profile VALUES ($1, $2)", m.Username, rsp.Id)
 	if err != nil {
 		log.Panic(err)
 	}
 	return p
 }
 
-func (b *Billing) Get_profile(username string) *Profile {
+func (b *Billing) Get_profile(m *member.Member) *Profile {
 	var id string
-	err := b.db.QueryRow("SELECT id FROM billing_profile WHERE username = $1", username).Scan(&id)
+	err := b.db.QueryRow("SELECT id FROM billing_profile WHERE username = $1", m.Username).Scan(&id)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Panic(err)
 		}
 		return nil
 	}
-	p := &Profile{b: b, username: username}
+	p := &Profile{b: b, member: m}
 	if bs, err := b.profiles.GetProfile(id); err != nil {
 		log.Println(err)
 		return nil
@@ -116,10 +117,10 @@ func (p *Profile) Update_billing(name string, amount float64) {
 	var id int
 	var a string
 	var start_date time.Time
-	err := p.b.db.QueryRow("SELECT id, amount, start_date FROM billing WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.username, name).Scan(&id, &a, &start_date)
+	err := p.b.db.QueryRow("SELECT id, amount, start_date FROM billing WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.member.Username, name).Scan(&id, &a, &start_date)
 	if err == sql.ErrNoRows {
 		// Register member
-		_, err = p.b.db.Exec("INSERT INTO billing (username, name, amount) VALUES ($1, $2, $3)", p.username, name, amount)
+		_, err = p.b.db.Exec("INSERT INTO billing (username, name, amount) VALUES ($1, $2, $3)", p.member.Username, name, amount)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -142,14 +143,14 @@ func (p *Profile) Update_billing(name string, amount float64) {
 	//	date as the old one (so that there is no confusion about start date when
 	//	looking at the list of billings).
 	p.Cancel_billing(name)
-	_, err = p.b.db.Exec("INSERT INTO billing (username, name, amount, start_date) VALUES ($1, $2, $3, $4)", p.username, name, amount, start_date)
+	_, err = p.b.db.Exec("INSERT INTO billing (username, name, amount, start_date) VALUES ($1, $2, $3, $4)", p.member.Username, name, amount, start_date)
 	if err != nil {
 		log.Panic(err)
 	}
 }
 
 func (p *Profile) Cancel_billing(name string) {
-	_, err := p.b.db.Exec("UPDATE billing SET end_date = now() WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.username, name)
+	_, err := p.b.db.Exec("UPDATE billing SET end_date = now() WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.member.Username, name)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -163,7 +164,7 @@ type Recurring_billing struct {
 }
 
 func (p *Profile) Get_recurring_bills() (rb []Recurring_billing) {
-	rows, err := p.b.db.Query("SELECT name, amount, start_date, end_date FROM billing WHERE username = $1 AND (end_date > now() OR end_date IS NULL)", p.username)
+	rows, err := p.b.db.Query("SELECT name, amount, start_date, end_date FROM billing WHERE username = $1 AND (end_date > now() OR end_date IS NULL)", p.member.Username)
 	defer rows.Close()
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -212,7 +213,7 @@ func (p *Profile) New_transaction(amount float64, name, ip_address string) *Tran
 	if amount <= 0 {
 		return nil
 	}
-	order_id := fmt.Sprint(rand.Intn(1000000)) + "-" + p.username
+	order_id := fmt.Sprint(rand.Intn(1000000)) + "-" + p.member.Username
 	req := beanstream.PaymentRequest{
 		PaymentMethod: "payment_profile",
 		OrderNumber:   order_id,
@@ -226,10 +227,10 @@ func (p *Profile) New_transaction(amount float64, name, ip_address string) *Tran
 		log.Println(err)
 	}
 	if !rsp.IsApproved() {
-		log.Println("Payment of %.2f by %s failed", amount, p.username)
+		log.Println("Payment of %.2f by %s failed", amount, p.member.Username)
 	}
 	txn := &Transaction{id: rsp.ID,
-		username:   p.username,
+		username:   p.member.Username,
 		Date:       time.Now(),
 		Approved:   rsp.IsApproved(),
 		Order_id:   rsp.OrderNumber,
@@ -237,7 +238,7 @@ func (p *Profile) New_transaction(amount float64, name, ip_address string) *Tran
 		Name:       name,
 		Card:       rsp.Card.LastFour,
 		Ip_address: ip_address}
-	_, err = p.b.db.Exec("INSERT INTO transaction (id, username, approved, order_id, amount, name, card, ip_address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)", rsp.ID, p.username, txn.Approved, txn.Order_id, txn.Amount, txn.Name, txn.Card, txn.Ip_address)
+	_, err = p.b.db.Exec("INSERT INTO transaction (id, username, approved, order_id, amount, name, card, ip_address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)", rsp.ID, p.member.Username, txn.Approved, txn.Order_id, txn.Amount, txn.Name, txn.Card, txn.Ip_address)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -246,7 +247,7 @@ func (p *Profile) New_transaction(amount float64, name, ip_address string) *Tran
 
 func (p *Profile) Get_transactions(number int) []*Transaction {
 	var txns []*Transaction
-	rows, err := p.b.db.Query("SELECT id, approved, order_id, amount, name, card, ip_address, time FROM transaction WHERE username = $1 ORDER BY time DESC LIMIT $2", p.username, number)
+	rows, err := p.b.db.Query("SELECT id, approved, order_id, amount, name, card, ip_address, time FROM transaction WHERE username = $1 ORDER BY time DESC LIMIT $2", p.member.Username, number)
 	defer rows.Close()
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -255,7 +256,7 @@ func (p *Profile) Get_transactions(number int) []*Transaction {
 		return txns
 	}
 	for i := 0; rows.Next(); i++ {
-		txn := &Transaction{username: p.username}
+		txn := &Transaction{username: p.member.Username}
 		txns = append(txns, txn)
 		var (
 			amount     string

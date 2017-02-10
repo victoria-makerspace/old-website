@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/vvanpo/makerspace/billing"
+	"github.com/vvanpo/makerspace/member"
 	"html/template"
 	"log"
 	"net/http"
@@ -34,12 +35,23 @@ type Http_server struct {
 type page struct {
 	Name      string
 	Title     string
-	Member    member
+	*session
 	Discourse map[string]string
 }
 
-func (s *Http_server) new_page(name, title string) page {
-	return page{Name: name, Title: title, Discourse: s.config.Discourse}
+func (s *Http_server) new_page(name, title string, w http.ResponseWriter, r *http.Request) page {
+	//// TODO: remove after testing
+	s.parse_templates()
+	/////
+	return page{Name: name,
+		Title: title,
+		Discourse: s.config.Discourse}
+}
+
+// page_error writes the session cookie if it exists and executes an error
+//	template.
+func (s *Http_server) page_error(p page, code int, w http.ResponseWriter) {
+
 }
 
 func (s *Http_server) root_handler() {
@@ -49,14 +61,15 @@ func (s *Http_server) root_handler() {
 			return
 		}
 		p := s.new_page("index", "")
-		s.authenticate(w, r, &p.Member)
+		s.authenticate(w, r, p.Member)
 		if signout := r.PostFormValue("sign-out"); signout != "" && signout == p.Member.Username {
-			s.sign_out(w, &p.Member)
+			s.sign_out(w, p.Member)
 		}
 		s.tmpl.Execute(w, p)
 	})
 }
 
+/*
 func (s *Http_server) talk_proxy() {
 	rp := &httputil.ReverseProxy{}
 	rp.Director = func(r *http.Request) {
@@ -64,7 +77,7 @@ func (s *Http_server) talk_proxy() {
 		r.URL.Host = s.config.Domain + ":1081"
 	}
 	s.mux.HandleFunc("/talk/", rp.ServeHTTP)
-}
+}*/
 
 func (s *Http_server) data_handler() {
 	s.mux.HandleFunc("/member/data/", func(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +89,6 @@ func (s *Http_server) join_handler() {
 	username_rexp := regexp.MustCompile("^[\\pL\\pN\\pM\\pP]+$")
 	name_rexp := regexp.MustCompile("^(?:[\\pL\\pN\\pM\\pP]+ ?)+$")
 	s.mux.HandleFunc("/join", func(w http.ResponseWriter, r *http.Request) {
-		s.parse_templates()
 		p := s.new_page("join", "Join")
 		s.authenticate(w, r, &p.Member)
 		if p.Member.Authenticated() {
