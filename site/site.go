@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"path"
 )
 
 var templates = [...]string{"main",
@@ -96,9 +97,7 @@ func (p *page) write_template() {
 	}
 }
 
-// TODO: call for all errors, including 404's from /static/ fileserver
-// http_error writes the session cookie if it exists and executes an error
-//	template.
+// http_error executes an error template.
 func (p *page) http_error(code int) {
 	p.Name = "error"
 	p.Title = fmt.Sprint(code)
@@ -110,11 +109,21 @@ func (p *page) http_error(code int) {
 func (h *Http_server) root_handler() {
 	h.member_handler()
 	h.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		p := h.new_page("index", "", w, r)
 		if r.URL.Path != "/" {
-			http.FileServer(http.Dir(h.config.Static_dir)).ServeHTTP(w, r)
+			// Handler for /static/ file directory
+			dir := http.Dir(h.config.Static_dir)
+			file, err := dir.Open(path.Clean(r.URL.Path))
+			if err == nil {
+				if fi, err := file.Stat(); err == nil && !fi.IsDir() {
+					http.ServeContent(w, r, fi.Name(), fi.ModTime(), file)
+					return
+				}
+			}
+			p.authenticate()
+			p.http_error(404)
 			return
 		}
-		p := h.new_page("index", "", w, r)
 		p.authenticate()
 		p.write_template()
 	})

@@ -119,7 +119,7 @@ func (p *Profile) Update_billing(name string, amount float64) {
 	var start_date time.Time
 	err := p.b.db.QueryRow("SELECT id, amount, start_date FROM billing WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.member.Username, name).Scan(&id, &a, &start_date)
 	if err == sql.ErrNoRows {
-		// Register member
+		// Register billing
 		_, err = p.b.db.Exec("INSERT INTO billing (username, name, amount) VALUES ($1, $2, $3)", p.member.Username, name, amount)
 		if err != nil {
 			log.Panic(err)
