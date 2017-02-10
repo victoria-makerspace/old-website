@@ -1,12 +1,7 @@
 Site:
-    - HTTP/2
-    - Go templates
-    - Mux for Discourse server
     - SSO for Discourse automatic login
     - Discourse CSS
-
-Database:
-    - PostgreSQL
+    - Projects pages for members
 
 Tool use hooks:
     - Laser cutter

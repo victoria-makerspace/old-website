@@ -6,8 +6,10 @@ import (
 	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/member"
 	"log"
+	"encoding/json"
 	"net/http"
 	"time"
+	"regexp"
 )
 
 func (p *page) set_session_cookie(value string, expires bool) {
@@ -58,6 +60,7 @@ func (p *page) new_session(m *member.Member, expires bool) {
 	}
 	p.set_session_cookie(token, expires)
 	p.Session = &session{Member: m, token: token}
+	p.talk_user_data()
 }
 
 // authenticate validates the session cookie, setting p.Session if valid
@@ -83,7 +86,7 @@ func (p *page) authenticate() {
 	if _, err := p.db.Exec("UPDATE session_http SET token = $1, last_seen = now(), expires = now() + interval '1 year' WHERE token = $2", p.Session.token, cookie.Value); err != nil {
 		log.Panic(err)
 	}
-	/// TODO: decode talk user data?
+	p.talk_user_data()
 }
 
 // destroy_session invalidates the current session.
@@ -96,3 +99,22 @@ func (p *page) destroy_session() {
 	}
 	p.unset_session_cookie()
 }
+
+var avatar_size_rexp = regexp.MustCompile("{size}")
+
+// talk_user_data fetches user info from the talk server
+func (p *page) talk_user_data() {
+	var data map[string]interface{}
+	talk_url := p.config.Discourse["url"]
+	rsp, err := http.Get(talk_url + "/users/" + p.Member().Username + ".json")
+	if err != nil || json.NewDecoder(rsp.Body).Decode(&data) != nil {
+		log.Println(err)
+		return
+	}
+	if user, ok := data["user"].(map[string]interface{}); ok {
+		p.Field["avatar_url"] = talk_url + string(avatar_size_rexp.ReplaceAll([]byte(user["avatar_template"].(string)), []byte("120")))
+		p.Field["card_background_url"] = talk_url + user["card_background"].(string)
+		p.Field["profile_background_url"] = talk_url + user["profile_background"].(string)
+	}
+}
+

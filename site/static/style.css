@@ -226,6 +226,15 @@ input[type=month] {
 #monthly th:last-child {
     width: 1%;
 }
+#profile-background {
+    height: 18rem;
+    background-size: cover;
+    background-position-y: 50%;
+    margin-bottom: 2rem;
+}
+#profile-background + .container {
+    padding-top: 0;
+}
 
 @media (max-width: 575px) {
     .navbar > .container {

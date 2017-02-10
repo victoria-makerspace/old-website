@@ -20,19 +20,12 @@ $("#navbar-guest .navbar-collapse").on("hidden.bs.collapse", function() {
     $(".navbar-toggler").removeClass("active");
 });
 
-var talk_url = $(".nav-link[title='Talk forum']").attr("href");
-var talk_user = function(username) {
-    return $.getJSON(talk_url + "/users/" + username + ".json").responseJSON;
-}
-var talk_avatar_url = function(talk_user) {
-    var url = talk_user["users"]["avatar_template"].replace("{size}", "120");
-}
-
 $(document).ready(function() {
 	if ($("#shop-features").length) {
 		$("body").scrollspy({ target: "#navbar-guest" });
 	}
 	var username = $("#sign-out button[name='sign-out']").val();
+    var talk_url = $(".nav-link[title='Talk forum']").attr("href");
     if (username) {
         console.log(talk_user(username));
         $.getJSON(talk_url + "/notifications.json", function(data) {
