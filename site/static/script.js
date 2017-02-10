@@ -26,7 +26,7 @@ $(document).ready(function() {
 		$("body").scrollspy({ target: "#navbar-guest" });
 	}
 	var username = $("#sign-out button[name='sign-out']").val();
-    if (username.length) {
+    if (username) {
         var talk_url = $("#general-menu .nav-link[title='Talk forum']").attr("href");
         $.getJSON(talk_url + "/notifications.json", function(data) {
             $.each(data["notifications"], function(i, v) {

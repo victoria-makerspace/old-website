@@ -8,19 +8,33 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"net/http/httputil"
-	"regexp"
+	_"regexp"
 )
 
-var templates = [...]string{"main", "index", "sign-in", "join", "dashboard", "billing", "tools", "storage"}
+var templates = [...]string{"main",
+	"index",
+	"sign-in",
+	"join",
+	"dashboard",
+	"billing",
+	"tools",
+	"storage"}
+
+func (s *Http_server) parse_templates() {
+	s.tmpl = template.Must(template.ParseFiles(func() []string {
+		files := make([]string, len(templates))
+		for i := range templates {
+			files[i] = s.config.Templates_dir + templates[i] + ".tmpl"
+		}
+		return files
+	}()...))
+}
 
 type Config struct {
-	Domain        string
-	Port          int
-	Templates_dir string
-	Static_dir    string
-	Data_dir      string
-	Discourse     map[string]string
+	Domain                              string
+	Port                                int
+	Templates_dir, Static_dir, Data_dir string
+	Discourse                           map[string]string
 }
 
 type Http_server struct {
@@ -32,40 +46,63 @@ type Http_server struct {
 	tmpl    *template.Template
 }
 
+func Serve(config Config, db *sql.DB, b *billing.Billing) *Http_server {
+	s := &Http_server{config: config, mux: http.NewServeMux(), db: db, billing: b}
+	s.srv.Addr = config.Domain + ":" + fmt.Sprint(config.Port)
+	s.srv.Handler = s.mux
+	s.parse_templates()
+	s.root_handler()
+	//s.join_handler()
+	//s.classes_handler()
+	//s.member_handler()
+	go log.Panic(s.srv.ListenAndServe())
+	return s
+}
+
 type page struct {
 	Name      string
 	Title     string
-	*session
+	Session   *session
 	Discourse map[string]string
 }
 
-func (s *Http_server) new_page(name, title string, w http.ResponseWriter, r *http.Request) page {
+func (h *Http_server) new_page(name, title string) page {
 	//// TODO: remove after testing
-	s.parse_templates()
+	h.parse_templates()
 	/////
 	return page{Name: name,
-		Title: title,
-		Discourse: s.config.Discourse}
+		Title:     title,
+		Discourse: h.config.Discourse}
+}
+
+func (p page) Member() *member.Member {
+	if p.Session != nil {
+		return p.Session.Member
+	}
+	return nil
 }
 
 // page_error writes the session cookie if it exists and executes an error
 //	template.
-func (s *Http_server) page_error(p page, code int, w http.ResponseWriter) {
+func (h *Http_server) page_error(p page, code int, w http.ResponseWriter) {
 
 }
 
 func (s *Http_server) root_handler() {
+	s.member_handler()
 	s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.FileServer(http.Dir(s.config.Static_dir)).ServeHTTP(w, r)
 			return
 		}
 		p := s.new_page("index", "")
-		s.authenticate(w, r, p.Member)
-		if signout := r.PostFormValue("sign-out"); signout != "" && signout == p.Member.Username {
+		p.Session = s.authenticate(r)
+		/*if signout := r.PostFormValue("sign-out"); signout != "" && signout == p.Member.Username {
 			s.sign_out(w, p.Member)
+		}*/
+		if err := s.tmpl.Execute(w, p); err != nil {
+			log.Println(err)
 		}
-		s.tmpl.Execute(w, p)
 	})
 }
 
@@ -78,7 +115,7 @@ func (s *Http_server) talk_proxy() {
 	}
 	s.mux.HandleFunc("/talk/", rp.ServeHTTP)
 }*/
-
+/*
 func (s *Http_server) data_handler() {
 	s.mux.HandleFunc("/member/data/", func(w http.ResponseWriter, r *http.Request) {
 		//http.StripPrefix("/member/data/", http.FileServer(http.Dir(s.config.Data_dir))).ServeHTTP(w, r)
@@ -144,29 +181,4 @@ func (s *Http_server) classes_handler() {
 		s.tmpl.Execute(w, p)
 	})
 }
-
-func (s *Http_server) parse_templates() {
-	s.tmpl = template.Must(template.ParseFiles(func() []string {
-		files := make([]string, len(templates))
-		for i := range templates {
-			files[i] = s.config.Templates_dir + templates[i] + ".tmpl"
-		}
-		return files
-	}()...))
-}
-
-func Serve(config Config, db *sql.DB, b *billing.Billing) *Http_server {
-	s := &Http_server{config: config, mux: http.NewServeMux(), db: db, billing: b}
-	s.srv.Addr = config.Domain + ":" + fmt.Sprint(config.Port)
-	s.srv.Handler = s.mux
-	s.parse_templates()
-	s.root_handler()
-	//s.talk_proxy()
-	s.data_handler()
-	s.join_handler()
-	s.classes_handler()
-	s.sso_handler()
-	s.member_handler()
-	go log.Panic(s.srv.ListenAndServe())
-	return s
-}
+*/

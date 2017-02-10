@@ -1,8 +1,13 @@
 package site
 
 import (
+	"database/sql"
 	"github.com/lib/pq"
+	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/member"
+	"log"
+	"net/http"
+	"time"
 )
 
 func (s *Http_server) session_cookie(value string) http.Cookie {
@@ -14,17 +19,13 @@ func (s *Http_server) session_cookie(value string) http.Cookie {
 		HttpOnly: true}
 }
 
-type member_info struct {
-	*member.Member
-	Talk map[string]interface{}
-	Billing *billing.Profile
-}
-
 type session struct {
-	token  string
-	Member *member_info
-	cookie http.Cookie
-	server *Http_server
+	*member.Member
+	Talk    map[string]interface{}
+	Billing *billing.Profile
+	token   string
+	cookie  http.Cookie
+	server  *Http_server
 }
 
 // new_session creates a new session, without setting the cookie.
@@ -42,8 +43,8 @@ func (s *Http_server) new_session(m *member.Member, expires bool) *session {
 		}
 	}
 	return &session{
-		token: token,
-		Member: &member_info{m},
+		token:  token,
+		Member: m,
 		cookie: cookie,
 		server: s}
 }
@@ -63,22 +64,25 @@ func (h *Http_server) authenticate(r *http.Request) *session {
 		return nil
 	}
 	s := &session{token: cookie.Value,
-				Member: &member_info{member.Get(username)},
-				cookie: h.session_cookie(cookie.Value),
-				server: h}
+		Member: member.Get(username, h.db),
+		cookie: h.session_cookie(cookie.Value),
+		server: h}
 	s.update()
 	/// TODO: decode talk user data
 	return s
 }
 
-// destroy destroys the session, but does not remove the cookie.  The session
-//	object must not be used after destroy(), as session methods assume a valid
-//	object.
+// destroy destroys the session, but does not remove the cookie.  Other than
+//	using the cookie field to unset the session cookie, the session object must
+//	not be used after destroy(), as session methods assume a valid object.
 //	destroy panics if the session doesn't exist, or if it is called twice.
 func (s *session) destroy() {
 	if _, err := s.server.db.Exec("UPDATE session_http SET expires = 'epoch' WHERE token = $1", s.token); err != nil {
 		log.Panic(err)
 	}
+	s.cookie.Value = " "
+	s.cookie.Expires = time.Unix(0,0)
+	s.cookie.MaxAge = -1
 }
 
 // update creates a new token for the session and updates the expiry date, if it
@@ -102,3 +106,4 @@ func (s *session) update() {
 	s.token = token
 	s.cookie.Value = token
 }
+

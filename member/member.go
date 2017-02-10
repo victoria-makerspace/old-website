@@ -61,7 +61,7 @@ func New(username, name, email, password string, db *sql.DB) *Member {
 
 func Get(username string, db *sql.DB) *Member {
 	m := &Member{}
-	if err := db.QueryRow("SELECT username, name, password_key, password_salt, email, registered FROM member WHERE username = $1").Scan(m.Username, m.Name, m.password_key, m.password_salt, m.Registered); err != nil {
+	if err := db.QueryRow("SELECT username, name, password_key, password_salt, email, registered FROM member WHERE username = $1", username).Scan(&m.Username, &m.Name, &m.password_key, &m.password_salt, &m.Email, &m.Registered); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
