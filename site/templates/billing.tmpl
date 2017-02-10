@@ -139,33 +139,34 @@
                 </section>
                 <hr>
                 <section>
+                    {{$student := and .Session.Billing .Session.Billing.Student}}
                     <h4>Membership dues</h4>
                     <form id="billing" class="px-2 px-sm-3" method="post" action="/member/billing">
                         <fieldset class="form-group mb-2 mb-sm-3">
                             <label class="custom-control custom-radio">
-                                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not .Member.Student}} checked{{end}}>
+                                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not $student}} checked{{end}}>
                                 <span class="custom-control-indicator"></span>
                                 <span class="custom-control-description"><b>Regular</b> ($50/month)</span>
                             </label>
                             <label class="custom-control custom-radio">
-                                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if .Member.Student}} checked{{end}}>
+                                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if $student}} checked{{end}}>
                                 <span class="custom-control-indicator"></span>
                                 <span class="custom-control-description"><b>Student</b> ($30/month)</span>
                             </label>
                         </fieldset>
-                        <fieldset id="student"{{if not .Member.Student}}class="text-muted" disabled{{end}}>
+                        <fieldset id="student"{{if not $student}}class="text-muted" disabled{{end}}>
                             <legend class="h5 mb-0 mb-sm-2">Student info</legend>
                             <div class="form-group row mb-2"> 
                                 <label for="institution" class="col-sm-4 col-form-label">Institution name</label>
                                 <div class="col-sm-8">
-                                    <input type="text" class="form-control" id="institution" name="institution" {{if .Member.Student}} value="{{.Member.Student.Institution}}" required{{end}}>
+                                    <input type="text" class="form-control" id="institution" name="institution" {{with $student}} value="{{.Institution}}" required{{end}}>
                                     <small class="form-control-feedback"></small>
                                 </div>
                             </div>
                             <div class="form-group row mb-sm-2">
                                 <label for="graduation" class="col-sm-4 col-form-label">Expected graduation</label>
                                 <div class="col-sm-8">
-                                    <input type="month" class="form-control" id="graduation" name="graduation"{{if .Member.Student}} value="{{.Member.Student.Grad_date.Format "2006-01"}}" required{{end}}>
+                                    <input type="month" class="form-control" id="graduation" name="graduation"{{with $student}} value="{{.Graduation_date.Format "2006-01"}}" required{{end}}>
                                     <small class="form-control-feedback"></small>
                                 </div>
                             </div>

@@ -34,10 +34,16 @@ func Billing_new(merchant_id, payments_api_key, profiles_api_key, reports_api_ke
 	return b
 }
 
+type student struct {
+	Institution string
+	Graduation_date time.Time
+}
+
 type Profile struct {
 	member	 *member.Member
 	b        *Billing
 	bs       beanstream.Profile
+	Student  *student
 }
 
 func (b *Billing) New_profile(token, cardholder string, m *member.Member) *Profile {
@@ -59,8 +65,12 @@ func (b *Billing) New_profile(token, cardholder string, m *member.Member) *Profi
 }
 
 func (b *Billing) Get_profile(m *member.Member) *Profile {
-	var id string
-	err := b.db.QueryRow("SELECT id FROM billing_profile WHERE username = $1", m.Username).Scan(&id)
+	var (
+		id string
+		username, institution sql.NullString
+		grad_date pq.NullTime
+	)
+	err := b.db.QueryRow("SELECT bp.id, s.username, s.institution, s.graduation_date FROM billing_profile bp LEFT JOIN student s USING (username) WHERE bp.username = $1", m.Username).Scan(&id, &username, &institution, &grad_date)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Panic(err)
@@ -73,6 +83,9 @@ func (b *Billing) Get_profile(m *member.Member) *Profile {
 		return nil
 	} else {
 		p.bs = *bs
+		if username.Valid {
+			p.Student = &student{institution.String, grad_date.Time}
+		}
 	}
 	return p
 }

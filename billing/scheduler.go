@@ -27,7 +27,7 @@ func (b *Billing) payment_scheduler() {
 			//	anyone ever ends up with a recurring billing without a
 			//	beanstream profile.
 			// TODO: implement the billing.monthly flag to actually do something
-			rows, err := b.db.Query("SELECT b.username, b.name, b.amount, bp.id FROM billing b LEFT JOIN billing_profile bp USING username WHERE b.monthly = true AND (b.end_date > now() OR b.end_date IS NULL)")
+			rows, err := b.db.Query("SELECT b.username, b.name, b.amount, bp.id FROM billing b LEFT JOIN billing_profile bp USING (username) WHERE b.monthly = true AND (b.end_date > now() OR b.end_date IS NULL)")
 			defer rows.Close()
 			if err != nil {
 				if err != sql.ErrNoRows {
