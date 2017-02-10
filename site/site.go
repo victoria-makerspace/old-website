@@ -8,10 +8,10 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	_"regexp"
 )
 
 var templates = [...]string{"main",
+	"error",
 	"index",
 	"sign-in",
 	"join",
@@ -60,64 +60,73 @@ func Serve(config Config, db *sql.DB, b *billing.Billing) *Http_server {
 }
 
 type page struct {
-	Name      string
-	Title     string
-	Session   *session
-	Discourse map[string]string
+	Name    string
+	Title   string
+	Session *session
+	Field   map[string]string // Data to be passed to templates
+	http.ResponseWriter
+	*http.Request
+	*Http_server
 }
 
-func (h *Http_server) new_page(name, title string) page {
+func (h *Http_server) new_page(name, title string, w http.ResponseWriter, r *http.Request) *page {
 	//// TODO: remove after testing
 	h.parse_templates()
 	/////
-	return page{Name: name,
-		Title:     title,
-		Discourse: h.config.Discourse}
+	p := &page{Name: name,
+		Title:          title,
+		Field:          make(map[string]string),
+		ResponseWriter: w,
+		Request:        r,
+		Http_server:    h}
+	p.Field["talk_url"] = p.config.Discourse["url"]
+	return p
 }
 
-func (p page) Member() *member.Member {
+func (p *page) Member() *member.Member {
 	if p.Session != nil {
 		return p.Session.Member
 	}
 	return nil
 }
 
-// page_error writes the session cookie if it exists and executes an error
-//	template.
-func (h *Http_server) page_error(p page, code int, w http.ResponseWriter) {
-
+func (p *page) write_template() {
+	if err := p.tmpl.Execute(p.ResponseWriter, p); err != nil {
+		log.Println(err)
+	}
 }
 
-func (s *Http_server) root_handler() {
-	s.member_handler()
-	s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+// TODO: call for all errors, including 404's from /static/ fileserver
+// http_error writes the session cookie if it exists and executes an error
+//	template.
+func (p *page) http_error(code int) {
+	p.Name = "error"
+	p.Title = fmt.Sprint(code)
+	p.Field["error_message"] = http.StatusText(code)
+	p.WriteHeader(code)
+	p.write_template()
+}
+
+func (h *Http_server) root_handler() {
+	h.member_handler()
+	h.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
-			http.FileServer(http.Dir(s.config.Static_dir)).ServeHTTP(w, r)
+			http.FileServer(http.Dir(h.config.Static_dir)).ServeHTTP(w, r)
 			return
 		}
-		p := s.new_page("index", "")
-		p.Session = s.authenticate(w, r)
-		if err := s.tmpl.Execute(w, p); err != nil {
-			log.Println(err)
-		}
+		p := h.new_page("index", "", w, r)
+		p.authenticate()
+		p.write_template()
 	})
 }
 
-/*
-func (s *Http_server) talk_proxy() {
-	rp := &httputil.ReverseProxy{}
-	rp.Director = func(r *http.Request) {
-		r.URL.Scheme = "http"
-		r.URL.Host = s.config.Domain + ":1081"
-	}
-	s.mux.HandleFunc("/talk/", rp.ServeHTTP)
-}*/
 /*
 func (s *Http_server) data_handler() {
 	s.mux.HandleFunc("/member/data/", func(w http.ResponseWriter, r *http.Request) {
 		//http.StripPrefix("/member/data/", http.FileServer(http.Dir(s.config.Data_dir))).ServeHTTP(w, r)
 	})
-}
+}*/
+/*
 
 func (s *Http_server) join_handler() {
 	username_rexp := regexp.MustCompile("^[\\pL\\pN\\pM\\pP]+$")

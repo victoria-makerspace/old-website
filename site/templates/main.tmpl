@@ -18,11 +18,7 @@
     <div class="container">
       <a id="general-toggler" class="navbar-toggler navbar-toggler-right nav-link glyphicons glyphicons-menu-hamburger" role="button" data-toggle="collapse" data-parent="#navbar-member" data-target="#general-menu" aria-expanded="false"></a>
       <a id="member-icon" class="navbar-toggler navbar-toggler-right nav-link" role="button" data-toggle="collapse" data-parent="#navbar-member" data-target="#member-menu" aria-expanded="false">
-        {{with .Avatar}}
-        <img src="{{.}}">
-        {{else}}
         <div class="glyphicons glyphicons-user"></div>
-        {{end}}
       </a>
       <a class="navbar-brand" href="/">
         <img src="/logo-simple-text.svg" alt="Victoria Makerspace">
@@ -141,6 +137,7 @@
         </footer>
 {{end}}
 {{if eq .Name "index"}}{{template "index.tmpl" .}}{{end}}
+{{if eq .Name "error"}}{{template "error.tmpl" .}}{{end}}
 {{if eq .Name "sign-in"}}{{template "sign-in.tmpl"}}{{end}}
 {{if eq .Name "join"}}{{template "join.tmpl"}}{{end}}
 {{if eq .Name "dashboard"}}{{template "dashboard.tmpl" .}}{{end}}

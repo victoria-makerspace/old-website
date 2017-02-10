@@ -1,57 +1,41 @@
 package site
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"net/url"
-	"net/http"
-	"crypto/sha256"
-	"crypto/hmac"
 	"github.com/vvanpo/makerspace/member"
+	"net/http"
+	"net/url"
 )
 
-func (s *Http_server) parse_sso_req(w http.ResponseWriter, r *http.Request) (payload url.Values) {
-	v := r.URL.Query()
+func (p *page) parse_sso_request() (payload url.Values) {
+	v := p.URL.Query()
 	if v.Get("sso") == "" {
 		return
 	}
-	payload_bytes, err := base64.StdEncoding.DecodeString(v.Get("sso"))
-	if err != nil {
-		//TODO: use different error handler
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
-	sig, err := hex.DecodeString(v.Get("sig"))
-	if err != nil {
-		//TODO: use different error handler
-		http.Error(w, http.StatusText(400), 400)
-		return
-	}
-	mac := hmac.New(sha256.New, []byte(s.config.Discourse["sso-secret"]))
+	payload_bytes, _ := base64.StdEncoding.DecodeString(v.Get("sso"))
+	sig, _ := hex.DecodeString(v.Get("sig"))
+	mac := hmac.New(sha256.New, []byte(p.config.Discourse["sso-secret"]))
 	mac.Write([]byte(v.Get("sso")))
-	if !hmac.Equal(mac.Sum(nil), sig) {
-		//TODO: use different error handler
-		http.Error(w, http.StatusText(400), 400)
-		return
-	}
-	payload, err = url.ParseQuery(string(payload_bytes))
-	if err != nil {
-		//TODO: use different error handler
-		http.Error(w, http.StatusText(400), 400)
+	payload, err := url.ParseQuery(string(payload_bytes))
+	if err != nil || !hmac.Equal(mac.Sum(nil), sig) {
+		p.http_error(400)
 		return
 	}
 	return
 }
 
-func (s *Http_server) encode_sso_rsp(nonce string, m *member.Member) (payload, sig string) {
+func (p *page) encode_sso_response(nonce string) (payload, sig string) {
 	q := url.Values{}
 	q.Set("nonce", nonce)
-	q.Set("email", m.Email)
-	q.Set("username", m.Username)
+	q.Set("email", p.Member().Email)
+	q.Set("username", p.Member().Username)
 	q.Set("require_activation", "true")
-	q.Set("external_id", m.Username)
+	q.Set("external_id", p.Member().Username)
 	payload = base64.StdEncoding.EncodeToString([]byte(q.Encode()))
-	mac := hmac.New(sha256.New, []byte(s.config.Discourse["sso-secret"]))
+	mac := hmac.New(sha256.New, []byte(p.config.Discourse["sso-secret"]))
 	mac.Write([]byte(payload))
 	sig = hex.EncodeToString(mac.Sum(nil))
 	payload = url.QueryEscape(payload)
@@ -62,66 +46,65 @@ func (s *Http_server) encode_sso_rsp(nonce string, m *member.Member) (payload, s
 //	sign-in and sign-out responses for local requests
 func (h *Http_server) sso_handler() {
 	h.mux.HandleFunc("/sso.json", func(w http.ResponseWriter, r *http.Request) {
-		p := h.new_page("sso", "")
-		p.Session = h.authenticate(w, r)
+		p := h.new_page("sso", "", w, r)
+		p.authenticate()
 		var response string
 		if p.Session == nil {
 			r.ParseForm()
-			if _, ok := r.PostForm["sign-in"]; ok {
-				if m := member.Get(r.PostFormValue("username"), h.db); m != nil {
-					if !m.Authenticate(r.PostFormValue("password")) {
+			if _, ok := p.PostForm["sign-in"]; ok {
+				if m := member.Get(p.PostFormValue("username"), p.db); m != nil {
+					if !m.Authenticate(p.PostFormValue("password")) {
 						response = "incorrect password"
 					} else {
-						p.Session = h.new_session(w, m, r.PostFormValue("save-session") == "on")
+						p.new_session(m, !(p.PostFormValue("save-session") == "on"))
 						response = "success"
 					}
 				} else {
 					response = "invalid username"
 				}
-				w.Write([]byte("\"" + response + "\""))
+				p.ResponseWriter.Write([]byte("\"" + response + "\""))
 				return
 			}
-			http.Error(w, http.StatusText(404), 404)
+			p.http_error(404)
 		} else {
-			http.Error(w, http.StatusText(403), 403)
+			p.http_error(403)
 		}
 	})
 	h.mux.HandleFunc("/sso", func(w http.ResponseWriter, r *http.Request) {
-		p := h.new_page("sso", "Sign-in")
-		p.Session = h.authenticate(w, r)
-		if p.Session != nil && r.PostFormValue("sign-out") == p.Member().Username {
-			p.Session.destroy(w)
-			http.SetCookie(w, p.Session.cookie)
+		p := h.new_page("sso", "Sign-in", w, r)
+		p.authenticate()
+		if p.Session != nil && p.PostFormValue("sign-out") == p.Member().Username {
+			p.destroy_session()
 			http.Redirect(w, r, "/", 303)
 			return
 		}
-		q := h.parse_sso_req(w, r)
+		q := p.parse_sso_request()
 		sso_payload := q.Get("nonce") != "" && q.Get("return_sso_url") != ""
 		if sso_payload {
-			// template adds sso query to form action
-			p.Discourse["sso"] = r.URL.RawQuery
+			// TODO: template adds sso query to form action
+			// p.....["sso"] = r.URL.RawQuery
 		}
 		if p.Session == nil {
-			if _, ok := r.PostForm["sign-in"]; ok {
-				if m := member.Get(r.PostFormValue("username"), h.db); m != nil {
-					if !m.Authenticate(r.PostFormValue("password")) {
-						h.tmpl.Execute(w, p)
+			if _, ok := p.PostForm["sign-in"]; ok {
+				if m := member.Get(p.PostFormValue("username"), p.db); m != nil {
+					if !m.Authenticate(p.PostFormValue("password")) {
+						p.write_template()
 						return
 					}
-					p.Session = h.new_session(w, m, r.PostFormValue("save-session") == "on")
+					p.new_session(m, !(p.PostFormValue("save-session") == "on"))
 				} else {
-					h.tmpl.Execute(w, p)
+					p.write_template()
 					return
 				}
 			} else {
-				h.tmpl.Execute(w, p)
+				p.write_template()
 				return
 			}
 		}
 		// Won't reach this point without a successful login
 		if sso_payload {
-			payload, sig := h.encode_sso_rsp(q.Get("nonce"), p.Member())
-			http.Redirect(w, r, q.Get("return_sso_url") + "?sso=" + payload + "&sig=" + sig, 303)
+			payload, sig := p.encode_sso_response(q.Get("nonce"))
+			http.Redirect(w, r, q.Get("return_sso_url")+"?sso="+payload+"&sig="+sig, 303)
 		}
 		http.Redirect(w, r, "/member", 303)
 	})

@@ -2,52 +2,38 @@ package site
 
 import (
 	"net/http"
-	"regexp"
 )
 
-func (s *Http_server) member_handler() {
-	s.sso_handler()
-	s.mux.HandleFunc("/member", func(w http.ResponseWriter, r *http.Request) {
-		p := s.new_page("dashboard", "Dashboard")
-		p.Session = s.authenticate(w, r)
-		if p.Member == nil {
-			s.page_error(p, 403, w)
-			//http.Error(w, http.StatusText(403), 403)
+func (h *Http_server) member_handler() {
+	h.sso_handler()
+	h.mux.HandleFunc("/member", func(w http.ResponseWriter, r *http.Request) {
+		p := h.new_page("dashboard", "Dashboard", w, r)
+		p.authenticate()
+		if p.Session == nil {
+			p.http_error(403)
 		}
-		s.tmpl.Execute(w, p)
+		p.write_template()
 	})
 }
 
-func (s *Http_server) tools_handler() {
-	s.mux.HandleFunc("/member/tools", func(w http.ResponseWriter, r *http.Request) {
-		p := s.new_page("tools", "Tools")
-		p.Session = s.authenticate(w, r)
-		if p.Member == nil {
-			s.page_error(p, 403, w)
-			//http.Error(w, http.StatusText(403), 403)
+func (h *Http_server) tools_handler() {
+	h.mux.HandleFunc("/member/tools", func(w http.ResponseWriter, r *http.Request) {
+		p := h.new_page("tools", "Tools", w, r)
+		p.authenticate()
+		if p.Session == nil {
+			p.http_error(403)
 		}
-		s.tmpl.Execute(w, p)
+		p.write_template()
 	})
 }
 
-func (s *Http_server) storage_handler() {
-	s.mux.HandleFunc("/member/storage", func(w http.ResponseWriter, r *http.Request) {
-		p := s.new_page("storage", "Storage")
-		p.Session = s.authenticate(w, r)
-		if p.Member == nil {
-			s.page_error(p, 403, w)
-			//http.Error(w, http.StatusText(403), 403)
+func (h *Http_server) storage_handler() {
+	h.mux.HandleFunc("/member/storage", func(w http.ResponseWriter, r *http.Request) {
+		p := h.new_page("storage", "Storage", w, r)
+		p.authenticate()
+		if p.Session == nil {
+			p.http_error(403)
 		}
-		s.tmpl.Execute(w, p)
+		p.write_template()
 	})
-}
-
-// Avatar returns the url for the member's avatar as determined by the discourse
-//	server.
-func (p page) Avatar() string {
-	rexp := regexp.MustCompile("{size}")
-	if t, ok := p.Session.Talk["avatar_template"].([]byte); ok {
-		return p.Discourse["url"] + string(rexp.ReplaceAll(t, []byte("120")))
-	}
-	return ""
 }

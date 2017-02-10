@@ -40,11 +40,11 @@ type Profile struct {
 	bs       beanstream.Profile
 }
 
-func (b *Billing) New_profile(token, name string, m *member.Member) *Profile {
+func (b *Billing) New_profile(token, cardholder string, m *member.Member) *Profile {
 	p := &Profile{b: b, member: m}
 	p.bs.Token = beanstream.Token{
 		Token: token,
-		Name:  name}
+		Name:  cardholder}
 	p.bs.Custom = beanstream.CustomFields{Ref1: m.Username}
 	rsp, err := b.profiles.CreateProfile(p.bs)
 	if err != nil {

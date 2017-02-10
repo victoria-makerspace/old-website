@@ -5,8 +5,8 @@ psql makerspace <<EOF
 DROP TABLE IF EXISTS member CASCADE;
 DROP TABLE IF EXISTS session_http CASCADE;
 DROP TABLE IF EXISTS administrator CASCADE;
-DROP TABLE IF EXISTS student CASCADE;
 DROP TABLE IF EXISTS billing_profile CASCADE;
+DROP TABLE IF EXISTS student CASCADE;
 DROP TABLE IF EXISTS transaction CASCADE;
 DROP TABLE IF EXISTS billing CASCADE;
 DROP TABLE IF EXISTS payment_scheduler_log CASCADE;
@@ -32,16 +32,16 @@ CREATE TABLE session_http (
 CREATE TABLE administrator (
     username text PRIMARY KEY REFERENCES member
 );
+CREATE TABLE billing_profile (
+    username text PRIMARY KEY REFERENCES member,
+    id text UNIQUE NOT NULL,
+    error bool NOT NULL DEFAULT false,
+    error_message text
+);
 CREATE TABLE student (
     username text PRIMARY KEY REFERENCES member,
     institution text,
     graduation_date date
-);
-CREATE TABLE billing_profile (
-    username text PRIMARY KEY REFERENCES member,
-    id text UNIQUE NOT NULL
-    error bool NOT NULL DEFAULT false,
-    error_message text
 );
 CREATE TABLE billing (
     id serial PRIMARY KEY,
