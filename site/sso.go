@@ -60,42 +60,67 @@ func (s *Http_server) encode_sso_rsp(nonce string, m *member.Member) (payload, s
 
 // sso_handler handles sign-in requests from the talk server, as well as serving
 //	sign-in and sign-out responses for local requests
-func (s *Http_server) sso_handler() {
-	s.mux.HandleFunc("/sso", func(w http.ResponseWriter, r *http.Request) {
-		p := s.new_page("sso", "Sign-in")
-		p.Session = s.authenticate(r)
+func (h *Http_server) sso_handler() {
+	h.mux.HandleFunc("/sso.json", func(w http.ResponseWriter, r *http.Request) {
+		p := h.new_page("sso", "")
+		p.Session = h.authenticate(w, r)
+		var response string
+		if p.Session == nil {
+			r.ParseForm()
+			if _, ok := r.PostForm["sign-in"]; ok {
+				if m := member.Get(r.PostFormValue("username"), h.db); m != nil {
+					if !m.Authenticate(r.PostFormValue("password")) {
+						response = "incorrect password"
+					} else {
+						p.Session = h.new_session(w, m, r.PostFormValue("save-session") == "on")
+						response = "success"
+					}
+				} else {
+					response = "invalid username"
+				}
+				w.Write([]byte("\"" + response + "\""))
+				return
+			}
+			http.Error(w, http.StatusText(404), 404)
+		} else {
+			http.Error(w, http.StatusText(403), 403)
+		}
+	})
+	h.mux.HandleFunc("/sso", func(w http.ResponseWriter, r *http.Request) {
+		p := h.new_page("sso", "Sign-in")
+		p.Session = h.authenticate(w, r)
 		if p.Session != nil && r.PostFormValue("sign-out") == p.Member().Username {
-			p.Session.destroy()
+			p.Session.destroy(w)
 			http.SetCookie(w, p.Session.cookie)
 			http.Redirect(w, r, "/", 303)
 			return
 		}
-		q := s.parse_sso_req(w, r)
-		if q("nonce") != "" && q("return_sso_url") != "" {
+		q := h.parse_sso_req(w, r)
+		sso_payload := q.Get("nonce") != "" && q.Get("return_sso_url") != ""
+		if sso_payload {
 			// template adds sso query to form action
 			p.Discourse["sso"] = r.URL.RawQuery
 		}
 		if p.Session == nil {
 			if _, ok := r.PostForm["sign-in"]; ok {
-				if m := member.Get(r.PostFormValue("username")); m != nil {
+				if m := member.Get(r.PostFormValue("username"), h.db); m != nil {
 					if !m.Authenticate(r.PostFormValue("password")) {
-						s.tmpl.Execute(w, p)
+						h.tmpl.Execute(w, p)
 						return
 					}
-					p.Session = s.new_session(m, r.PostFormValue("save-session") == "on")
-					http.SetCookie(w, p.Session.cookie)
+					p.Session = h.new_session(w, m, r.PostFormValue("save-session") == "on")
 				} else {
-					s.tmpl.Execute(w, p)
+					h.tmpl.Execute(w, p)
 					return
 				}
-			} else if _, ok := r.PostForm["sso"]; !ok {
-				s.tmpl.Execute(w, p)
+			} else {
+				h.tmpl.Execute(w, p)
 				return
 			}
 		}
 		// Won't reach this point without a successful login
-		if q("nonce") != "" && q("return_sso_url") != "" {
-			payload, sig := s.encode_sso_rsp(nonce, p.Member())
+		if sso_payload {
+			payload, sig := h.encode_sso_rsp(q.Get("nonce"), p.Member())
 			http.Redirect(w, r, q.Get("return_sso_url") + "?sso=" + payload + "&sig=" + sig, 303)
 		}
 		http.Redirect(w, r, "/member", 303)

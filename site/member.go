@@ -9,7 +9,7 @@ func (s *Http_server) member_handler() {
 	s.sso_handler()
 	s.mux.HandleFunc("/member", func(w http.ResponseWriter, r *http.Request) {
 		p := s.new_page("dashboard", "Dashboard")
-		p.Session = s.authenticate(r)
+		p.Session = s.authenticate(w, r)
 		if p.Member == nil {
 			s.page_error(p, 403, w)
 			//http.Error(w, http.StatusText(403), 403)
@@ -21,7 +21,7 @@ func (s *Http_server) member_handler() {
 func (s *Http_server) tools_handler() {
 	s.mux.HandleFunc("/member/tools", func(w http.ResponseWriter, r *http.Request) {
 		p := s.new_page("tools", "Tools")
-		p.Session = s.authenticate(r)
+		p.Session = s.authenticate(w, r)
 		if p.Member == nil {
 			s.page_error(p, 403, w)
 			//http.Error(w, http.StatusText(403), 403)
@@ -33,7 +33,7 @@ func (s *Http_server) tools_handler() {
 func (s *Http_server) storage_handler() {
 	s.mux.HandleFunc("/member/storage", func(w http.ResponseWriter, r *http.Request) {
 		p := s.new_page("storage", "Storage")
-		p.Session = s.authenticate(r)
+		p.Session = s.authenticate(w, r)
 		if p.Member == nil {
 			s.page_error(p, 403, w)
 			//http.Error(w, http.StatusText(403), 403)

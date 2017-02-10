@@ -58,7 +58,7 @@
                         <a class="nav-link" href="/member/storage"><span class="glyphicons glyphicons-cargo"></span>&nbsp; storage</a>
                     </li>
                     <li class="nav-item" id="sign-out">
-                        <form action="/" method="post">
+                        <form action="/sso" method="post">
                             <label>
                                 sign out
                                 <button name="sign-out" type="submit" value="{{.Member.Username}}" class="nav-link glyphicons glyphicons-log-out"></button>
@@ -79,7 +79,7 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form class="modal-body" action="/member" method="post" novalidate>
+                <form class="modal-body" action="/sso" method="post" novalidate>
                     <div class="form-group">
                         <div class="input-group">
                             <span class="input-group-addon">@</span>
@@ -101,7 +101,7 @@
                             <span class="custom-control-description">Remember me</span>
                         </label>
                     </div>
-                    <button type="submit" name="sign-in" value="true" class="float-right btn btn-primary">Sign in</button>
+                    <button type="submit" name="sign-in" class="float-right btn btn-primary">Sign in</button>
                 </form>
             </div>
         </div>

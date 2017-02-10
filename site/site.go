@@ -96,10 +96,7 @@ func (s *Http_server) root_handler() {
 			return
 		}
 		p := s.new_page("index", "")
-		p.Session = s.authenticate(r)
-		/*if signout := r.PostFormValue("sign-out"); signout != "" && signout == p.Member.Username {
-			s.sign_out(w, p.Member)
-		}*/
+		p.Session = s.authenticate(w, r)
 		if err := s.tmpl.Execute(w, p); err != nil {
 			log.Println(err)
 		}

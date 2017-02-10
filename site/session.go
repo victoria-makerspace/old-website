@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-func (s *Http_server) session_cookie(value string) http.Cookie {
-	return http.Cookie{Name: "session",
+func (s *Http_server) session_cookie(value string) *http.Cookie {
+	return &http.Cookie{Name: "session",
 		Value:  value,
 		Path:   "/",
 		Domain: s.config.Domain,
@@ -24,12 +24,12 @@ type session struct {
 	Talk    map[string]interface{}
 	Billing *billing.Profile
 	token   string
-	cookie  http.Cookie
+	cookie  *http.Cookie
 	server  *Http_server
 }
 
 // new_session creates a new session, without setting the cookie.
-func (s *Http_server) new_session(m *member.Member, expires bool) *session {
+func (s *Http_server) new_session(w http.ResponseWriter, m *member.Member, expires bool) *session {
 	token := member.Rand256()
 	if _, err := s.db.Exec("INSERT INTO session_http (token, username) VALUES ($1, $2)", token, m.Username); err != nil {
 		log.Panic(err)
@@ -42,6 +42,7 @@ func (s *Http_server) new_session(m *member.Member, expires bool) *session {
 			log.Panic(err)
 		}
 	}
+	http.SetCookie(w, cookie)
 	return &session{
 		token:  token,
 		Member: m,
@@ -50,7 +51,7 @@ func (s *Http_server) new_session(m *member.Member, expires bool) *session {
 }
 
 // authenticate validates the session cookie, returning nil if invalid
-func (h *Http_server) authenticate(r *http.Request) *session {
+func (h *Http_server) authenticate(w http.ResponseWriter, r *http.Request) *session {
 	cookie, err := r.Cookie("session")
 	if err != nil {
 		return nil
@@ -67,7 +68,7 @@ func (h *Http_server) authenticate(r *http.Request) *session {
 		Member: member.Get(username, h.db),
 		cookie: h.session_cookie(cookie.Value),
 		server: h}
-	s.update()
+	s.update(w)
 	/// TODO: decode talk user data
 	return s
 }
@@ -76,19 +77,19 @@ func (h *Http_server) authenticate(r *http.Request) *session {
 //	using the cookie field to unset the session cookie, the session object must
 //	not be used after destroy(), as session methods assume a valid object.
 //	destroy panics if the session doesn't exist, or if it is called twice.
-func (s *session) destroy() {
+func (s *session) destroy(w http.ResponseWriter) {
 	if _, err := s.server.db.Exec("UPDATE session_http SET expires = 'epoch' WHERE token = $1", s.token); err != nil {
 		log.Panic(err)
 	}
 	s.cookie.Value = " "
 	s.cookie.Expires = time.Unix(0,0)
 	s.cookie.MaxAge = -1
+	http.SetCookie(w, s.cookie)
 }
 
 // update creates a new token for the session and updates the expiry date, if it
-//	exists.  It does not actually set the resulting cookie.  update() will panic
-//	if the session doesn't exist.
-func (s *session) update() {
+//	exists.  update() will panic if the session doesn't exist.
+func (s *session) update(w http.ResponseWriter) {
 	// We first find the expiry date to update it by a year and add it to the
 	//	cookie if it exists
 	var expires pq.NullTime
@@ -105,5 +106,6 @@ func (s *session) update() {
 	}
 	s.token = token
 	s.cookie.Value = token
+	http.SetCookie(w, s.cookie)
 }
 

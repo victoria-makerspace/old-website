@@ -123,8 +123,8 @@ form_submit.click(function(event) {
     });
 	if (form.is("#sign-in form")) {
 		event.preventDefault();
-		$.ajax("/sign-in.json", {
-			data: $("#sign-in form").serialize(),
+		$.ajax("/sso.json", {
+			data: $("#sign-in form").serialize() + "&sign-in",
 			dataType: "json",
 			method: "POST",
 			success: function(data) {
@@ -150,7 +150,7 @@ form_submit.click(function(event) {
         event.preventDefault();
         if (!invalid) {
             $.ajax("/join", {
-                data: $("#join").serialize() + "&join=true",
+                data: $("#join").serialize() + "&join",
                 dataType: "json",
                 method: "POST",
                 success: function(data) {
