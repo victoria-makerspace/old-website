@@ -10,18 +10,17 @@ import (
 	"time"
 )
 
-func (s *Http_server) session_cookie(value string) *http.Cookie {
+func (h *Http_server) session_cookie(value string) *http.Cookie {
 	return &http.Cookie{Name: "session",
 		Value:  value,
 		Path:   "/",
-		Domain: s.config.Domain,
+		Domain: h.config.Domain,
 		/* Secure: true, */
 		HttpOnly: true}
 }
 
 type session struct {
 	*member.Member
-	Talk    map[string]interface{}
 	Billing *billing.Profile
 	token   string
 	cookie  *http.Cookie

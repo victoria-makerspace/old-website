@@ -20,6 +20,13 @@ $("#navbar-guest .navbar-collapse").on("hidden.bs.collapse", function() {
     $(".navbar-toggler").removeClass("active");
 });
 
+var talk_url = $(".nav-link[title='Talk forum']").attr("href");
+var talk_user = function(username) {
+    return $.getJSON(talk_url + "/users/" + username + ".json").responseJSON;
+}
+var talk_avatar_url = function(talk_user) {
+    var url = talk_user["users"]["avatar_template"].replace("{size}", "120");
+}
 
 $(document).ready(function() {
 	if ($("#shop-features").length) {
@@ -27,7 +34,7 @@ $(document).ready(function() {
 	}
 	var username = $("#sign-out button[name='sign-out']").val();
     if (username) {
-        var talk_url = $("#general-menu .nav-link[title='Talk forum']").attr("href");
+        console.log(talk_user(username));
         $.getJSON(talk_url + "/notifications.json", function(data) {
             $.each(data["notifications"], function(i, v) {
                 //$("#member-menu-toolbar").after("<li>" + v["data"]["topic_title"] + "</li>");
