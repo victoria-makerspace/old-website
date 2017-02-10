@@ -1,12 +1,12 @@
-{{$card := and (.Member.Billing) (.Member.Billing.Card)}}
+{{$card := and .Session.Billing .Session.Billing.Card}}
   <div class="container">
     <div class="row">
       <div class="col-md-10 col-lg-8 col-xl-7">
-        {{if .Member.Billing}}
+        {{with .Session.Billing}}
         <section>
           <h4>Transactions history</h4>
           <div class="px-2 px-sm-3">
-            {{with .Member.Billing.Get_transactions 8}}
+            {{with .Get_transactions 8}}
             <table class="table table-sm table-striped">
               <thead>
                 <tr>
@@ -31,7 +31,7 @@
             {{else}}
             <p>You have no recent transactions.</p>
             {{end}}
-            {{with .Member.Billing.Get_recurring_bills}}
+            {{with .Get_recurring_bills}}
             <h5>Monthly payments</h5>
             <form action="/member/billing" method="post" id="monthly">
             <table class="table table-sm">
@@ -58,7 +58,7 @@
             </table>
             </form>
             {{end}}
-            {{with .Member.Billing.Get_missed_payments}}
+            {{with .Get_missed_payments}}
             <h5 class="text-danger">Missed payments</h5>
             <table class="table table-sm table-danger">
               <thead>
@@ -83,33 +83,33 @@
         {{end}}
         <section>
           {{with $card}}
-                    <h4>Update credit card</h4>
-                        <div class="row px-2 px-sm-3">
-                            <p class="col-sm-9 mb-2 mb-sm-3 text-muted">
-                                <strong>Current card:</strong> {{.Number}}<br>
-                                <strong>Expiry:</strong> {{.ExpiryMonth}}/20{{.ExpiryYear}}
-                            </p>
-                            <form action="/member/billing" method="post" class="col-sm-3 mb-3 text-sm-right">
-                                <button type="submit" name="delete-card" class="btn btn-warning">Delete</button>
-                            </form>
-                        </div>
-                    {{else}}
-                    <h4>Register credit card</h4>
-                    {{end}}
-                        <form action="/member/billing" method="post" id="credit-card" class="px-2 px-sm-3">
-                            <div class="form-group row mb-2 mb-sm-3">
-                                <label for="name" class="col-sm-4 col-form-label">Name</label>
-                                <div class="col-sm-8">
-                                    <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if not $card}} autofocus{{end}}>
-                                    <small class="form-control-feedback"></small>
-                                </div>
-                            </div>
-                            <div class="form-group row mb-2 mb-sm-3">
-                                <label for="ccNumber" class="col-sm-4 col-form-label">Card number</label>
-                                <div class="col-sm-8">
-                                    <div class="input-group" data-beanstream-target="ccNumber_input">
-                                        <span class="input-group-addon glyphicons glyphicons-credit-card"></span>
-                                    </div>
+          <h4>Update credit card</h4>
+            <div class="row px-2 px-sm-3">
+              <p class="col-sm-9 mb-2 mb-sm-3 text-muted">
+                <strong>Current card:</strong> {{.Number}}<br>
+                <strong>Expiry:</strong> {{.ExpiryMonth}}/20{{.ExpiryYear}}
+              </p>
+              <form action="/member/billing" method="post" class="col-sm-3 mb-3 text-sm-right">
+                <button type="submit" name="delete-card" class="btn btn-warning">Delete</button>
+              </form>
+            </div>
+            {{else}}
+            <h4>Register credit card</h4>
+            {{end}}
+            <form action="/member/billing" method="post" id="credit-card" class="px-2 px-sm-3">
+              <div class="form-group row mb-2 mb-sm-3">
+                <label for="name" class="col-sm-4 col-form-label">Name</label>
+                <div class="col-sm-8">
+                  <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if not $card}} autofocus{{end}}>
+                  <small class="form-control-feedback"></small>
+                </div>
+              </div>
+              <div class="form-group row mb-2 mb-sm-3">
+                <label for="ccNumber" class="col-sm-4 col-form-label">Card number</label>
+              <div class="col-sm-8">
+                <div class="input-group" data-beanstream-target="ccNumber_input">
+                  <span class="input-group-addon glyphicons glyphicons-credit-card"></span>
+                </div>
                                     <small data-beanstream-target="ccNumber_error" class="form-control-feedback"></small>
                                 </div>
                             </div>

@@ -81,8 +81,7 @@ func (h *Http_server) sso_handler() {
 		q := p.parse_sso_request()
 		sso_payload := q.Get("nonce") != "" && q.Get("return_sso_url") != ""
 		if sso_payload {
-			// TODO: template adds sso query to form action
-			// p.....["sso"] = r.URL.RawQuery
+			p.Field["sso_query"] = r.URL.RawQuery
 		}
 		if p.Session == nil {
 			if _, ok := p.PostForm["sign-in"]; ok {
