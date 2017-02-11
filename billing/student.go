@@ -1,29 +1,29 @@
 package billing
 
 import (
+	"github.com/lib/pq"
 	"log"
+	"database/sql"
 	"time"
 )
 
 type student struct {
-	Institution string
+	Institution     string
+	Email           string
 	Graduation_date time.Time
 }
 
-func (bp *Profile) Update_student(institution string, grad_date time.Time) {
-	var query string
-	if bp.Student != nil {
-		query = "INSERT INTO student (username, institution, graduation_date) VALUE ($1, $2, $3)"
+func get_student(username string, db *sql.DB) *student {
+	var (
+		institution, email sql.NullString
+		grad_date pq.NullTime
+	)
+	if err := db.QueryRow("SELECT institution, student_email, graduation_date FROM student WHERE username = $1", username).Scan(&institution, &email, &grad_date); err != nil {
+		if err != sql.ErrNoRows {
+			log.Panic(err)
+		}
+		return nil
 	}
-	query = "UPDATE student SET institution = $2, graduation_date = $3 WHERE username = $1"
-	if _, err := bp.db.Exec(query, bp.member.Username, institution, grad_date); err != nil {
-		log.Panic(err)
-	}
-	bp.Student = &student{institution, grad_date}
+	return &student{institution.String, email.String, grad_date.Time}
 }
 
-func (bp *Profile) Delete_student() {
-	if _, err := bp.db.Exec("DELETE FROM student WHERE username = $1", bp.member.Username); err != nil {
-		log.Panic(err)
-	}
-}

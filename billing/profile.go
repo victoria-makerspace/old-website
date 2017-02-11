@@ -3,7 +3,6 @@ package billing
 import (
 	"database/sql"
 	beanstream "github.com/Beanstream/beanstream-go"
-	"github.com/lib/pq"
 	"github.com/vvanpo/makerspace/member"
 	"log"
 )
@@ -12,7 +11,8 @@ type Profile struct {
 	member	 *member.Member
 	*Billing
 	beanstream.Profile
-	Student  *student
+	Error *string
+	[]*Invoice
 }
 
 func (b *Billing) New_profile(token, cardholder string, m *member.Member) *Profile {
@@ -23,10 +23,11 @@ func (b *Billing) New_profile(token, cardholder string, m *member.Member) *Profi
 	p.Custom = beanstream.CustomFields{Ref1: m.Username}
 	rsp, err := b.profiles.CreateProfile(p.Profile)
 	if err != nil {
-		log.Println(err)
+		log.Println("Failed to create profile: ", err)
+		return nil
 	}
 	p.Id = rsp.Id
-	if _, err = b.db.Exec("INSERT INTO billing_profile VALUES ($1, $2)", m.Username, rsp.Id); err != nil {
+	if _, err = b.db.Exec("INSERT INTO payment_profile VALUES ($1, $2)", m.Username, rsp.Id); err != nil {
 		log.Panic(err)
 	}
 	return p
@@ -35,10 +36,10 @@ func (b *Billing) New_profile(token, cardholder string, m *member.Member) *Profi
 func (b *Billing) Get_profile(m *member.Member) *Profile {
 	var (
 		id string
-		username, institution sql.NullString
-		grad_date pq.NullTime
+		invalid bool
+		error_message *string
 	)
-	err := b.db.QueryRow("SELECT bp.id, s.username, s.institution, s.graduation_date FROM billing_profile bp LEFT JOIN student s USING (username) WHERE bp.username = $1", m.Username).Scan(&id, &username, &institution, &grad_date)
+	err := b.db.QueryRow("SELECT id, error, error_message FROM payment_profile WHERE username = $1", m.Username).Scan(&id, &invalid, error_message)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Panic(err)
@@ -51,10 +52,11 @@ func (b *Billing) Get_profile(m *member.Member) *Profile {
 		return nil
 	} else {
 		p.Profile = *bs
-		if username.Valid {
-			p.Student = &student{institution.String, grad_date.Time}
+		if invalid {
+			p.Error = error_message
 		}
 	}
+	p.get_bills()
 	return p
 }
 
@@ -84,6 +86,10 @@ func (p *Profile) Update_card(name, token string) {
 	if err != nil {
 		log.Println(err)
 		return
+	}
+	// Clear card error
+	if _, err = p.db.Exec("UPDATE payment_profile SET error = false, error_message = null"); err != nil {
+		log.Panic(err)
 	}
 	p.Card = *card
 }

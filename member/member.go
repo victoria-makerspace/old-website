@@ -67,14 +67,13 @@ func Get(username string, db *sql.DB) *Member {
 		}
 		log.Panic(err)
 	}
-	// Check if member is active
-	var n int
-	if err := db.QueryRow("SELECT COUNT(*) FROM billing WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", m.Username, "Membership dues").Scan(&n); err != nil {
+	// Check if member is active, by asserting whether or not they are being
+	//	currently invoiced.
+	var active bool
+	if err := db.QueryRow("SELECT true FROM invoice i INNER JOIN fee f ON (i.fee = f.id) WHERE i.username = $1 AND f.category = 'membership' AND (i.end_date > now() OR i.end_date IS NULL)", m.Username).Scan(&active); err != nil {
 		log.Panic(err)
 	}
-	if n == 1 {
-		m.Active = true
-	}
+	m.Active = active
 	return m
 }
 
@@ -83,4 +82,24 @@ func (m *Member) Authenticate(password string) bool {
 		return true
 	}
 	return false
+}
+
+func (m *Member) Update_student(institution, email string, grad_date time.Time) {
+	var is_student bool
+	if err := m.db.QueryRow("SELECT true FROM student WHERE username = $1", m.Username).Scan(&is_student); err != nil {
+		log.Panic(err)
+	}
+	if is_student {
+		query = "UPDATE student SET institution = $2, student_email = $3, graduation_date = $4 WHERE username = $1"
+	}
+	query = "INSERT INTO student (username, institution, email, graduation_date) VALUE ($1, $2, $3, $4)"
+	if _, err := m.db.Exec(query, m.Username, institution, email, grad_date); err != nil {
+		log.Panic(err)
+	}
+}
+
+func (m *Member) Delete_student() {
+	if _, err := m.db.Exec("DELETE FROM student WHERE username = $1", m.Username); err != nil {
+		log.Panic(err)
+	}
 }

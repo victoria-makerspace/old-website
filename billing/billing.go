@@ -32,6 +32,7 @@ func Billing_new(merchant_id, payments_api_key, profiles_api_key, reports_api_ke
 	return b
 }
 
+///TODO: allow members to register to pay for another member's fees (like their child)
 
 // prorate_month returns the amount multiplied by the fraction of the current
 //	month left.
@@ -41,7 +42,31 @@ func prorate_month(amount float64) float64 {
 	return amount * float64(days_left) / float64(days_in_month)
 }
 
-func (p *Profile) Update_billing(name string, amount float64) {
+type fee struct{
+	Description string
+	interval time.Duration
+}
+
+//TODO
+type (f *fee) Interval() string {
+}
+
+type Invoice struct{
+	id int
+	Username string
+	Date time.Time
+	*Profile
+	Amount float64
+	End_date *time.Time
+	Name *string
+	Recurring_bill *fee
+}
+
+func (p *Profile) get_bills() {
+	rows, err := p.db.Query("SELECT i.id, i.username, i.date, i.payment_profile, i.end_date, COALESCE(i.description, f.description), COALESCE(i.amount, f.amount), f.recurring FROM invoice i LEFT JOIN fee f ON (i.fee = f.id) LEFT JOIN 	")
+}
+
+func (p *Profile) Update_invoice() {
 	var id int
 	var a string
 	var start_date time.Time
@@ -53,7 +78,7 @@ func (p *Profile) Update_billing(name string, amount float64) {
 			log.Panic(err)
 		}
 		// Prorate the current month's bill, do transaction immediately.
-		p.New_transaction(prorate_month(amount), name + " (prorated)", "")
+		p.New_transaction(prorate_month(amount), name+" (prorated)", "")
 		return
 	} else if err != nil {
 		log.Panic(err)
@@ -117,11 +142,11 @@ func (p *Profile) Get_recurring_bills() (rb []Recurring_billing) {
 // Update_membership should only be called after student information has already
 //	been updated.
 func (bp *Profile) Update_membership() {
-	if 
 	var query string
 	if bp.Student != nil {
 		query = ""
 	}
+	log.Println(query)
 }
 
 type Missed_payment struct {
@@ -133,4 +158,3 @@ type Missed_payment struct {
 func (p *Profile) Get_missed_payments() (mp []Missed_payment) {
 	return
 }
-

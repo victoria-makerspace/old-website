@@ -2,10 +2,10 @@ package billing
 
 import (
 	"database/sql"
+	"github.com/vvanpo/makerspace/member"
 	"log"
 	"strconv"
 	"time"
-	"github.com/vvanpo/makerspace/member"
 )
 
 // first_of_next_month returns the local time at 00:00 on the first day of next
@@ -36,9 +36,9 @@ func (b *Billing) payment_scheduler() {
 				return
 			}
 			type payment struct {
-				member	 *member.Member
-				name     string
-				amount   float64
+				member *member.Member
+				name   string
+				amount float64
 			}
 			var (
 				payments   []payment
@@ -46,8 +46,8 @@ func (b *Billing) payment_scheduler() {
 				profiles   map[string]*Profile
 				username   string
 				profile_id string
-				a          string	// intermediate 'amount' string before
-									//	conversion to float
+				a          string // intermediate 'amount' string before
+				//	conversion to float
 			)
 			for rows.Next() {
 				pmnt := payment{}
@@ -76,7 +76,7 @@ func (b *Billing) payment_scheduler() {
 					}
 				}
 				// Do transaction
-				
+
 			}
 		}()
 	}

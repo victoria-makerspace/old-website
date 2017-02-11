@@ -171,9 +171,10 @@
                                 </div>
                             </div>
                         </fieldset>
-                        <button type="submit" name="register" class="btn btn-primary"{{if not $card}} disabled{{end}}>
-                            {{if .Member.Active}}Update{{else}}Register{{end}}
-                        </button>
+                        <button type="submit" name="update" class="btn btn-secondary">Update</button>
+                        {{if not .Member.Active}}
+                        <button type="submit" name="register" class="d-inline-flex btn btn-primary"{{if not $card}} disabled{{end}}>Register</button>
+                        {{end}}
                         {{if not $card}}
                         <p class="d-inline-flex alert alert-warning ml-3">You must register a credit card.</p>
                         {{end}}

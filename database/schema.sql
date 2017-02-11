@@ -12,10 +12,13 @@ CREATE TABLE member (
 	email_validated boolean NOT NULL DEFAULT false,
 	registered timestamp(0) NOT NULL DEFAULT now()
 );
--- CREATE TYPE privelege AS ENUM ('');
+CREATE TYPE privilege AS ENUM (
+	'modify-member',
+	'revoke-member',
+	'do-transactions');
 CREATE TABLE administrator (
-	username text PRIMARY KEY REFERENCES member
-	--  privileges privilege[]
+	username text PRIMARY KEY REFERENCES member,
+	privileges privilege[]
 );
 CREATE TABLE session_http (
 	token character(64) PRIMARY KEY,
@@ -32,36 +35,44 @@ CREATE TABLE payment_profile (
 	CHECK (error = false AND error_message IS NULL OR error = true)
 );
 CREATE TABLE student (
-	username text PRIMARY KEY REFERENCES payment_profile,
+	username text PRIMARY KEY REFERENCES member,
 	institution text,
+	student_email text,
 	graduation_date date
 );
-CREATE TYPE fee_category AS ENUM ('membership', 'storage', 'consumable');
+CREATE TYPE fee_category AS ENUM (
+	'membership',
+	'storage',
+	'consumable');
 CREATE TABLE fee (
 	id serial PRIMARY KEY,
 	category fee_category NOT NULL,
 	identifier text NOT NULL,
-	amount real NOT NULL,
-	description text,
-	UNIQUE (category, identifier)
+	description text NOT NULL,
+	amount real,
+	-- Set to null for non-recurring values
+	recurring interval DEFAULT '1 M',
+	UNIQUE (category, identifier),
+	-- Recurring fees require a fixed price
+	CHECK ((recurring IS NULL) OR
+		(recurring IS NOT NULL AND amount IS NOT NULL))
 );
-COPY fee (category, identifier, amount) FROM STDIN;
-membership	regular	50.0
-membership	student	30.0
+COPY fee (category, identifier, amount, description) FROM STDIN;
+membership	regular	50.0	Membership dues
+membership	student	30.0	Membership dues (student)
 \.
 CREATE TABLE invoice (
 	id serial PRIMARY KEY,
 	username text NOT NULL REFERENCES member,
-	-- null values are one-time-only bills
 	date date NOT NULL DEFAULT now(),
-	recurring interval DEFAULT '1 M',
+	profile REFERENCES payment_profile,
 	end_date date,
-	name text,
+	description text,
 	amount real,
 	fee integer REFERENCES fee,
-	-- XOR (amount, fee) on null value
-	CHECK ((amount IS NULL AND fee IS NOT NULL) OR
-		(amount IS NOT NULL AND fee IS NULL))
+	-- Ensure amount is set in either table
+	CHECK (CASE WHEN fee f IS NOT NULL AND amount IS NULL
+		THEN EXISTS (SELECT 1 FROM fee WHERE id = f AND amount IS NOT NULL)
 );
 CREATE TABLE txn_scheduler_log (
 	time timestamp(0) PRIMARY KEY DEFAULT now()
