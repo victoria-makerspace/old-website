@@ -1,86 +1,13 @@
 #!/usr/bin/env bash
 
-psql makerspace <<EOF
+dir=$(dirname $0)
 
-DROP TABLE IF EXISTS member CASCADE;
-DROP TABLE IF EXISTS session_http CASCADE;
-DROP TABLE IF EXISTS administrator CASCADE;
-DROP TABLE IF EXISTS billing_profile CASCADE;
-DROP TABLE IF EXISTS student CASCADE;
-DROP TABLE IF EXISTS transaction CASCADE;
-DROP TABLE IF EXISTS billing CASCADE;
-DROP TABLE IF EXISTS payment_scheduler_log CASCADE;
-DROP TABLE IF EXISTS missed_payments CASCADE;
-DROP TABLE IF EXISTS storage CASCADE;
+if [[ -e "$1" ]]; then
+    data="$1"
+else
+    data="$dir/data.sql"
+fi
 
-CREATE TABLE member (
-    username text PRIMARY KEY,
-    name text NOT NULL,
-    password_key character(64) NOT NULL,
-    password_salt character(64) NOT NULL UNIQUE,
-    email text NOT NULL UNIQUE,
-    email_validated boolean NOT NULL DEFAULT false,
-    registered timestamp(0) NOT NULL DEFAULT now()
-);
-CREATE TABLE session_http (
-    token character(64) PRIMARY KEY,
-    username text NOT NULL REFERENCES member,
-    sign_in_time timestamp(0) NOT NULL DEFAULT now(),
-    last_seen timestamp(0) NOT NULL DEFAULT now(),
-    expires timestamp(0)
-);
-CREATE TABLE administrator (
-    username text PRIMARY KEY REFERENCES member
-);
-CREATE TABLE billing_profile (
-    username text PRIMARY KEY REFERENCES member,
-    id text UNIQUE NOT NULL,
-    error bool NOT NULL DEFAULT false,
-    error_message text
-);
-CREATE TABLE student (
-    username text PRIMARY KEY REFERENCES member,
-    institution text,
-    graduation_date date
-);
-CREATE TABLE billing (
-    id serial PRIMARY KEY,
-    username text NOT NULL REFERENCES member,
-    name text NOT NULL,
-    amount money NOT NULL,
-    start_date date NOT NULL DEFAULT now(),
-    monthly boolean NOT NULL DEFAULT true,
-    end_date date
-);
-CREATE TABLE transaction (
-    id integer PRIMARY KEY,
-    username text NOT NULL REFERENCES member,
-    approved boolean NOT NULL,
-    order_id text NOT NULL,
-    amount money NOT NULL,
-    name text,
-    card character(4),
-    ip_address text,
-    billing integer REFERENCES billing,
-    time timestamp(0) NOT NULL DEFAULT now()
-);
-CREATE TABLE payment_scheduler_log (
-    time timestamp(0) NOT NULL DEFAULT now()
-);
-CREATE TABLE missed_payments (
-    date date NOT NULL DEFAULT now(),
-    billing integer NOT NULL REFERENCES billing,
-    transaction integer REFERENCES transaction,
-    amount money
-);
-CREATE TABLE storage (
-    location text NOT NULL,
-    number integer NOT NULL,
-    member text REFERENCES member,
-    description text,
-    PRIMARY KEY (location, number)
-);
+psql makerspace < "$dir/schema.sql"
 
-EOF
-
-psql makerspace < ./data.sql
+psql makerspace < "$data"

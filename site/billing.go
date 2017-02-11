@@ -6,10 +6,6 @@ import (
 	"time"
 )
 
-func (p *page) get_student() {
-
-}
-
 func (p *page) update_membership_rate() {
 	/*	var n int
 		err := db.QueryRow("SELECT COUNT(*) FROM student WHERE username = $1", m.Username).Scan(&n)
@@ -56,7 +52,6 @@ func (h *Http_server) billing_handler() {
 		} else if _, ok := p.PostForm["delete-card"]; ok && billing != nil {
 			billing.Delete_card()
 		}
-		//p.Member().get_student(s.db)
 		if _, ok := p.PostForm["register"]; ok {
 			if p.PostFormValue("rate") == "student" && p.PostFormValue("institution") != "" && p.PostFormValue("graduation") != "" {
 				graduation, err := time.Parse("2006-01", p.PostFormValue("graduation"))
