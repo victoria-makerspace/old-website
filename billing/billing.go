@@ -60,10 +60,10 @@ func (i *Invoice) Interval() string {
 func (p *Profile) get_recurring_bills() {
 	rows, err := p.db.Query("SELECT i.id, i.username, i.date, i.profile,"+
 		"i.end_date, COALESCE(i.description, f.description),"+
-		"COALESCE(i.amount, f.amount), f.recurring FROM invoice i INNER JOIN fee f ON"+
-		"(i.fee = f.id) WHERE (i.username = $1 OR i.profile = $1) AND"+
+		"COALESCE(i.amount, f.amount), f.recurring FROM invoice i INNER JOIN"+
+		"fee f ON (i.fee = f.id) WHERE (i.username = $1 OR i.profile = $1) AND"+
 		"f.recurring IS NOT NULL AND (i.end_date > now() OR i.end_date IS NULL)",
-		p.Member.Username)
+		p.member.Username)
 	defer rows.Close()
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -86,7 +86,7 @@ func (p *Profile) get_recurring_bills() {
 		if end_date.Valid {
 			inv.End_date = &end_date.Time
 		}
-		p.Invoice = append(p.Invoice, inv)
+		p.Invoices = append(p.Invoices, inv)
 	}
 }
 
@@ -135,6 +135,6 @@ func (p *Profile) Cancel_recurring_bill(id int) {
 	}
 }
 
-func (p *Profile) Get_missed_payments() (mp []Missed_payment) {
+func (p *Profile) get_missed_payments() {
 	return
 }

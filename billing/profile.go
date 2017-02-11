@@ -12,7 +12,7 @@ type Profile struct {
 	*Billing
 	beanstream.Profile
 	Error *string
-	[]*Invoice
+	Invoices []*Invoice
 }
 
 func (b *Billing) New_profile(token, cardholder string, m *member.Member) *Profile {
