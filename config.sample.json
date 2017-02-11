@@ -1,1 +1,25 @@
-/home/victor/Dropbox/env/git/makerspace/config.json
+{
+    "domain": "",
+    "port": 80,
+    "dir": "/home/makerspace",
+    "database": {
+            "dbname": "makerspace",
+            "host": "/var/run/postgresql",
+            "sslmode": "disable"
+    },
+    "beanstream": {
+        "merchant-id": "",
+        "payments-api-key": "",
+        "profiles-api-key": "",
+        "reports-api-key": ""
+    },
+    "discourse": {
+        "url":           "/talk",
+        "sso-secret":    "",
+        "api-key":       "",
+        "smtp_address":  "",
+        "smtp_port":     "",
+        "smtp_username": "",
+        "smtp_password": ""
+    }
+}
