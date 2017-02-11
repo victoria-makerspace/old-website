@@ -2,14 +2,14 @@ package site
 
 import (
 	"database/sql"
+	"encoding/json"
 	"github.com/lib/pq"
 	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/member"
 	"log"
-	"encoding/json"
 	"net/http"
-	"time"
 	"regexp"
+	"time"
 )
 
 func (p *page) set_session_cookie(value string, expires bool) {
@@ -117,4 +117,3 @@ func (p *page) talk_user_data() {
 		p.Field["profile_background_url"] = talk_url + user["profile_background"].(string)
 	}
 }
-

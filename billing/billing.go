@@ -42,35 +42,61 @@ func prorate_month(amount float64) float64 {
 	return amount * float64(days_left) / float64(days_in_month)
 }
 
-type fee struct{
+type Invoice struct {
+	id          int
+	Username    string
+	Date        time.Time
+	Payer       string
+	Amount      float64
+	End_date    *time.Time
 	Description string
-	interval time.Duration
+	interval    time.Duration
 }
 
 //TODO
-type (f *fee) Interval() string {
+func (i *Invoice) Interval() string {
 }
 
-type Invoice struct{
-	id int
-	Username string
-	Date time.Time
-	*Profile
-	Amount float64
-	End_date *time.Time
-	Name *string
-	Recurring_bill *fee
-}
-
-func (p *Profile) get_bills() {
-	rows, err := p.db.Query("SELECT i.id, i.username, i.date, i.payment_profile, i.end_date, COALESCE(i.description, f.description), COALESCE(i.amount, f.amount), f.recurring FROM invoice i LEFT JOIN fee f ON (i.fee = f.id) LEFT JOIN 	")
+func (p *Profile) get_recurring_bills() {
+	rows, err := p.db.Query("SELECT i.id, i.username, i.date, i.profile,"+
+		"i.end_date, COALESCE(i.description, f.description),"+
+		"COALESCE(i.amount, f.amount), f.recurring FROM invoice i INNER JOIN fee f ON"+
+		"(i.fee = f.id) WHERE (i.username = $1 OR i.profile = $1) AND"+
+		"f.recurring IS NOT NULL AND (i.end_date > now() OR i.end_date IS NULL)",
+		p.Member.Username)
+	defer rows.Close()
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return
+		}
+		log.Panic(err)
+	}
+	for rows.Next() {
+		inv := &Invoice{}
+		var (
+			payer    sql.NullString
+			end_date pq.NullTime
+			interval sql.NullInt
+		)
+		if err = rows.Scan(&inv.id, &inv.Username, &inv.Date, &payer, &end_date, &inv.Description, &inv.Amount, &interval); err != nil {
+			log.Panic(err)
+		}
+		inv.Payer = payer.String
+		inv.interval = interval
+		if end_date.Valid {
+			inv.End_date = &end_date.Time
+		}
+		p.Invoice = append(p.Invoice, inv)
+	}
 }
 
 func (p *Profile) Update_invoice() {
 	var id int
 	var a string
 	var start_date time.Time
-	err := p.db.QueryRow("SELECT id, amount, start_date FROM billing WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.member.Username, name).Scan(&id, &a, &start_date)
+	err := p.db.QueryRow("SELECT id, amount, start_date FROM billing WHERE"+
+		"username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)",
+		p.member.Username, name).Scan(&id, &a, &start_date)
 	if err == sql.ErrNoRows {
 		// Register billing
 		_, err = p.db.Exec("INSERT INTO billing (username, name, amount) VALUES ($1, $2, $3)", p.member.Username, name, amount)
@@ -102,57 +128,11 @@ func (p *Profile) Update_invoice() {
 	}
 }
 
-func (p *Profile) Cancel_billing(name string) {
-	_, err := p.db.Exec("UPDATE billing SET end_date = now() WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.member.Username, name)
+func (p *Profile) Cancel_recurring_bill(id int) {
+	_, err := p.db.Exec("billing SET end_date = now() WHERE username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)", p.member.Username, name)
 	if err != nil {
 		log.Panic(err)
 	}
-}
-
-type Recurring_billing struct {
-	Name       string
-	Amount     float64
-	Start_date time.Time
-	End_date   pq.NullTime
-}
-
-func (p *Profile) Get_recurring_bills() (rb []Recurring_billing) {
-	rows, err := p.db.Query("SELECT name, amount, start_date, end_date FROM billing WHERE username = $1 AND (end_date > now() OR end_date IS NULL)", p.member.Username)
-	defer rows.Close()
-	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Panic(err)
-		}
-		return
-	}
-	for rows.Next() {
-		var r Recurring_billing
-		var amount string
-		if err = rows.Scan(&r.Name, &amount, &r.Start_date, &r.End_date); err != nil {
-			log.Panic(err)
-		}
-		if r.Amount, err = strconv.ParseFloat(amount[1:], 32); err != nil {
-			log.Println(err)
-		}
-		rb = append(rb, r)
-	}
-	return
-}
-
-// Update_membership should only be called after student information has already
-//	been updated.
-func (bp *Profile) Update_membership() {
-	var query string
-	if bp.Student != nil {
-		query = ""
-	}
-	log.Println(query)
-}
-
-type Missed_payment struct {
-	Name   string
-	Amount float64
-	Date   time.Time
 }
 
 func (p *Profile) Get_missed_payments() (mp []Missed_payment) {

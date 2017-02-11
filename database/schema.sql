@@ -51,7 +51,7 @@ CREATE TABLE fee (
 	description text NOT NULL,
 	amount real,
 	-- Set to null for non-recurring values
-	recurring interval DEFAULT '1 M',
+	recurring interval DEFAULT '1 month',
 	UNIQUE (category, identifier),
 	-- Recurring fees require a fixed price
 	CHECK ((recurring IS NULL) OR
@@ -65,14 +65,12 @@ CREATE TABLE invoice (
 	id serial PRIMARY KEY,
 	username text NOT NULL REFERENCES member,
 	date date NOT NULL DEFAULT now(),
-	profile REFERENCES payment_profile,
+	profile text REFERENCES payment_profile,
 	end_date date,
 	description text,
 	amount real,
-	fee integer REFERENCES fee,
-	-- Ensure amount is set in either table
-	CHECK (CASE WHEN fee f IS NOT NULL AND amount IS NULL
-		THEN EXISTS (SELECT 1 FROM fee WHERE id = f AND amount IS NOT NULL)
+	fee integer REFERENCES fee
+	-- TODO: Ensure amount is set in either table
 );
 CREATE TABLE txn_scheduler_log (
 	time timestamp(0) PRIMARY KEY DEFAULT now()
