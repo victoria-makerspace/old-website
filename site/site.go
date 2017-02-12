@@ -64,7 +64,7 @@ type page struct {
 	Name    string
 	Title   string
 	Session *session
-	Field   map[string]string // Data to be passed to templates
+	Field   map[string]interface{} // Data to be passed to templates
 	http.ResponseWriter
 	*http.Request
 	*Http_server
@@ -76,7 +76,7 @@ func (h *Http_server) new_page(name, title string, w http.ResponseWriter, r *htt
 	/////
 	p := &page{Name: name,
 		Title:          title,
-		Field:          make(map[string]string),
+		Field:			make(map[string]interface{}),
 		ResponseWriter: w,
 		Request:        r,
 		Http_server:    h}

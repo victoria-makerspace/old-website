@@ -8,10 +8,10 @@ import (
 )
 
 type Profile struct {
-	member	 *member.Member
+	member *member.Member
 	*Billing
 	beanstream.Profile
-	Error *string
+	Error    *string
 	Invoices []*Invoice
 }
 
@@ -27,7 +27,8 @@ func (b *Billing) New_profile(token, cardholder string, m *member.Member) *Profi
 		return nil
 	}
 	p.Id = rsp.Id
-	if _, err = b.db.Exec("INSERT INTO payment_profile VALUES ($1, $2)", m.Username, rsp.Id); err != nil {
+	if _, err = b.db.Exec("INSERT INTO payment_profile VALUES ($1, $2)",
+		m.Username, rsp.Id); err != nil {
 		log.Panic(err)
 	}
 	return p
@@ -35,11 +36,11 @@ func (b *Billing) New_profile(token, cardholder string, m *member.Member) *Profi
 
 func (b *Billing) Get_profile(m *member.Member) *Profile {
 	var (
-		id string
-		invalid bool
-		error_message *string
+		id            string
+		invalid       sql.NullString
 	)
-	err := b.db.QueryRow("SELECT id, error, error_message FROM payment_profile WHERE username = $1", m.Username).Scan(&id, &invalid, error_message)
+	err := b.db.QueryRow("SELECT id, invalid_error FROM payment_profile"+
+		" WHERE username = $1", m.Username).Scan(&id, &invalid)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Panic(err)
@@ -52,11 +53,11 @@ func (b *Billing) Get_profile(m *member.Member) *Profile {
 		return nil
 	} else {
 		p.Profile = *bs
-		if invalid {
-			p.Error = error_message
+		if invalid.Valid {
+			p.Error = &invalid.String
 		}
 	}
-	p.get_bills()
+	p.get_recurring_bills()
 	return p
 }
 

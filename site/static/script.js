@@ -24,16 +24,6 @@ $(document).ready(function() {
 	if ($("#shop-features").length) {
 		$("body").scrollspy({ target: "#navbar-guest" });
 	}
-	var username = $("#sign-out button[name='sign-out']").val();
-    var talk_url = $(".nav-link[title='Talk forum']").attr("href");
-    if (username) {
-        console.log(talk_user(username));
-        $.getJSON(talk_url + "/notifications.json", function(data) {
-            $.each(data["notifications"], function(i, v) {
-                //$("#member-menu-toolbar").after("<li>" + v["data"]["topic_title"] + "</li>");
-            });
-        });
-    }
 });
 
 $("#sign-in").on("shown.bs.modal", function() {

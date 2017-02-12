@@ -142,8 +142,8 @@
 {{end}}
 {{if eq .Name "index"}}{{template "index.tmpl" .}}{{end}}
 {{if eq .Name "error"}}{{template "error.tmpl" .}}{{end}}
-{{if eq .Name "sign-in"}}{{template "sign-in.tmpl"}}{{end}}
-{{if eq .Name "join"}}{{template "join.tmpl"}}{{end}}
+{{if eq .Name "sign-in"}}{{template "sign-in.tmpl" .}}{{end}}
+{{if eq .Name "join"}}{{template "join.tmpl" .}}{{end}}
 {{if eq .Name "dashboard"}}{{template "dashboard.tmpl" .}}{{end}}
 {{if eq .Name "billing"}}{{template "billing.tmpl" .}}{{end}}
 {{if eq .Name "tools"}}{{template "tools.tmpl" .}}{{end}}

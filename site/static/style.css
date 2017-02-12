@@ -206,8 +206,8 @@ body > .container {
     color: rgba(90,90,90,1);
     font-size: 1rem;
 }
-.input-group .form-control-file {
-    line-height: 2rem;
+.custom-file-control::after {
+    content: "" !important;
 }
 .has-danger .form-control-danger,
 .has-success .form-control-success {

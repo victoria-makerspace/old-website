@@ -1,8 +1,7 @@
-{{$card := and .Session.Billing .Session.Billing.Card}}
   <div class="container">
     <div class="row">
       <div class="col-md-10 col-lg-8 col-xl-7">
-        {{with .Session.Billing}}
+        {{with .Field.pay_profile}}
         <section>
           <h4>Transactions history</h4>
           <div class="px-2 px-sm-3">
@@ -31,7 +30,7 @@
             {{else}}
             <p>You have no recent transactions.</p>
             {{end}}
-            {{with .Get_recurring_bills}}
+            {{with .Invoices}}
             <h5>Monthly payments</h5>
             <form action="/member/billing" method="post" id="monthly">
             <table class="table table-sm">
@@ -58,7 +57,7 @@
             </table>
             </form>
             {{end}}
-            {{with .Get_missed_payments}}
+            {{/*with .Get_missed_payments}}
             <h5 class="text-danger">Missed payments</h5>
             <table class="table table-sm table-danger">
               <thead>
@@ -76,18 +75,18 @@
                 </tr>
               </tbody>
             </table>
-            {{end}}
+            {{end*/}}
           </div>
         </section>
         <hr>
         {{end}}
         <section>
-          {{with $card}}
+          {{if .Field.card_number}}
           <h4>Update credit card</h4>
             <div class="row px-2 px-sm-3">
               <p class="col-sm-9 mb-2 mb-sm-3 text-muted">
-                <strong>Current card:</strong> {{.Number}}<br>
-                <strong>Expiry:</strong> {{.ExpiryMonth}}/20{{.ExpiryYear}}
+                <strong>Current card:</strong> {{.Field.card_number}}<br>
+                <strong>Expiry:</strong> {{.Field.card_expiry}}
               </p>
               <form action="/member/billing" method="post" class="col-sm-3 mb-3 text-sm-right">
                 <button type="submit" name="delete-card" class="btn btn-warning">Delete</button>
@@ -100,7 +99,7 @@
               <div class="form-group row mb-2 mb-sm-3">
                 <label for="name" class="col-sm-4 col-form-label">Name</label>
                 <div class="col-sm-8">
-                  <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if not $card}} autofocus{{end}}>
+                  <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if not .Field.card_number}} autofocus{{end}}>
                   <small class="form-control-feedback"></small>
                 </div>
               </div>
@@ -133,49 +132,55 @@
                             </div>
                             <script src="https://payform.beanstream.com/payfields/beanstream_payfields.js" data-submitForm="true"></script>
                             <button type="submit" class="btn btn-primary">
-                                {{if not $card}}Register{{else}}Update{{end}}
+                                {{if not .Field.card_number}}Register{{else}}Update{{end}}
                             </button>
                         </form>
                 </section>
                 <hr>
                 <section>
-                    {{$student := and .Session.Billing .Session.Billing.Student}}
                     <h4>Membership dues</h4>
                     <form id="billing" class="px-2 px-sm-3" method="post" action="/member/billing">
                         <fieldset class="form-group mb-2 mb-sm-3">
                             <label class="custom-control custom-radio">
-                                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not $student}} checked{{end}}>
+                                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not .Member.Student}} checked{{end}}>
                                 <span class="custom-control-indicator"></span>
                                 <span class="custom-control-description"><b>Regular</b> ($50/month)</span>
                             </label>
                             <label class="custom-control custom-radio">
-                                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if $student}} checked{{end}}>
+                                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if .Member.Student}} checked{{end}}>
                                 <span class="custom-control-indicator"></span>
                                 <span class="custom-control-description"><b>Student</b> ($30/month)</span>
                             </label>
                         </fieldset>
-                        <fieldset id="student"{{if not $student}}class="text-muted" disabled{{end}}>
+                        <fieldset id="student"{{if not .Member.Student}}class="text-muted" disabled{{end}}>
                             <legend class="h5 mb-0 mb-sm-2">Student info</legend>
                             <div class="form-group row mb-2"> 
                                 <label for="institution" class="col-sm-4 col-form-label">Institution name</label>
                                 <div class="col-sm-8">
-                                    <input type="text" class="form-control" id="institution" name="institution" {{with $student}} value="{{.Institution}}" required{{end}}>
+                                    <input type="text" class="form-control" id="institution" name="institution" {{if .Member.Student}} value="{{.Field.student_institution}}" required{{end}}>
+                                    <small class="form-control-feedback"></small>
+                                </div>
+                            </div>
+                            <div class="form-group row mb-2"> 
+                                <label for="student_email" class="col-sm-4 col-form-label">Student e-mail</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" name="student_email" {{if .Member.Student}} value="{{.Field.student_email}}" required{{end}}>
                                     <small class="form-control-feedback"></small>
                                 </div>
                             </div>
                             <div class="form-group row mb-sm-2">
                                 <label for="graduation" class="col-sm-4 col-form-label">Expected graduation</label>
                                 <div class="col-sm-8">
-                                    <input type="month" class="form-control" id="graduation" name="graduation"{{with $student}} value="{{.Graduation_date.Format "2006-01"}}" required{{end}}>
+                                    <input type="month" class="form-control" id="graduation" name="graduation"{{if .Member.Student}} value="{{.Field.student_graduation_date}}" required{{end}}>
                                     <small class="form-control-feedback"></small>
                                 </div>
                             </div>
                         </fieldset>
                         <button type="submit" name="update" class="btn btn-secondary">Update</button>
                         {{if not .Member.Active}}
-                        <button type="submit" name="register" class="d-inline-flex btn btn-primary"{{if not $card}} disabled{{end}}>Register</button>
+                        <button type="submit" name="register" class="d-inline-flex btn btn-primary"{{if not .Field.card_number}} disabled{{end}}>Register</button>
                         {{end}}
-                        {{if not $card}}
+                        {{if not .Field.card_number}}
                         <p class="d-inline-flex alert alert-warning ml-3">You must register a credit card.</p>
                         {{end}}
                     </form>

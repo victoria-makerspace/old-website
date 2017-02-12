@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/lib/pq"
-	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/member"
 	"log"
 	"net/http"
@@ -40,7 +39,6 @@ func (p *page) unset_session_cookie() {
 
 type session struct {
 	*member.Member
-	Billing *billing.Profile
 	token   string
 }
 
@@ -81,7 +79,8 @@ func (p *page) authenticate() {
 		}
 		log.Panic(err)
 	}
-	p.Session = &session{token: member.Rand256(), Member: member.Get(username, p.db)}
+	p.Session = &session{Member: member.Get(username, p.db),
+		token: member.Rand256()}
 	p.set_session_cookie(p.Session.token, expires.Valid)
 	if _, err := p.db.Exec("UPDATE session_http SET token = $1, last_seen = now(), expires = now() + interval '1 year' WHERE token = $2", p.Session.token, cookie.Value); err != nil {
 		log.Panic(err)

@@ -12,13 +12,13 @@ CREATE TABLE member (
 	email_validated boolean NOT NULL DEFAULT false,
 	registered timestamp(0) NOT NULL DEFAULT now()
 );
-CREATE TYPE privilege AS ENUM (
+CREATE TYPE admin_privilege AS ENUM (
 	'modify-member',
 	'revoke-member',
 	'do-transactions');
 CREATE TABLE administrator (
 	username text PRIMARY KEY REFERENCES member,
-	privileges privilege[]
+	privileges admin_privilege[]
 );
 CREATE TABLE session_http (
 	token character(64) PRIMARY KEY,
@@ -27,12 +27,13 @@ CREATE TABLE session_http (
 	last_seen timestamp(0) NOT NULL DEFAULT now(),
 	expires timestamp(0)
 );
+CREATE TYPE payment_profile_error AS ENUM (
+	'no card');
 CREATE TABLE payment_profile (
 	username text PRIMARY KEY REFERENCES member,
 	id text UNIQUE NOT NULL,
-	error bool NOT NULL DEFAULT false,
-	error_message text,
-	CHECK (error = false AND error_message IS NULL OR error = true)
+	-- null value implies profile is valid
+	invalid_error payment_profile_error
 );
 CREATE TABLE student (
 	username text PRIMARY KEY REFERENCES member,
