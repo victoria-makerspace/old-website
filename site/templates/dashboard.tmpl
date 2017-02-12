@@ -6,13 +6,14 @@
     <form id="waiver" action="" method="post">
       <div class="alert alert-info">
         <p>Please sign and upload the <a href="/liability-waiver.pdf" id="waiver" download>liability waiver <span class="glyphicons glyphicons-download-alt"></span></a></p>
-              <label class="custom-file">
-                  <input type="file" accept=".pdf" class="custom-file-input" name="waiver" required>
-                  <span class="custom-file-control">
-                    Choose file...
-                  </span>
-              </label>
-    </div>
+          <label class="custom-file float-left mr-3">
+            <input type="file" accept=".pdf" class="custom-file-input" name="waiver" required>
+            <span class="custom-file-control">
+              Choose file...
+            </span>
+          </label>
+          <button type="submit" name="waiver" class="btn btn-primary" disabled>Upload</button>
+      </div>
     </form>
     <p class="alert alert-info">Please set up <a href="/member/billing">billing</a> and register to become a member.</p>
 {{template "footer"}}

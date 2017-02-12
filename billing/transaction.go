@@ -14,7 +14,6 @@ import (
 
 type Transaction struct {
 	id         string
-	username   string
 	Date       time.Time
 	Approved   bool
 	Order_id   string
@@ -22,7 +21,7 @@ type Transaction struct {
 	Name       string // "Membership dues", "Storage fees", etc.
 	Card       string // Last 4 digits
 	Ip_address string
-	billing_id int
+	invoice    int
 }
 
 func (p *Profile) New_transaction(amount float64, name, ip_address string) *Transaction {

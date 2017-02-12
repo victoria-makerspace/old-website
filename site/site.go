@@ -163,14 +163,17 @@ func (h *Http_server) join_handler() {
 				rsp = "nil"
 			}
 			w.Write([]byte(rsp))
-		} else if r.PostFormValue("join") == "true" {
+		} else if _, ok := q["join"]; ok {
 			username_length := len([]rune(r.PostFormValue("username")))
 			if !username_rexp.MatchString(r.PostFormValue("username")) || username_length > 20 || username_length < 3 {
+				//TODO: embed error
 			} else if !name_rexp.MatchString(r.PostFormValue("name")) {
+				//TODO: embed error
 			} else if m := member.New(r.PostFormValue("username"), r.PostFormValue("name"), r.PostFormValue("email"), r.PostFormValue("password"), p.db); m != nil {
 				p.new_session(m, true)
 				w.Write([]byte("success"))
 			}
+			return
 		} else {
 			p.write_template()
 		}

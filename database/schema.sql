@@ -55,8 +55,7 @@ CREATE TABLE fee (
 	recurring interval DEFAULT '1 month',
 	UNIQUE (category, identifier),
 	-- Recurring fees require a fixed price
-	CHECK ((recurring IS NULL) OR
-		(recurring IS NOT NULL AND amount IS NOT NULL))
+	CHECK (CASE WHEN recurring IS NOT NULL THEN amount IS NOT NULL END)
 );
 COPY fee (category, identifier, amount, description) FROM STDIN;
 membership	regular	50.0	Membership dues
@@ -66,12 +65,12 @@ CREATE TABLE invoice (
 	id serial PRIMARY KEY,
 	username text NOT NULL REFERENCES member,
 	date date NOT NULL DEFAULT now(),
-	profile text REFERENCES payment_profile,
+	profile text NOT NULL REFERENCES payment_profile,
 	end_date date,
 	description text,
 	amount real,
-	fee integer REFERENCES fee
-	-- TODO: Ensure amount is set in either table
+	fee integer REFERENCES fee,
+	CHECK (CASE WHEN amount IS NULL THEN fee IS NOT NULL END)
 );
 CREATE TABLE txn_scheduler_log (
 	time timestamp(0) PRIMARY KEY DEFAULT now()
@@ -79,7 +78,6 @@ CREATE TABLE txn_scheduler_log (
 CREATE TABLE transaction (
 	-- Beanstream value
 	id integer PRIMARY KEY,
-	username text NOT NULL REFERENCES member,
 	approved boolean NOT NULL,
 	time timestamp(0) NOT NULL DEFAULT now(),
 	order_id text,

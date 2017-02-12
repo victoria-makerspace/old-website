@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"github.com/vvanpo/makerspace/member"
 	"log"
-	"strconv"
 	"time"
 )
 
@@ -23,53 +22,39 @@ func (b *Billing) payment_scheduler() {
 			log.Println("Starting payment scheduler")
 			defer log.Println("Payment scheduler completed")
 			// Query to find all open billing registrations for which a
-			//	transaction should occur.  Left join billing_profile in case
-			//	anyone ever ends up with a recurring billing without a
-			//	beanstream profile.
-			// TODO: implement the billing.monthly flag to actually do something
-			rows, err := b.db.Query("SELECT b.username, b.name, b.amount, bp.id FROM billing b LEFT JOIN billing_profile bp USING (username) WHERE b.monthly = true AND (b.end_date > now() OR b.end_date IS NULL)")
-			defer rows.Close()
+			//	transaction should occur.
+			//TODO: recurring intervals different than 1 month
+			rows, err := b.db.Query("SELECT i.id, i.profile, COALESCE(i.amount, f.amount) FROM invoice i INNER JOIN fee f ON (i.fee = f.id) WHERE f.recurring = '1 month' AND (i.end_date >= now() OR i.end_date IS NULL)")
 			if err != nil {
 				if err != sql.ErrNoRows {
 					log.Panic(err)
 				}
 				return
 			}
+			defer rows.Close()
 			type payment struct {
-				member *member.Member
-				name   string
+				id int
+				profile *Profile
 				amount float64
 			}
 			var (
 				payments   []payment
 				members    map[string]*member.Member
 				profiles   map[string]*Profile
-				username   string
-				profile_id string
-				a          string // intermediate 'amount' string before
-				//	conversion to float
+				profile_username string
 			)
 			for rows.Next() {
 				pmnt := payment{}
-				if err = rows.Scan(&username, &pmnt.name, &a, &profile_id); err != nil {
+				if err = rows.Scan(&pmnt.id, &profile_username, &pmnt.amount); err != nil {
 					log.Panic(err)
 				}
-				if profile_id == "" {
-					//// TODO: missed payment
-				}
-				// Convert amount to float
-				if pmnt.amount, err = strconv.ParseFloat(a[1:], 32); err != nil {
-					log.Println(err)
-				}
-				payments = append(payments, pmnt)
-				// Ensure we only query the database once per member
-				if _, ok := members[username]; !ok {
-					members[username] = member.Get(username, b.db)
+				if _, ok := members[profile_username]; !ok {
+					members[profile_username] = member.Get(profile_username, b.db)
 				}
 				// Ensure no redundant profile queries are sent to Beanstream
-				if _, ok := profiles[username]; !ok {
-					if profile := b.Get_profile(members[username]); profile != nil {
-						profiles[username] = profile
+				if _, ok := profiles[profile_username]; !ok {
+					if profile := b.Get_profile(members[profile_username]); profile != nil {
+						profiles[profile_username] = profile
 					} else {
 						log.Println("Could not fetch Beanstream profile for " + username)
 						//// TODO: missed payment
@@ -77,6 +62,7 @@ func (b *Billing) payment_scheduler() {
 				}
 				// Do transaction
 
+				payments = append(payments, pmnt)
 			}
 		}()
 	}
