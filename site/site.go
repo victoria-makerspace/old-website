@@ -76,7 +76,7 @@ func (h *Http_server) new_page(name, title string, w http.ResponseWriter, r *htt
 	/////
 	p := &page{Name: name,
 		Title:          title,
-		Field:			make(map[string]interface{}),
+		Field:          make(map[string]interface{}),
 		ResponseWriter: w,
 		Request:        r,
 		Http_server:    h}

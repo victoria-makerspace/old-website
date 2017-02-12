@@ -35,14 +35,13 @@ func (m *Member) Update_student(institution, email string, grad_date time.Time) 
 		m.Username).Scan(&is_student); err != nil {
 		log.Panic(err)
 	}
-	query := "INSERT INTO student (username, institution, email, "+
+	query := "INSERT INTO student (username, institution, email, " +
 		"graduation_date) VALUE ($1, $2, $3, $4)"
 	if is_student {
-		query = "UPDATE student SET institution = $2, student_email = $3, "+
+		query = "UPDATE student SET institution = $2, student_email = $3, " +
 			"graduation_date = $4 WHERE username = $1"
 	}
-	if _, err := m.db.Exec(query, m.Username, institution, email, grad_date);
-		err != nil {
+	if _, err := m.db.Exec(query, m.Username, institution, email, grad_date); err != nil {
 		log.Panic(err)
 	}
 	m.Student = true

@@ -115,4 +115,53 @@ func (p *page) talk_user_data() {
 		p.Field["card_background_url"] = talk_url + user["card_background"].(string)
 		p.Field["profile_background_url"] = talk_url + user["profile_background"].(string)
 	}
+	// Get notifications
+	data = nil
+	rsp, err = http.Get(talk_url + "/notifications.json?api_key=" + p.config.Discourse["api-key"] + "&api_username=" + p.Member().Username)
+	if err != nil || json.NewDecoder(rsp.Body).Decode(&data) != nil {
+		log.Println(err)
+		return
+	}
+ntfns := make([]struct{
+		Notification_type int
+		Notification_icon string
+		Read bool
+		Created_at string
+		Post_number int
+		Topic_id int
+		Slug string
+		Data map[string]interface{}}, 16)
+	for i, v := range data["notifications"].([]interface{})[:12] {
+		if n, ok := v.(map[string]interface{}); ok {
+			ntfns[i].Notification_type = int(n["notification_type"].(float64))
+			ntfns[i].Read = n["read"].(bool)
+			ntfns[i].Created_at = n["created_at"].(string)
+			if pn, ok := n["post_number"].(float64); ok {
+				ntfns[i].Post_number = int(pn)
+			}
+			if ti, ok := n["topic_id"].(float64); ok {
+				ntfns[i].Topic_id = int(ti)
+			}
+			if sl, ok := n["slug"].(string); ok {
+				ntfns[i].Slug = sl
+			}
+			ntfns[i].Data = n["data"].(map[string]interface{})
+			var icon string
+			switch ntfns[i].Notification_type {
+			case 2: icon = "undo"
+			case 3:
+			case 4:
+			case 5:
+			case 6: icon = "envelope"
+			case 7:
+			case 8:
+			case 9:
+			case 10:
+			case 11:
+			case 12: icon = "certificate"
+			}
+			ntfns[i].Notification_icon = icon
+		}
+	}
+	p.Field["notifications"] = ntfns
 }

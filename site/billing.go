@@ -71,8 +71,7 @@ func (h *Http_server) billing_handler() {
 		} else if _, ok := p.PostForm["terminate"]; ok {
 			////////// TODO: password check
 			id, _ := strconv.Atoi(p.PostFormValue("terminate"))
-			if bill := pay_profile.Get_bill(id);
-				bill != nil {
+			if bill := pay_profile.Get_bill(id); bill != nil {
 				bill.Cancel_recurring_bill()
 			}
 			// Redirect not really necessary as double-submission is harmless.

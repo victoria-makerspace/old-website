@@ -69,7 +69,7 @@ button.nav-link {
     color: rgba(0,0,0,0.7) !important;
     background-color: rgba(2,117,216,0.5);
 }
-.nav-link .glyphicons + span {
+#general-menu .nav-link .glyphicons + span {
     display: none;
 }
 .navbar-toggler {
@@ -126,6 +126,22 @@ button.nav-link {
 }
 #member-menu-toolbar .nav-link:last-child {
     float: right;
+}
+#notifications {
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+}
+#notifications a {
+    display: block;
+    padding: 0 0.5rem;
+}
+#notifications a:hover {
+    background-color: rgba(2,117,216,0.5);
+}
+#notifications a span:first-child {
+    color: rgba(0,0,0,0.5);
+}
+#notifications a span:nth-child(2) {
+    color: rgba(0,0,0,0.9);
 }
 #sign-out {
     text-align: right;
@@ -246,9 +262,10 @@ input[type=month] {
         border-radius: 0 0 0.25rem 0.25rem;
         padding: 0;
         background: rgba(247,247,247,0.85);
+        width: 10rem;
     }
     #general-menu .navbar-nav {
-        flex-direction: row;
+        flex-direction: column;
         margin: 0 0 0 auto;
     }
     #general-menu .nav-item:first-child .nav-link {
@@ -257,14 +274,32 @@ input[type=month] {
     #general-menu .nav-item:last-child .nav-link {
         border-bottom-right-radius: 0.25rem;
     }
+    #general-menu .nav-link .glyphicons {
+        margin-right: 0.5rem;
+    }
     #general-menu .nav-link .glyphicons + span {
         display: inline;
+    }
+    #general-menu .member-nav-link {
+        display: block;
+    }
+    #member-menu .member-nav-link {
+        display: none;
+    }
+    #notifications a:nth-child(7) ~ a {
+        display: none;
     }
     #student:disabled {
         display: none;
     }
 }
 @media (min-width: 576px) {
+    #general-menu .member-nav-link {
+        display: none;
+    }
+    #member-menu .member-nav-link {
+        display: block;
+    }
     #general-menu {
         margin-right: 3rem;
     }

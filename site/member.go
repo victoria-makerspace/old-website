@@ -12,6 +12,7 @@ func (h *Http_server) member_handler() {
 		p.authenticate()
 		if p.Session == nil {
 			p.http_error(403)
+			return
 		}
 		p.write_template()
 	})
@@ -23,6 +24,7 @@ func (h *Http_server) tools_handler() {
 		p.authenticate()
 		if p.Session == nil {
 			p.http_error(403)
+			return
 		}
 		p.write_template()
 	})
@@ -34,6 +36,7 @@ func (h *Http_server) storage_handler() {
 		p.authenticate()
 		if p.Session == nil {
 			p.http_error(403)
+			return
 		}
 		p.write_template()
 	})
