@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"golang.org/x/crypto/scrypt"
 	"log"
+	"regexp"
 	"time"
 )
 
@@ -43,20 +44,32 @@ type Member struct {
 	db            *sql.DB
 }
 
+//	username_rexp := regexp.MustCompile("^[\\pL\\pN\\pM\\pP]+$")
+var username_rexp = regexp.MustCompile(``)
+var name_rexp = regexp.MustCompile(`^(?:[\pL\pN\pM\pP]+ ?)+$`)
+
 // New creates a new user, but will panic if the username already exists
 func New(username, name, email, password string, db *sql.DB) *Member {
+	// Ideally, all members are created through the join page when the talk
+	//	server is running, as it queries discourse's check_username.json api to
+	//	ensure usernames are compliant with discourse.
+	if !username_rexp.MatchString(username) || !name_rexp.MatchString(name) ||
+		len(username) < 3 || len(username) > 20 || len(name) > 100 {
+		return nil
+	}
 	salt := Rand256()
 	m := &Member{
 		Username:      username,
 		Name:          name,
 		Email:         email,
-		Registered:    time.Now(),
 		password_key:  key(password, salt),
 		password_salt: salt,
 		db:            db}
-	_, err := db.Exec("INSERT INTO member (username, name, password_key, password_salt, email, registered) VALUES ($1, $2, $3, $4, $5, $6)", username, name, m.password_key, salt, email, m.Registered)
-	if err != nil {
-		log.Panic(err)
+	if err := db.QueryRow("INSERT INTO member (username, name, password_key, password_salt, email) VALUES ($1, $2, $3, $4, $5) RETURNING registered", username, name, m.password_key, salt, email).Scan(&m.Registered); err != nil {
+		if err != sql.ErrNoRows {
+			log.Panic(err)
+		}
+		return nil
 	}
 	return m
 }

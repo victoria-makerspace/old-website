@@ -2,14 +2,15 @@ package site
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/member"
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"path"
-	"regexp"
 )
 
 var templates = [...]string{"main",
@@ -99,10 +100,12 @@ func (p *page) write_template() {
 
 // http_error executes an error template.
 func (p *page) http_error(code int) {
+	//TODO: pass error code and message via *page object
 	p.Name = "error"
 	p.Title = fmt.Sprint(code)
 	p.Field["error_message"] = http.StatusText(code)
 	p.WriteHeader(code)
+	//TODO: if content JSON ...write_json() etc
 	p.write_template()
 }
 
@@ -131,8 +134,6 @@ func (h *Http_server) root_handler() {
 }
 
 func (h *Http_server) join_handler() {
-	username_rexp := regexp.MustCompile("^[\\pL\\pN\\pM\\pP]+$")
-	name_rexp := regexp.MustCompile("^(?:[\\pL\\pN\\pM\\pP]+ ?)+$")
 	h.mux.HandleFunc("/join", func(w http.ResponseWriter, r *http.Request) {
 		p := h.new_page("join", "Join", w, r)
 		p.authenticate()
@@ -164,16 +165,33 @@ func (h *Http_server) join_handler() {
 			w.Write([]byte(rsp))
 			return
 		} else if _, ok := p.PostForm["join"]; ok {
-			username_length := len([]rune(r.PostFormValue("username")))
-			if !username_rexp.MatchString(r.PostFormValue("username")) || username_length > 20 || username_length < 3 {
-				//TODO: embed error
-			} else if !name_rexp.MatchString(r.PostFormValue("name")) {
-				//TODO: embed error
-			} else if m := member.New(r.PostFormValue("username"), r.PostFormValue("name"), r.PostFormValue("email"), r.PostFormValue("password"), p.db); m != nil {
-				p.new_session(m, true)
-				w.Write([]byte("success"))
+			//TODO: vary output based on Content-type: application/json or whatever
+			var check_username map[string]interface{}
+			if rsp, err := http.Get(p.Talk_url + "/users/check_username.json?username=" + url.QueryEscape(p.PostFormValue("username"))); err != nil {
+				log.Println(err)
+			} else if err = json.NewDecoder(rsp.Body).Decode(&check_username); err != nil {
+				log.Println(err)
 			}
-			return
+			///TODO: put username/email/name in its own methods and all under one url for the javascript
+			if e, ok := check_username["errors"]; ok {
+				//TODO: embed errors, given as a JSON string array by discourse
+				log.Println(e)
+			} else if a, ok := check_username["available"]; ok {
+				if a, ok = check_username["available"].(bool); ok && a == true {
+					if m := member.New(r.PostFormValue("username"),
+						r.PostFormValue("name"), r.PostFormValue("email"),
+						r.PostFormValue("password"), p.db);
+						m != nil {
+						//TODO: sign in with the talk server immediately, to prevent talk_url errors within p.new_session
+						p.new_session(m, true)
+						w.Write([]byte("success"))
+						return
+					}
+				}
+				//TODO: embed errors
+			}
+			//TODO: embed "talk is down" error
+			p.http_error(500)
 		}
 		p.write_template()
 	})

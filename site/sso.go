@@ -32,7 +32,6 @@ func (p *page) encode_sso_response(nonce string) (payload, sig string) {
 	q.Set("nonce", nonce)
 	q.Set("email", p.Member().Email)
 	q.Set("username", p.Member().Username)
-	q.Set("require_activation", "true")
 	q.Set("external_id", p.Member().Username)
 	payload = base64.StdEncoding.EncodeToString([]byte(q.Encode()))
 	mac := hmac.New(sha256.New, []byte(p.config.Discourse["sso-secret"]))
