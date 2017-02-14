@@ -116,6 +116,9 @@ button.nav-link {
     right: 0;
     top: 100%;
     border-radius: 0 0 0.75rem 0.25rem;
+    border-width: 0 1px 1px;
+    border-style: solid;
+    border-color: rgba(0,0,0,0.2);
     padding: 0;
     background: rgba(247,247,247,0.85);
     width: 16rem;
@@ -133,15 +136,19 @@ button.nav-link {
 #notifications a {
     display: block;
     padding: 0 0.5rem;
+    font-size: 0.9rem;
+    font-style: italic;
 }
 #notifications a:hover {
     background-color: rgba(2,117,216,0.5);
 }
-#notifications a span:first-child {
+#notifications a .notification-icon {
     color: rgba(0,0,0,0.5);
+    font-size: 1rem;
 }
-#notifications a span:nth-child(2) {
+#notifications a .notification-icon + span {
     color: rgba(0,0,0,0.9);
+    font-style: normal;
 }
 #sign-out {
     text-align: right;
@@ -158,8 +165,6 @@ button.nav-link {
 #sign-out .nav-link {
     display: inline-block;
     border-radius: 0.75rem 0;
-    border-width: 1px 0 0 1px;
-    border-color: rgba(0,0,0,0.2);
     height: inherit;
     padding: 0 0.5rem;
 }
@@ -260,6 +265,9 @@ input[type=month] {
         position: absolute;
         right: 0;
         border-radius: 0 0 0.25rem 0.25rem;
+        border-width: 0 1px 1px;
+        border-style: solid;
+        border-color: rgba(0,0,0,0.2);
         padding: 0;
         background: rgba(247,247,247,0.85);
         width: 10rem;
