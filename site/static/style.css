@@ -89,6 +89,7 @@ button.nav-link {
     width: 3rem;
     padding: 0.25rem;
     display: block !important;
+    top: 0;
     right: 0;
 }
 #member-icon img {
