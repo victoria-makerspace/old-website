@@ -6,8 +6,8 @@ ALTER DATABASE makerspace SET search_path TO makerspace, pg_catalog;
 CREATE TABLE member (
 	username text PRIMARY KEY,
 	name text NOT NULL,
-	password_key character(64) NOT NULL,
-	password_salt character(64) NOT NULL UNIQUE,
+	password_key character(64),
+	password_salt character(64) UNIQUE,
 	email text NOT NULL UNIQUE,
 	email_validated boolean NOT NULL DEFAULT false,
 	registered timestamp(0) NOT NULL DEFAULT now()
@@ -79,7 +79,7 @@ CREATE TABLE invoice (
 	id serial PRIMARY KEY,
 	username text NOT NULL REFERENCES member,
 	date date NOT NULL DEFAULT now(),
-	profile text NOT NULL REFERENCES payment_profile,
+	profile text REFERENCES payment_profile,
 	end_date date,
 	description text,
 	amount real,
@@ -120,25 +120,15 @@ CREATE TABLE storage (
 );
 -- storage values
 --	Hall locker
-WITH RECURSIVE t(n, id) AS (
-	SELECT	1, id
-	FROM	fee
-	WHERE	category = 'storage' AND identifier = 'hall-locker'
-	UNION
-	SELECT n+1, id FROM t WHERE n < 12
-)
 INSERT INTO storage
-SELECT * FROM t;
+SELECT	generate_series(1,12), id
+FROM	fee
+WHERE	category = 'storage' AND identifier = 'hall-locker';
 --	Bathroom locker
-WITH RECURSIVE t(n, id) AS (
-	SELECT	1, id
-	FROM	fee
-	WHERE	category = 'storage' AND identifier = 'bathroom-locker'
-	UNION
-	SELECT n+1, id FROM t WHERE n < 11
-)
 INSERT INTO storage
-SELECT * FROM t;
+SELECT generate_series(1,11), id
+FROM	fee
+WHERE	category = 'storage' AND identifier = 'bathroom-locker';
 --	Wall storage
 INSERT INTO storage
 SELECT generate_subscripts(a, 1), id, unnest(a)
