@@ -7,6 +7,7 @@ import (
 func (h *Http_server) member_handler() {
 	h.sso_handler()
 	h.billing_handler()
+	h.storage_handler()
 	h.mux.HandleFunc("/member", func(w http.ResponseWriter, r *http.Request) {
 		p := h.new_page("dashboard", "Dashboard", w, r)
 		p.authenticate()

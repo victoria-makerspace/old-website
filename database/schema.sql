@@ -38,7 +38,7 @@ CREATE TYPE payment_profile_error AS ENUM (
 CREATE TABLE payment_profile (
 	username text PRIMARY KEY REFERENCES member,
 	id text UNIQUE NOT NULL,
-	-- null value implies profile is valid
+	-- NULL value implies profile is valid
 	invalid_error payment_profile_error
 );
 CREATE TYPE fee_category AS ENUM (
@@ -60,6 +60,18 @@ CREATE TABLE fee (
 COPY fee (category, identifier, amount, description) FROM STDIN;
 membership	regular	50.0	Membership dues
 membership	student	30.0	Membership dues (student)
+storage	bathroom-locker	5.0	Bathroom locker fee
+storage	hall-locker	5.0	Hall locker fee
+\.
+-- Wall storage is $5/lineal foot, so the corresponding invoice should multiply
+--	by this number.
+COPY fee (category, identifier, amount, description) FROM STDIN;
+storage	wall	5.0	Wall storage fee
+\.
+-- Corporate membership is case-by-case, only to be registered from the admin
+--	panel
+COPY fee (category, identifier, description, recurring) FROM STDIN;
+membership	corporate	Membership dues (corporate)	\N
 \.
 CREATE TABLE invoice (
 	id serial PRIMARY KEY,
@@ -70,6 +82,8 @@ CREATE TABLE invoice (
 	description text,
 	amount real,
 	fee integer REFERENCES fee,
+	-- Defaults to fee.recurring when NULL
+	recurring interval,
 	CHECK (CASE WHEN amount IS NULL THEN fee IS NOT NULL END)
 );
 CREATE TABLE txn_scheduler_log (
