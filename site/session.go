@@ -39,7 +39,7 @@ func (p *page) unset_session_cookie() {
 
 type session struct {
 	*member.Member
-	token   string
+	token string
 }
 
 // new_session
@@ -104,33 +104,49 @@ var avatar_size_rexp = regexp.MustCompile("{size}")
 // talk_user_data fetches user info from the talk server
 func (p *page) talk_user_data() {
 	var data map[string]interface{}
-	talk_url := p.config.Discourse["url"]
-	rsp, err := http.Get(talk_url + "/users/" + p.Member().Username + ".json")
-	if err != nil || json.NewDecoder(rsp.Body).Decode(&data) != nil {
+	rsp, err := http.Get(p.Talk_url + "/users/" + p.Member().Username + ".json")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
 		log.Println(err)
 		return
 	}
 	if user, ok := data["user"].(map[string]interface{}); ok {
-		p.Field["avatar_url"] = talk_url + string(avatar_size_rexp.ReplaceAll([]byte(user["avatar_template"].(string)), []byte("120")))
-		p.Field["card_background_url"] = talk_url + user["card_background"].(string)
-		p.Field["profile_background_url"] = talk_url + user["profile_background"].(string)
+		p.Field["avatar_url"] = p.Talk_url +
+			string(avatar_size_rexp.ReplaceAll([]byte(user["avatar_template"].(string)), []byte("120")))
+		p.Field["card_background_url"] = p.Talk_url + user["card_background"].(string)
+		p.Field["profile_background_url"] = p.Talk_url + user["profile_background"].(string)
+	} else {
+		log.Printf("Error requesting talk user data for '%s': %q\n", p.Member().Username, data)
+		return
 	}
 	// Get notifications
 	data = nil
-	rsp, err = http.Get(talk_url + "/notifications.json?api_key=" + p.config.Discourse["api-key"] + "&api_username=" + p.Member().Username)
-	if err != nil || json.NewDecoder(rsp.Body).Decode(&data) != nil {
+	rsp, err = http.Get(p.Talk_url + "/notifications.json?api_key=" + p.config.Discourse["api-key"] + "&api_username=" + p.Member().Username)
+	if err != nil {
 		log.Println(err)
 		return
 	}
-ntfns := make([]struct{
+	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
+		log.Println(err)
+		return
+	}
+	if _, ok := data["notifications"].([]interface{}); !ok {
+		log.Printf("Error requesting talk notification data for '%s': %q\n", p.Member().Username, data)
+		return
+	}
+	ntfns := make([]struct {
 		Notification_type int
 		Notification_icon string
-		Read bool
-		Created_at string
-		Post_number int
-		Topic_id int
-		Slug string
-		Data map[string]interface{}}, 16)
+		Read              bool
+		Created_at        string
+		Post_number       int
+		Topic_id          int
+		Slug              string
+		Data              map[string]interface{}
+	}, 16)
 	for i, v := range data["notifications"].([]interface{})[:12] {
 		if n, ok := v.(map[string]interface{}); ok {
 			ntfns[i].Notification_type = int(n["notification_type"].(float64))
@@ -148,17 +164,20 @@ ntfns := make([]struct{
 			ntfns[i].Data = n["data"].(map[string]interface{})
 			var icon string
 			switch ntfns[i].Notification_type {
-			case 2: icon = "undo"
+			case 2:
+				icon = "undo"
 			case 3:
 			case 4:
 			case 5:
-			case 6: icon = "envelope"
+			case 6:
+				icon = "envelope"
 			case 7:
 			case 8:
 			case 9:
 			case 10:
 			case 11:
-			case 12: icon = "certificate"
+			case 12:
+				icon = "certificate"
 			}
 			ntfns[i].Notification_icon = icon
 		}

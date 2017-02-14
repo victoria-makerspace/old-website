@@ -54,9 +54,6 @@ func Serve(config Config, db *sql.DB, b *billing.Billing) *Http_server {
 	s.srv.Handler = s.mux
 	s.parse_templates()
 	s.root_handler()
-	//s.join_handler()
-	//s.classes_handler()
-	//s.member_handler()
 	go log.Panic(s.srv.ListenAndServe())
 	return s
 }
@@ -65,6 +62,7 @@ type page struct {
 	Name    string
 	Title   string
 	Session *session
+	Talk_url string
 	Field   map[string]interface{} // Data to be passed to templates
 	http.ResponseWriter
 	*http.Request
@@ -77,6 +75,7 @@ func (h *Http_server) new_page(name, title string, w http.ResponseWriter, r *htt
 	/////
 	p := &page{Name: name,
 		Title:          title,
+		Talk_url:       h.config.Discourse["url"],
 		Field:          make(map[string]interface{}),
 		ResponseWriter: w,
 		Request:        r,
@@ -141,19 +140,19 @@ func (h *Http_server) join_handler() {
 			p.http_error(403)
 			return
 		}
-		q := r.URL.Query()
-		if _, ok := q["exists"]; ok {
+		p.ParseForm()
+		if _, ok := p.Form["exists"]; ok {
 			rsp := "true"
 			var exists bool
-			if _, ok := q["username"]; ok {
-				if err := p.db.QueryRow("SELECT true FROM member WHERE username = $1", q.Get("username")).Scan(&exists); err != nil {
+			if _, ok := p.Form["username"]; ok {
+				if err := p.db.QueryRow("SELECT true FROM member WHERE username = $1", p.FormValue("username")).Scan(&exists); err != nil {
 					if err != sql.ErrNoRows {
 						log.Panic(err)
 					}
 					rsp = "false"
 				}
-			} else if _, ok := q["email"]; ok {
-				if err := p.db.QueryRow("SELECT true FROM member WHERE email = $1", q.Get("email")).Scan(&exists); err != nil {
+			} else if _, ok := p.Form["email"]; ok {
+				if err := p.db.QueryRow("SELECT true FROM member WHERE email = $1", p.FormValue("email")).Scan(&exists); err != nil {
 					if err != sql.ErrNoRows {
 						log.Panic(err)
 					}
@@ -163,7 +162,8 @@ func (h *Http_server) join_handler() {
 				rsp = "nil"
 			}
 			w.Write([]byte(rsp))
-		} else if _, ok := q["join"]; ok {
+			return
+		} else if _, ok := p.PostForm["join"]; ok {
 			username_length := len([]rune(r.PostFormValue("username")))
 			if !username_rexp.MatchString(r.PostFormValue("username")) || username_length > 20 || username_length < 3 {
 				//TODO: embed error
@@ -174,8 +174,7 @@ func (h *Http_server) join_handler() {
 				w.Write([]byte("success"))
 			}
 			return
-		} else {
-			p.write_template()
 		}
+		p.write_template()
 	})
 }

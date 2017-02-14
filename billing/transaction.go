@@ -1,30 +1,30 @@
 package billing
 
 import (
-	"database/sql"
+/*	"database/sql"
 	"fmt"
 	beanstream "github.com/Beanstream/beanstream-go"
 	"log"
 	"math/rand"
-	"strconv"
+	"strconv"*/
 	"time"
 )
 
 // TODO: reject negative amounts
 
-type Transaction struct {
+type transaction struct {
 	id         string
-	Date       time.Time
-	Approved   bool
-	Order_id   string
-	Amount     float64
-	Name       string // "Membership dues", "Storage fees", etc.
-	Card       string // Last 4 digits
-	Ip_address string
+	approved   bool
+	timestamp  time.Time
+	amount     float64
+	order_id   string
+	comment    string
+	card       string // Last 4 digits
+	ip_address string
 	invoice    int
 }
 
-func (p *Profile) New_transaction(amount float64, name, ip_address string) *Transaction {
+/*func (p *Profile) new_transaction(amount float64, name, ip_address string) *Transaction {
 	if amount <= 0 {
 		return nil
 	}
@@ -58,9 +58,9 @@ func (p *Profile) New_transaction(amount float64, name, ip_address string) *Tran
 		log.Panic(err)
 	}
 	return txn
-}
+}*/
 
-func (p *Profile) Get_transactions(number int) []*Transaction {
+/*func (p *Profile) Get_transactions(number int) []*Transaction {
 	var txns []*Transaction
 	rows, err := p.db.Query("SELECT id, approved, order_id, amount, name, card, ip_address, time FROM transaction WHERE username = $1 ORDER BY time DESC LIMIT $2", p.member.Username, number)
 	defer rows.Close()
@@ -93,4 +93,4 @@ func (p *Profile) Get_transactions(number int) []*Transaction {
 		log.Panic(err)
 	}
 	return txns
-}
+}*/

@@ -145,8 +145,9 @@ form_submit.click(function(event) {
 				$("#sign-in form").submit();
 			}
 		});
-	} else if (form.is("#billing") && invalid) event.preventDefault();
-	else if (form.is("#join")) {
+	} else if (form.is("#billing") && invalid) {
+        event.preventDefault();
+    } else if (form.is("#join")) {
         event.preventDefault();
         if (!invalid) {
             $.ajax("/join", {
@@ -155,9 +156,6 @@ form_submit.click(function(event) {
                 method: "POST",
                 success: function(data) {
                     if (data == "success") $(location).attr("href", "/member");
-                },
-                error: function(j, status, error) {
-                    $("#join").submit();
                 }
             });
         }

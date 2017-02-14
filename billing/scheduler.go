@@ -10,7 +10,8 @@ import (
 // first_of_next_month returns the local time at 00:00 on the first day of next
 //	month
 func first_of_next_month() time.Time {
-	return time.Date(time.Now().Year(), time.Now().Month()+1, 1, 0, 0, 0, 0, time.Local)
+	return time.Date(time.Now().Year(), time.Now().Month()+1, 1, 0, 0, 0, 0,
+		time.Local)
 }
 
 func (b *Billing) payment_scheduler() {
@@ -24,7 +25,10 @@ func (b *Billing) payment_scheduler() {
 			// Query to find all open billing registrations for which a
 			//	transaction should occur.
 			//TODO: recurring intervals different than 1 month
-			rows, err := b.db.Query("SELECT i.id, i.profile, COALESCE(i.amount, f.amount) FROM invoice i INNER JOIN fee f ON (i.fee = f.id) WHERE f.recurring = '1 month' AND (i.end_date >= now() OR i.end_date IS NULL)")
+			rows, err := b.db.Query("SELECT i.id, i.profile, "+
+				"COALESCE(i.amount, f.amount) FROM invoice i INNER JOIN fee f "+
+				"ON (i.fee = f.id) WHERE f.recurring = '1 month' AND "+
+				"(i.end_date >= now() OR i.end_date IS NULL)")
 			if err != nil {
 				if err != sql.ErrNoRows {
 					log.Panic(err)
@@ -56,7 +60,7 @@ func (b *Billing) payment_scheduler() {
 					if profile := b.Get_profile(members[profile_username]); profile != nil {
 						profiles[profile_username] = profile
 					} else {
-						log.Println("Could not fetch Beanstream profile for " + username)
+						log.Println("Could not fetch Beanstream profile for " + profile_username)
 						//// TODO: missed payment
 					}
 				}

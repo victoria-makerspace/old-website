@@ -82,7 +82,7 @@ CREATE TABLE transaction (
 	time timestamp(0) NOT NULL DEFAULT now(),
 	amount real NOT NULL,
 	order_id text,
-	name text,
+	comment text,
 	card character(4),
 	ip_address text,
 	invoice integer REFERENCES invoice,
