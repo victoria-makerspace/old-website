@@ -20,6 +20,12 @@ CREATE TABLE administrator (
 	username text PRIMARY KEY REFERENCES member,
 	privileges admin_privilege[]
 );
+CREATE TABLE student (
+	username text PRIMARY KEY REFERENCES member,
+	institution text,
+	student_email text,
+	graduation_date date
+);
 CREATE TABLE session_http (
 	token character(64) PRIMARY KEY,
 	username text NOT NULL REFERENCES member,
@@ -34,12 +40,6 @@ CREATE TABLE payment_profile (
 	id text UNIQUE NOT NULL,
 	-- null value implies profile is valid
 	invalid_error payment_profile_error
-);
-CREATE TABLE student (
-	username text PRIMARY KEY REFERENCES member,
-	institution text,
-	student_email text,
-	graduation_date date
 );
 CREATE TYPE fee_category AS ENUM (
 	'membership',
@@ -80,20 +80,18 @@ CREATE TABLE transaction (
 	id integer PRIMARY KEY,
 	approved boolean NOT NULL,
 	time timestamp(0) NOT NULL DEFAULT now(),
+	amount real NOT NULL,
 	order_id text,
 	name text,
 	card character(4),
 	ip_address text,
-	amount real,
 	invoice integer REFERENCES invoice,
 	logged timestamp(0) REFERENCES txn_scheduler_log,
-	-- XOR (amount, invoice) on null value
-	CHECK ((amount IS NULL AND invoice IS NOT NULL) OR
-		(amount IS NOT NULL AND invoice IS NULL))
+	CHECK (CASE WHEN amount IS NULL THEN invoice IS NOT NULL END)
 );
 CREATE TABLE missed_payment (
-	date date NOT NULL DEFAULT now(),
 	invoice integer NOT NULL REFERENCES invoice,
+	date date NOT NULL DEFAULT now(),
 	transaction integer REFERENCES transaction,
 	logged timestamp(0) REFERENCES txn_scheduler_log
 );
