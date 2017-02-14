@@ -39,6 +39,7 @@ func (h *Http_server) storage_handler() {
 			p.http_error(403)
 			return
 		}
+
 		p.write_template()
 	})
 }

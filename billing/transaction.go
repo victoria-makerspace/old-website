@@ -1,30 +1,28 @@
 package billing
 
 import (
-/*	"database/sql"
-	"fmt"
-	beanstream "github.com/Beanstream/beanstream-go"
+	"database/sql"
+	//beanstream "github.com/Beanstream/beanstream-go"
 	"log"
-	"math/rand"
-	"strconv"*/
 	"time"
 )
 
-// TODO: reject negative amounts
-
-type transaction struct {
-	id         string
-	approved   bool
-	timestamp  time.Time
-	amount     float64
+type Transaction struct {
+	Id         int
+	*Profile
+	Approved   bool
+	Time       time.Time
+	Amount     float64
+	Comment    string
+	Card       string // Last 4 digits
+	Ip_address string
+	Invoice    *Invoice
 	order_id   string
-	comment    string
-	card       string // Last 4 digits
-	ip_address string
-	invoice    int
 }
 
 /*func (p *Profile) new_transaction(amount float64, name, ip_address string) *Transaction {
+// TODO: reject negative amounts
+
 	if amount <= 0 {
 		return nil
 	}
@@ -60,7 +58,48 @@ type transaction struct {
 	return txn
 }*/
 
-/*func (p *Profile) Get_transactions(number int) []*Transaction {
+func (p *Profile) get_transactions() {
+	rows, err := p.db.Query("SELECT id, approved, time, amount, order_id, "+
+		"comment, card, ip_address, invoice FROM transaction WHERE "+
+		"profile = $1 ORDER BY time DESC", p.member.Username)
+	defer rows.Close()
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return
+		}
+		log.Panic(err)
+	}
+	for rows.Next() {
+		txn := &Transaction{Profile: p}
+		var order_id, comment, card, ip_address sql.NullString
+		var invoice_id sql.NullInt64
+		if err = rows.Scan(&txn.Id, &txn.Approved, &txn.Time, &txn.Amount,
+			&order_id, &comment, &card, &ip_address, &invoice_id);
+			err != nil {
+			log.Panic(err)
+		}
+		txn.order_id = order_id.String
+		txn.Comment = comment.String
+		txn.Card = card.String
+		txn.Ip_address = ip_address.String
+		if (invoice_id.Valid) {
+			txn.Invoice = p.Get_bill(int(invoice_id.Int64))
+		}
+		p.Transactions = append(p.Transactions, txn)
+	}
+}
+
+//	Get_transaction returns nil when the transaction isn't found.
+func (p *Profile) Get_transaction(id int) *Transaction {
+	for _, i := range p.Transactions {
+		if i.Id == id {
+			return i
+		}
+	}
+	return nil
+}
+
+/*
 	var txns []*Transaction
 	rows, err := p.db.Query("SELECT id, approved, order_id, amount, name, card, ip_address, time FROM transaction WHERE username = $1 ORDER BY time DESC LIMIT $2", p.member.Username, number)
 	defer rows.Close()

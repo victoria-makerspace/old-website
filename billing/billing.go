@@ -81,7 +81,7 @@ type Invoice struct {
 	End_date    *time.Time
 	Description string
 	*Fee
-	profile     *Profile
+	*Profile
 }
 
 func (p *Profile) get_recurring_bills() {
@@ -90,7 +90,7 @@ func (p *Profile) get_recurring_bills() {
 		"COALESCE(i.description, f.description), COALESCE(i.amount, f.amount), "+
 		"f.category, f.identifier, f.recurring FROM invoice i INNER JOIN fee f ON (i.fee = f.id) WHERE "+
 		"i.profile = $1 AND f.recurring IS NOT NULL AND (i.end_date > now() OR "+
-		"i.end_date IS NULL)",
+		"i.end_date IS NULL) ORDER BY i.date DESC",
 		p.member.Username)
 	defer rows.Close()
 	if err != nil {
@@ -100,7 +100,7 @@ func (p *Profile) get_recurring_bills() {
 		log.Panic(err)
 	}
 	for rows.Next() {
-		inv := &Invoice{profile: p}
+		inv := &Invoice{Profile: p}
 		var end_date pq.NullTime
 		if err = rows.Scan(&inv.Id, &inv.Username, &inv.Date, &end_date,
 			&inv.Description, &inv.Amount, &inv.Category, &inv.Identifier, &inv.Interval); err != nil {
@@ -129,7 +129,7 @@ func (p *Profile) New_recurring_bill(fee_id int, username string) {
 	}
 	inv := &Invoice{
 		Username: username,
-		profile:  p}
+		Profile:  p}
 	if err := p.db.QueryRow("INSERT INTO invoice (username, profile, fee) "+
 		"VALUES ($1, $2, $3) RETURNING id, date, f.description, f.amount, "+
 		"f.recurring FROM fee f ON (fee = f.id)", username, p.member.Username,
@@ -141,13 +141,13 @@ func (p *Profile) New_recurring_bill(fee_id int, username string) {
 }
 
 func (i *Invoice) Cancel_recurring_bill() {
-	for n, v := range i.profile.Invoices {
+	for n, v := range i.Invoices {
 		if v == i {
-			i.profile.Invoices = append(i.profile.Invoices[:n-1],
-				i.profile.Invoices[n:]...)
+			i.Invoices = append(i.Invoices[:n-1],
+				i.Invoices[n:]...)
 		}
 	}
-	if _, err := i.profile.db.Exec("UPDATE invoice SET end_date = now() WHERE "+
+	if _, err := i.db.Exec("UPDATE invoice SET end_date = now() WHERE "+
 		"id = $1 AND (end_date > now() OR end_date IS NULL)", i.Id);
 		err != nil {
 		log.Panic(err)
@@ -155,42 +155,6 @@ func (i *Invoice) Cancel_recurring_bill() {
 	*i = Invoice{}
 }
 
-/*
-	var id int
-	var start_date time.Time
-	if err := p.db.QueryRow("SELECT id, amount, start_date FROM billing WHERE"+
-		"username = $1 AND name = $2 AND (end_date > now() OR end_date IS NULL)",
-		p.member.Username, name).Scan(&id, &a, &start_date);
-		err != == sql.ErrNoRows {
-
-	}
-	if err == sql.ErrNoRows {
-		// Register billing
-		_, err = p.db.Exec("INSERT INTO billing (username, name, amount) VALUES ($1, $2, $3)", p.member.Username, name, amount)
-		if err != nil {
-			log.Panic(err)
-		}
-		// Prorate the current month's bill, do transaction immediately.
-		p.New_transaction(prorate_month(amount), name+" (prorated)", "")
-		return
-	} else if err != nil {
-		log.Panic(err)
-	}
-	// If billing already exists and the amount hasn't changed, do nothing.
-	if prev_amount == amount {
-		return
-	}
-	// If a billing exists but the amount needs to be updated, expire the
-	//	existing billing at now(), and create a new billing with the same start
-	//	date as the old one (so that there is no confusion about start date when
-	//	looking at the list of billings).
-	p.Cancel_billing(name)
-	_, err = p.db.Exec("INSERT INTO billing (username, name, amount, start_date) VALUES ($1, $2, $3, $4)", p.member.Username, name, amount, start_date)
-	if err != nil {
-		log.Panic(err)
-	}
-}
-
 func (p *Profile) get_missed_payments() {
 	return
-}*/
+}

@@ -39,6 +39,7 @@ type Member struct {
 	Active        bool
 	Admin         bool
 	Student       bool
+	Corporate     bool    //TODO
 	password_key  string
 	password_salt string
 	db            *sql.DB

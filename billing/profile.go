@@ -13,6 +13,7 @@ type Profile struct {
 	beanstream.Profile
 	Error    *string
 	Invoices []*Invoice
+	Transactions []*Transaction
 }
 
 func (b *Billing) New_profile(token, cardholder string, m *member.Member) *Profile {
@@ -58,6 +59,7 @@ func (b *Billing) Get_profile(m *member.Member) *Profile {
 		}
 	}
 	p.get_recurring_bills()
+	p.get_transactions()
 	return p
 }
 

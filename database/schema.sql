@@ -57,6 +57,7 @@ CREATE TABLE fee (
 	-- Recurring fees require a fixed price
 	CHECK (CASE WHEN recurring IS NOT NULL THEN amount IS NOT NULL END)
 );
+-- fee values
 COPY fee (category, identifier, amount, description) FROM STDIN;
 membership	regular	50.0	Membership dues
 membership	student	30.0	Membership dues (student)
@@ -73,6 +74,7 @@ storage	wall	5.0	Wall storage fee
 COPY fee (category, identifier, description, recurring) FROM STDIN;
 membership	corporate	Membership dues (corporate)	\N
 \.
+-- /end fee values
 CREATE TABLE invoice (
 	id serial PRIMARY KEY,
 	username text NOT NULL REFERENCES member,
@@ -92,6 +94,7 @@ CREATE TABLE txn_scheduler_log (
 CREATE TABLE transaction (
 	-- Beanstream value
 	id integer PRIMARY KEY,
+	profile text NOT NULL REFERENCES payment_profile,
 	approved boolean NOT NULL,
 	time timestamp(0) NOT NULL DEFAULT now(),
 	amount real NOT NULL,
@@ -109,3 +112,39 @@ CREATE TABLE missed_payment (
 	transaction integer REFERENCES transaction,
 	logged timestamp(0) REFERENCES txn_scheduler_log
 );
+CREATE TABLE storage (
+	id integer NOT NULL,
+	fee integer NOT NULL REFERENCES fee,
+	size real,
+	PRIMARY KEY (id, fee)
+);
+-- storage values
+--	Hall locker
+WITH RECURSIVE t(n, id) AS (
+	SELECT	1, id
+	FROM	fee
+	WHERE	category = 'storage' AND identifier = 'hall-locker'
+	UNION
+	SELECT n+1, id FROM t WHERE n < 12
+)
+INSERT INTO storage
+SELECT * FROM t;
+--	Bathroom locker
+WITH RECURSIVE t(n, id) AS (
+	SELECT	1, id
+	FROM	fee
+	WHERE	category = 'storage' AND identifier = 'bathroom-locker'
+	UNION
+	SELECT n+1, id FROM t WHERE n < 11
+)
+INSERT INTO storage
+SELECT * FROM t;
+--	Wall storage
+INSERT INTO storage
+SELECT generate_subscripts(a, 1), id, unnest(a)
+FROM (
+	SELECT id, ARRAY[2.5,3.5,3,5,4,5,4,4,4,5.5] AS a
+	FROM fee
+	WHERE category = 'storage' AND identifier = 'wall'
+) f;
+-- /end storage values
