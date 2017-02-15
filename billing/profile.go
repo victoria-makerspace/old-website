@@ -7,53 +7,38 @@ import (
 	"log"
 )
 
+//TODO: don't make Profile dependent on having a beanstream profile, every member should have exactly one profile object
 type Profile struct {
-	member *member.Member
-	*Billing
-	beanstream.Profile
-	Error    *string
 	Invoices []*Invoice
 	Transactions []*Transaction
-}
-
-func (b *Billing) New_profile(token, cardholder string, m *member.Member) *Profile {
-	p := &Profile{Billing: b, member: m}
-	p.Token = beanstream.Token{
-		Token: token,
-		Name:  cardholder}
-	p.Custom = beanstream.CustomFields{Ref1: m.Username}
-	rsp, err := b.profiles.CreateProfile(p.Profile)
-	if err != nil {
-		log.Println("Failed to create profile: ", err)
-		return nil
-	}
-	p.Id = rsp.Id
-	if _, err = b.db.Exec("INSERT INTO payment_profile VALUES ($1, $2)",
-		m.Username, rsp.Id); err != nil {
-		log.Panic(err)
-	}
-	return p
+	Error    *string
+	billing *Billing
+	bs_profile beanstream.Profile
+	member *member.Member
 }
 
 func (b *Billing) Get_profile(m *member.Member) *Profile {
+	p := &Profile{billing: b, member: m}
 	var (
 		id            string
 		invalid       sql.NullString
 	)
-	err := b.db.QueryRow("SELECT id, invalid_error FROM payment_profile"+
-		" WHERE username = $1", m.Username).Scan(&id, &invalid)
+	err := b.db.QueryRow("SELECT id, invalid_error FROM payment_profile "+
+		"WHERE username = $1", m.Username).Scan(&id, &invalid)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Panic(err)
 		}
-		return nil
+		p.Error = &"No credit card profile"
+		return p
 	}
 	p := &Profile{Billing: b, member: m}
-	if bs, err := b.profiles.GetProfile(id); err != nil {
+	if bs, err := b.profile_api.GetProfile(id); err != nil {
 		log.Println(err)
-		return nil
+		p.Error = &"No credit card profile"
+		return p
 	} else {
-		p.Profile = *bs
+		p.bs_profile = *bs
 		if invalid.Valid {
 			p.Error = &invalid.String
 		}
@@ -64,35 +49,61 @@ func (b *Billing) Get_profile(m *member.Member) *Profile {
 }
 
 func (p *Profile) Get_card() *beanstream.CreditCard {
-	if p.Card.Number == "" {
+	if p.bs_profile == nil || p.bs_profile.Card.Number == "" {
 		return nil
 	}
 	return &p.Card
 }
 
 func (p *Profile) Delete_card() {
-	if _, err := p.DeleteCard(p.profiles, 1); err != nil {
+	if p.Get_card() == nil {
+		return
+	}
+	if _, err := p.DeleteCard(p.billing.profile_api, 1); err != nil {
 		log.Println(err)
 	}
 	p.Card = beanstream.CreditCard{}
 }
 
-func (p *Profile) Update_card(name, token string) {
+func (p *Profile) Update_card(token, cardholder string) {
 	if p.Get_card() != nil {
 		p.Delete_card()
 	}
-	if _, err := p.profiles.AddTokenizedCard(p.Id, name, token); err != nil {
+	if p.bs_profile == nil {
+		p.new_bs_profile(token, cardholder)
+		return
+	}
+	if _, err := p.billing.profile_api.AddTokenizedCard(p.bs_profile.Id, name, token); err != nil {
 		log.Println(err)
 		return
 	}
-	card, err := p.Profile.GetCard(p.profiles, 1)
+	card, err := p.bs_profile.GetCard(p.billing.profile_api, 1)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	// Clear card error
+	p.Error = nil
 	if _, err = p.db.Exec("UPDATE payment_profile SET error = false, error_message = null"); err != nil {
 		log.Panic(err)
 	}
 	p.Card = *card
+}
+
+func (p *Profile) new_bs_profile(token, cardholder string) {
+	p.bs_profile.Token = beanstream.Token{
+		Token: token,
+		Name:  cardholder}
+	p.bs_profile.Custom = beanstream.CustomFields{Ref1: m.Username}
+	rsp, err := b.billing.profile_api.CreateProfile(p.bs_profile)
+	if err != nil {
+		log.Println("Failed to create profile: ", err)
+		return
+	}
+	p.bs_profile.Id = rsp.Id
+	if _, err = b.db.Exec("INSERT INTO payment_profile VALUES ($1, $2)",
+		p.member.Username, rsp.Id); err != nil {
+		log.Panic(err)
+	}
+	p.Error = nil
 }

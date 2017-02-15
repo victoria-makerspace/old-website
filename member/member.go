@@ -50,6 +50,7 @@ var username_rexp = regexp.MustCompile(``)
 var name_rexp = regexp.MustCompile(`^(?:[\pL\pN\pM\pP]+ ?)+$`)
 
 // New creates a new user, but will panic if the username already exists
+//TODO: move db parameter into a suitable receiver
 func New(username, name, email, password string, db *sql.DB) *Member {
 	// Ideally, all members are created through the join page when the talk
 	//	server is running, as it queries discourse's check_username.json api to
@@ -75,6 +76,8 @@ func New(username, name, email, password string, db *sql.DB) *Member {
 	return m
 }
 
+//TODO: support null password keys, and use e-mail verification for login
+//TODO: move db parameter into a suitable receiver
 func Get(username string, db *sql.DB) *Member {
 	m := &Member{db: db}
 	// Populate m and check if member is active, by asserting whether or not

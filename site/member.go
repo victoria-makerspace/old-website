@@ -39,7 +39,8 @@ func (h *Http_server) storage_handler() {
 			p.http_error(403)
 			return
 		}
-
+		p.Field["fees"] = p.billing.Fees
+		p.Field["storage"] = p.billing.Storage
 		p.write_template()
 	})
 }

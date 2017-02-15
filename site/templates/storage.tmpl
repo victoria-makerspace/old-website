@@ -1,4 +1,6 @@
   <div class="container">
-    
-{{template "footer"}}
+  {{range .Field.storage}}
+    {{.}}<br>
+  {{end}}
+  {{template "footer"}}
   </div>

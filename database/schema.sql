@@ -59,27 +59,27 @@ CREATE TABLE fee (
 );
 -- fee values
 COPY fee (category, identifier, amount, description) FROM STDIN;
-membership	regular	50.0	Membership dues
-membership	student	30.0	Membership dues (student)
-storage	bathroom-locker	5.0	Bathroom locker fee
-storage	hall-locker	5.0	Hall locker fee
+membership	regular	50.0	Membership
+membership	student	30.0	Membership (student)
+storage	bathroom-locker	5.0	Bathroom locker
+storage	hall-locker	5.0	Hall locker
 \.
 -- Wall storage is $5/lineal foot, so the corresponding invoice should multiply
 --	by this number.
 COPY fee (category, identifier, amount, description) FROM STDIN;
-storage	wall	5.0	Wall storage fee
+storage	wall	5.0	Wall storage
 \.
 -- Corporate membership is case-by-case, only to be registered from the admin
 --	panel
 COPY fee (category, identifier, description, recurring) FROM STDIN;
-membership	corporate	Membership dues (corporate)	\N
+membership	corporate	Membership (corporate)	\N
 \.
 -- /end fee values
 CREATE TABLE invoice (
 	id serial PRIMARY KEY,
 	username text NOT NULL REFERENCES member,
 	date date NOT NULL DEFAULT now(),
-	profile text REFERENCES payment_profile,
+	paid_by text REFERENCES member,
 	end_date date,
 	description text,
 	amount real,
@@ -113,10 +113,11 @@ CREATE TABLE missed_payment (
 	logged timestamp(0) REFERENCES txn_scheduler_log
 );
 CREATE TABLE storage (
-	id integer NOT NULL,
+	number integer NOT NULL,
 	fee integer NOT NULL REFERENCES fee,
 	size real,
-	PRIMARY KEY (id, fee)
+	invoice integer REFERENCES invoice,
+	PRIMARY KEY (number, fee)
 );
 -- storage values
 --	Hall locker

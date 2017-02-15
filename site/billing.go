@@ -62,9 +62,9 @@ func (h *Http_server) billing_handler() {
 				p.write_template()
 				return
 			}
-			member_type := "membership.regular"
+			member_type := "membership_regular"
 			if p.Member().Student {
-				member_type = "membership.student"
+				member_type = "membership_student"
 			}
 			pay_profile.New_recurring_bill(pay_profile.Fees[member_type].Id, p.Member().Username)
 			http.Redirect(w, r, "/member/billing", 303)
