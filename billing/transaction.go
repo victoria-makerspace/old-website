@@ -59,8 +59,8 @@ type Transaction struct {
 }*/
 
 func (p *Profile) get_transactions() {
-	rows, err := p.db.Query("SELECT id, approved, time, amount, order_id, "+
-		"comment, card, ip_address, invoice FROM transaction WHERE "+
+	rows, err := p.billing.db.Query("SELECT id, approved, time, amount, "+
+		"order_id, comment, card, ip_address, invoice FROM transaction WHERE "+
 		"profile = $1 ORDER BY time DESC", p.member.Username)
 	defer rows.Close()
 	if err != nil {

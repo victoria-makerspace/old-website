@@ -18,12 +18,7 @@ func (h *Http_server) billing_handler() {
 		pay_profile := p.billing.Get_profile(p.Member())
 		p.ParseForm()
 		if token := p.PostFormValue("singleUseToken"); token != "" {
-			if pay_profile != nil {
-				pay_profile.Update_card(p.PostFormValue("name"), token)
-			} else {
-				pay_profile = p.billing.New_profile(token,
-					p.PostFormValue("name"), p.Member())
-			}
+			pay_profile.Update_card(p.PostFormValue("name"), token)
 			http.Redirect(w, r, "/member/billing", 303)
 		} else if _, ok := p.PostForm["delete-card"]; ok && pay_profile != nil {
 			pay_profile.Delete_card()
@@ -57,7 +52,7 @@ func (h *Http_server) billing_handler() {
 				p.http_error(422)
 				return
 			}
-			if pay_profile == nil {
+			if pay_profile.Error == nil {
 				//TODO: embed error response
 				p.write_template()
 				return
@@ -65,8 +60,11 @@ func (h *Http_server) billing_handler() {
 			member_type := "membership_regular"
 			if p.Member().Student {
 				member_type = "membership_student"
+			} else if p.Member().Corporate {
+				//TODO
 			}
-			pay_profile.New_recurring_bill(pay_profile.Fees[member_type].Id, p.Member().Username)
+			pay_profile.New_recurring_bill(
+				pay_profile.billing.Fees[member_type].Id, p.Member().Username)
 			http.Redirect(w, r, "/member/billing", 303)
 		} else if _, ok := p.PostForm["terminate"]; ok {
 			////////// TODO: password check

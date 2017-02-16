@@ -108,14 +108,18 @@ func (b *Billing) get_bill(id int) *Invoice {
 		}
 		log.Panic(err)
 	}
-	inv.Paid_by = member.Get(paid_by.String, b.db)
+	if m := member.Get(paid_by.String, b.db); m != nil {
+		inv.Paid_by = m
+	}
 	if end_date.Valid {
 		inv.End_date = &end_date.Time
 	}
 	inv.Description = description.String
 	inv.Amount = amount.Float64
 	inv.Interval = interval.String
-	inv.Fee = b.Fees[fee_category.String+"_"+fee_identifier.String]
+	if fee_category.Valid && fee_identifier.Valid {
+		inv.Fee = b.Fees[fee_category.String+"_"+fee_identifier.String]
+	}
 	return inv
 }
 
@@ -148,9 +152,8 @@ func (p *Profile) get_recurring_bills() {
 			interval                     sql.NullString
 			fee_category, fee_identifier sql.NullString
 		)
-		if err = rows.Scan(&inv.Id, &inv.Username, &inv.Date, &paid_by,
-			&end_date, &description, &amount, &interval, &fee_category,
-			&fee_identifier); err != nil {
+		if err = rows.Scan(&inv.Id, &inv.Username, &inv.Date, &end_date,
+			&description, &amount, &interval, &fee_category, &fee_identifier); err != nil {
 			log.Panic(err)
 		}
 		if end_date.Valid {
@@ -159,7 +162,10 @@ func (p *Profile) get_recurring_bills() {
 		inv.Description = description.String
 		inv.Amount = amount.Float64
 		inv.Interval = interval.String
-		inv.Fee = b.Fees[fee_category.String+"_"+fee_identifier.String]
+		if fee_category.Valid && fee_identifier.Valid {
+			inv.Fee = p.billing.Fees[fee_category.String+"_"+
+				fee_identifier.String]
+		}
 		p.Invoices = append(p.Invoices, inv)
 	}
 }
@@ -176,32 +182,35 @@ func (p *Profile) Get_bill(id int) *Invoice {
 
 //TODO: BUG: not all 'fee' records have non-null 'recurring' fields
 func (p *Profile) New_recurring_bill(fee_id int, username string) {
-	if member.Get(username, p.db) == nil {
+	if member.Get(username, p.billing.db) == nil {
 		return
 	}
 	fee := p.billing.get_fee(fee_id)
 	inv := &Invoice{Username: username,
-		Paid_by:     p,
+		Paid_by:     p.member,
 		Description: fee.Description,
 		Amount:      fee.Amount,
 		Interval:    fee.Interval,
 		Fee:         fee}
-	if err := p.db.QueryRow("INSERT INTO invoice (username, paid_by, fee) "+
-		"VALUES ($1, $2, $3) RETURNING id, date", username, p.member.Username,
-		fee_id).Scan(&inv.Id, &inv.Date); err != nil {
+	if err := p.billing.db.QueryRow("INSERT INTO invoice (username, paid_by, "+
+		"fee) VALUES ($1, $2, $3) RETURNING id, date", username,
+		p.member.Username, fee_id).Scan(&inv.Id, &inv.Date); err != nil {
 		log.Panic(err)
 	}
 	p.Invoices = append(p.Invoices, inv)
 }
 
-func (i *Invoice) Cancel_recurring_bill() {
-	for n, v := range i.Invoices {
+func (p *Profile) Cancel_recurring_bill(i *Invoice) {
+	if i.Paid_by != p.member {
+		return
+	}
+	for n, v := range p.Invoices {
 		if v == i {
-			i.Invoices = append(i.Invoices[:n-1],
-				i.Invoices[n:]...)
+			p.Invoices = append(p.Invoices[:n-1],
+				p.Invoices[n:]...)
 		}
 	}
-	if _, err := i.db.Exec("UPDATE invoice SET end_date = now() WHERE "+
+	if _, err := p.billing.db.Exec("UPDATE invoice SET end_date = now() WHERE "+
 		"id = $1 AND (end_date > now() OR end_date IS NULL)", i.Id); err != nil {
 		log.Panic(err)
 	}
