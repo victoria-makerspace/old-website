@@ -39,7 +39,7 @@ type Member struct {
 	Active        bool
 	Admin         bool
 	Student       bool
-	Corporate     bool    //TODO
+	Corporate     bool //TODO
 	password_key  string
 	password_salt string
 	db            *sql.DB
@@ -90,7 +90,7 @@ func Get(username string, db *sql.DB) *Member {
 		"student WHERE username = $1), EXISTS (SELECT 1 FROM administrator "+
 		"WHERE username = $1) FROM member WHERE username = $1", username).
 		Scan(&m.Username, &m.Name, &m.password_key, &m.password_salt, &m.Email,
-		&m.Registered, &m.Active, &m.Student, &m.Admin); err != nil {
+			&m.Registered, &m.Active, &m.Student, &m.Admin); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}

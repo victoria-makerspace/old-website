@@ -9,19 +9,19 @@ import (
 
 //TODO: don't make Profile dependent on having a beanstream profile, every member should have exactly one profile object
 type Profile struct {
-	Invoices []*Invoice
+	Invoices     []*Invoice
 	Transactions []*Transaction
-	Error    *string
-	billing *Billing
-	bs_profile beanstream.Profile
-	member *member.Member
+	Error        *string
+	billing      *Billing
+	bs_profile   beanstream.Profile
+	member       *member.Member
 }
 
 func (b *Billing) Get_profile(m *member.Member) *Profile {
 	p := &Profile{billing: b, member: m}
 	var (
-		id            string
-		invalid       sql.NullString
+		id      string
+		invalid sql.NullString
 	)
 	err := b.db.QueryRow("SELECT id, invalid_error FROM payment_profile "+
 		"WHERE username = $1", m.Username).Scan(&id, &invalid)

@@ -1,7 +1,7 @@
 #!/usr/bin/sudo -s
 
 FROM=talk.makerspace.ca
-TO=makerspace.ca/talk
+TO=makerspace.ca
 
 dnf install docker postgresql-server
 # docker-storage-setup will fail when using devicemapper (default on fedora) 
@@ -32,7 +32,7 @@ fi
 docker cp $1 $ps:/var/www/discourse/public/backups/default/
 docker exec $ps discourse restore $(basename $1)
 
-echo "YES" |
-    docker exec $ps discourse remap $FROM $TO
+docker exec -it $ps discourse remap $FROM $TO/talk
+docker exec -it $ps discourse remap /uploads /talk/uploads
 docker exec $ps rails r /shared/site_settings.rb
 docker exec $ps rake posts:rebake

@@ -25,9 +25,9 @@ func (b *Billing) payment_scheduler() {
 			// Query to find all open billing registrations for which a
 			//	transaction should occur.
 			//TODO: recurring intervals different than 1 month
-			rows, err := b.db.Query("SELECT i.id, i.profile, "+
-				"COALESCE(i.amount, f.amount) FROM invoice i INNER JOIN fee f "+
-				"ON (i.fee = f.id) WHERE f.recurring = '1 month' AND "+
+			rows, err := b.db.Query("SELECT i.id, i.profile, " +
+				"COALESCE(i.amount, f.amount) FROM invoice i INNER JOIN fee f " +
+				"ON (i.fee = f.id) WHERE f.recurring = '1 month' AND " +
 				"(i.end_date >= now() OR i.end_date IS NULL)")
 			if err != nil {
 				if err != sql.ErrNoRows {
@@ -37,14 +37,14 @@ func (b *Billing) payment_scheduler() {
 			}
 			defer rows.Close()
 			type payment struct {
-				id int
+				id      int
 				profile *Profile
-				amount float64
+				amount  float64
 			}
 			var (
-				payments   []payment
-				members    map[string]*member.Member
-				profiles   map[string]*Profile
+				payments         []payment
+				members          map[string]*member.Member
+				profiles         map[string]*Profile
 				profile_username string
 			)
 			for rows.Next() {

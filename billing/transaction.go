@@ -8,7 +8,7 @@ import (
 )
 
 type Transaction struct {
-	Id         int
+	Id int
 	*Profile
 	Approved   bool
 	Time       time.Time
@@ -74,15 +74,14 @@ func (p *Profile) get_transactions() {
 		var order_id, comment, card, ip_address sql.NullString
 		var invoice_id sql.NullInt64
 		if err = rows.Scan(&txn.Id, &txn.Approved, &txn.Time, &txn.Amount,
-			&order_id, &comment, &card, &ip_address, &invoice_id);
-			err != nil {
+			&order_id, &comment, &card, &ip_address, &invoice_id); err != nil {
 			log.Panic(err)
 		}
 		txn.order_id = order_id.String
 		txn.Comment = comment.String
 		txn.Card = card.String
 		txn.Ip_address = ip_address.String
-		if (invoice_id.Valid) {
+		if invoice_id.Valid {
 			txn.Invoice = p.Get_bill(int(invoice_id.Int64))
 		}
 		p.Transactions = append(p.Transactions, txn)

@@ -60,11 +60,11 @@ func Serve(config Config, db *sql.DB, b *billing.Billing) *Http_server {
 }
 
 type page struct {
-	Name    string
-	Title   string
-	Session *session
+	Name     string
+	Title    string
+	Session  *session
 	Talk_url string
-	Field   map[string]interface{} // Data to be passed to templates
+	Field    map[string]interface{} // Data to be passed to templates
 	http.ResponseWriter
 	*http.Request
 	*Http_server
@@ -180,8 +180,7 @@ func (h *Http_server) join_handler() {
 				if a, ok = check_username["available"].(bool); ok && a == true {
 					if m := member.New(r.PostFormValue("username"),
 						r.PostFormValue("name"), r.PostFormValue("email"),
-						r.PostFormValue("password"), p.db);
-						m != nil {
+						r.PostFormValue("password"), p.db); m != nil {
 						//TODO: sign in with the talk server immediately, to prevent talk_url errors within p.new_session
 						p.new_session(m, true)
 						w.Write([]byte("success"))
