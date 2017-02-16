@@ -1,0 +1,38 @@
+#!/usr/bin/sudo -s
+
+FROM=talk.makerspace.ca
+TO=makerspace.ca/talk
+
+dnf install docker postgresql-server
+# docker-storage-setup will fail when using devicemapper (default on fedora) 
+#   without LVM and available space for volumes
+echo "STORAGE_DRIVER=overlay2" >> /etc/sysconfig/docker-storage-setup
+systemctl enable docker postgresql
+systemctl start docker postgresql
+firewall-cmd --zone=FedoraServer --add-port=1081/tcp --permanent
+firewall-cmd --reload
+
+git clone https://github.com/discourse/discourse_docker.git /var/discourse
+cd /var/discourse
+mkdir shared
+# https://meta.discourse.org/t/discourse-on-centos-7/20701/12
+chcon -Rt svirt_sandbox_file_t /var/discourse/shared
+
+cp app.yml containers/app.yml
+./launcher bootstrap app &&
+    ./launcher start app
+
+ps=$(docker ps -a | awk '{print $1, $(NF)}' | grep " app$" | awk '{print $1}')
+
+docker cp site_settings.rb $ps:/shared/
+# Pass backup tarball as argument
+if [[ ! -f $1 ]]; then
+    exit
+fi
+docker cp $1 $ps:/var/www/discourse/public/backups/default/
+docker exec $ps discourse restore $(basename $1)
+
+echo "YES" |
+    docker exec $ps discourse remap $FROM $TO
+docker exec $ps rails r /shared/site_settings.rb
+docker exec $ps rake posts:rebake
