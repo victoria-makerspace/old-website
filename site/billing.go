@@ -22,7 +22,7 @@ func (h *Http_server) billing_handler() {
 		pay_profile := p.billing.Get_profile(p.Member())
 		p.ParseForm()
 		if token := p.PostFormValue("singleUseToken"); token != "" {
-			pay_profile.Update_card(p.PostFormValue("name"), token)
+			pay_profile.Update_card(token, p.PostFormValue("name"))
 			http.Redirect(w, r, "/member/billing", 303)
 		} else if _, ok := p.PostForm["delete-card"]; ok && pay_profile != nil {
 			pay_profile.Delete_card()
@@ -34,20 +34,14 @@ func (h *Http_server) billing_handler() {
 				p.PostFormValue("graduation") != "" {
 				graduation, err := time.Parse("2006-01", p.PostFormValue("graduation"))
 				if err == nil && graduation.After(time.Now().AddDate(0, 1, 0)) {
-					if p.Member().Active && !p.Member().Student {
-						//TODO: find invoice (regardless who's paying it) and update to student
-					}
-					p.Member().Update_student(p.PostFormValue("institution"),
+					pay_profile.Update_student(p.PostFormValue("institution"),
 						p.PostFormValue("student_email"), graduation)
 					http.Redirect(w, r, "/member/billing", 303)
 				} else {
 					//TODO: embed error in page
 				}
 			} else {
-				if p.Member().Active && p.Member().Student {
-					//TODO: same as above, update invoice
-				}
-				p.Member().Delete_student()
+				pay_profile.Delete_student()
 				http.Redirect(w, r, "/member/billing", 303)
 			}
 		}
@@ -56,7 +50,7 @@ func (h *Http_server) billing_handler() {
 				p.http_error(422)
 				return
 			}
-			if pay_profile.Error == nil {
+			if pay_profile.Error != nil {
 				//TODO: embed error response
 				p.write_template()
 				return

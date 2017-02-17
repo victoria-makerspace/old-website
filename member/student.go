@@ -32,11 +32,11 @@ func (m *Member) Get_student() *Student {
 func (m *Member) Update_student(institution, email string, grad_date time.Time) {
 	var is_student bool
 	if err := m.db.QueryRow("SELECT true FROM student WHERE username = $1",
-		m.Username).Scan(&is_student); err != nil {
+		m.Username).Scan(&is_student); err != nil && err != sql.ErrNoRows {
 		log.Panic(err)
 	}
-	query := "INSERT INTO student (username, institution, email, " +
-		"graduation_date) VALUE ($1, $2, $3, $4)"
+	query := "INSERT INTO student (username, institution, student_email, " +
+		"graduation_date) VALUES ($1, $2, $3, $4)"
 	if is_student {
 		query = "UPDATE student SET institution = $2, student_email = $3, " +
 			"graduation_date = $4 WHERE username = $1"
@@ -48,9 +48,9 @@ func (m *Member) Update_student(institution, email string, grad_date time.Time) 
 }
 
 func (m *Member) Delete_student() {
+	m.Student = false
 	if _, err := m.db.Exec("DELETE FROM student WHERE username = $1",
 		m.Username); err != nil {
 		log.Panic(err)
 	}
-	m.Student = false
 }
