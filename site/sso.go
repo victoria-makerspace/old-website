@@ -22,7 +22,7 @@ func (p *page) parse_sso_request() (payload url.Values) {
 	payload, err := url.ParseQuery(string(payload_bytes))
 	if err != nil || !hmac.Equal(mac.Sum(nil), sig) {
 		p.http_error(400)
-		return
+		return nil
 	}
 	return
 }
@@ -78,6 +78,9 @@ func (h *Http_server) sso_handler() {
 			return
 		}
 		q := p.parse_sso_request()
+		if q == nil {
+			return
+		}
 		sso_payload := q.Get("nonce") != "" && q.Get("return_sso_url") != ""
 		if sso_payload {
 			p.Field["sso_query"] = r.URL.RawQuery
@@ -103,6 +106,7 @@ func (h *Http_server) sso_handler() {
 		if sso_payload {
 			payload, sig := p.encode_sso_response(q.Get("nonce"))
 			http.Redirect(w, r, q.Get("return_sso_url")+"?sso="+payload+"&sig="+sig, 303)
+			return
 		}
 		http.Redirect(w, r, "/member", 303)
 	})
