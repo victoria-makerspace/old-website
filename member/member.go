@@ -32,17 +32,18 @@ func key(password, salt string) string {
 }
 
 type Member struct {
-	Username      string
-	Name          string
-	Email         string
-	Registered    time.Time
-	Active        bool
-	Admin         bool
-	Student       bool
-	Corporate     bool //TODO
-	password_key  string
-	password_salt string
-	db            *sql.DB
+	Username        string
+	Name            string
+	Email           string
+	Active          bool
+	Agreed_to_terms bool
+	Registered      time.Time
+	Admin           bool
+	Student         bool
+	Corporate       bool //TODO
+	password_key    string
+	password_salt   string
+	db              *sql.DB
 }
 
 //	username_rexp := regexp.MustCompile("^[\\pL\\pN\\pM\\pP]+$")
@@ -78,19 +79,12 @@ func New(username, name, email, password string, db *sql.DB) *Member {
 
 //TODO: support null password keys, and use e-mail verification for login
 //TODO: move db parameter into a suitable receiver
+//TODO: check corporate account
 func Get(username string, db *sql.DB) *Member {
 	m := &Member{db: db}
 	// Populate m and check if member is active, by asserting whether or not
 	//	they are being currently invoiced.
-	if err := db.QueryRow("SELECT "+
-		"username, name, password_key, password_salt, email, registered, "+
-		"EXISTS (SELECT 1 FROM invoice i INNER JOIN fee f ON (i.fee = f.id) "+
-		"WHERE i.username = $1 AND f.category = 'membership' AND "+
-		"(i.end_date > now() OR i.end_date IS NULL)), EXISTS (SELECT 1 FROM "+
-		"student WHERE username = $1), EXISTS (SELECT 1 FROM administrator "+
-		"WHERE username = $1) FROM member WHERE username = $1", username).
-		Scan(&m.Username, &m.Name, &m.password_key, &m.password_salt, &m.Email,
-			&m.Registered, &m.Active, &m.Student, &m.Admin); err != nil {
+	if err := db.QueryRow("SELECT username, name, password_key, password_salt, email, agreed_to_terms, registered, EXISTS (SELECT 1 FROM invoice i INNER JOIN fee f ON (i.fee = f.id) WHERE i.username = $1 AND f.category = 'membership' AND (i.end_date > now() OR i.end_date IS NULL)), EXISTS (SELECT 1 FROM student WHERE username = $1), EXISTS (SELECT 1 FROM administrator WHERE username = $1) FROM member WHERE username = $1", username).Scan(&m.Username, &m.Name, &m.password_key, &m.password_salt, &m.Email, &m.Agreed_to_terms, &m.Registered, &m.Active, &m.Student, &m.Admin); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -104,4 +98,14 @@ func (m *Member) Authenticate(password string) bool {
 		return true
 	}
 	return false
+}
+
+func (m *Member) Change_password(password string) {
+	m.password_salt = Rand256()
+	m.password_key = key(password, m.password_salt)
+	if _, err := m.db.Exec("UPDATE member (password_key, password_salt) SET "+
+		"password_key = $1, password_salt = $2 WHERE username = $3",
+		m.password_key, m.password_salt, m.Username); err != nil {
+		log.Panic(err)
+	}
 }

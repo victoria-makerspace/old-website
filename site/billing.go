@@ -15,6 +15,10 @@ func (h *Http_server) billing_handler() {
 			p.http_error(403)
 			return
 		}
+		if !p.Member().Agreed_to_terms {
+			p.write_template()
+			return
+		}
 		pay_profile := p.billing.Get_profile(p.Member())
 		p.ParseForm()
 		if token := p.PostFormValue("singleUseToken"); token != "" {
@@ -64,13 +68,13 @@ func (h *Http_server) billing_handler() {
 				//TODO
 			}
 			pay_profile.New_recurring_bill(
-				pay_profile.billing.Fees[member_type].Id, p.Member().Username)
+				p.billing.Fees[member_type].Id, p.Member().Username)
 			http.Redirect(w, r, "/member/billing", 303)
 		} else if _, ok := p.PostForm["terminate"]; ok {
 			////////// TODO: password check
 			id, _ := strconv.Atoi(p.PostFormValue("terminate"))
 			if bill := pay_profile.Get_bill(id); bill != nil {
-				bill.Cancel_recurring_bill()
+				pay_profile.Cancel_recurring_bill(bill)
 			}
 			// Redirect not really necessary as double-submission is harmless.
 		}

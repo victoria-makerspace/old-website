@@ -2,20 +2,22 @@
 
 FROM=talk.makerspace.ca
 TO=makerspace.ca
+SUBFOLDER=/talk
 
-dnf install docker postgresql-server
+dnf -y install docker postgresql-server
 # docker-storage-setup will fail when using devicemapper (default on fedora) 
 #   without LVM and available space for volumes
 echo "STORAGE_DRIVER=overlay2" >> /etc/sysconfig/docker-storage-setup
 systemctl enable docker postgresql
 systemctl start docker postgresql
+# Open firewall port exposed by docker, and pointed to by reverse proxy
 firewall-cmd --zone=FedoraServer --add-port=1081/tcp --permanent
 firewall-cmd --reload
 
 git clone https://github.com/discourse/discourse_docker.git /var/discourse
 cd /var/discourse
 mkdir shared
-# https://meta.discourse.org/t/discourse-on-centos-7/20701/12
+# Keep SELinux happy: https://meta.discourse.org/t/discourse-on-centos-7/20701/12
 chcon -Rt svirt_sandbox_file_t /var/discourse/shared
 
 cp app.yml containers/app.yml
@@ -24,6 +26,7 @@ cp app.yml containers/app.yml
 
 ps=$(docker ps -a | awk '{print $1, $(NF)}' | grep " app$" | awk '{print $1}')
 
+# This file contains all site settings in the form of "SiteSetting.foo='bar'"
 docker cp site_settings.rb $ps:/shared/
 # Pass backup tarball as argument
 if [[ ! -f $1 ]]; then
@@ -32,7 +35,8 @@ fi
 docker cp $1 $ps:/var/www/discourse/public/backups/default/
 docker exec $ps discourse restore $(basename $1)
 
-docker exec -it $ps discourse remap $FROM $TO/talk
-docker exec -it $ps discourse remap /uploads /talk/uploads
+docker exec -it $ps discourse remap $FROM $TO$SUBFOLDER
+docker exec -it $ps discourse remap /uploads $SUBFOLDER/uploads
+# Implement site settings
 docker exec $ps rails r /shared/site_settings.rb
 docker exec $ps rake posts:rebake

@@ -31,6 +31,11 @@ label {
 .navbar-brand > img {
     height: 2.5rem;
 }
+#talk-link {
+    border-radius: 0.25rem 0.25rem 0 0;
+    margin: 0.5rem 0 0 0.25rem;
+    display: inline-block;
+}
 .navbar-collapse {
     padding-top: 0.5rem;
 }
@@ -196,11 +201,18 @@ button.nav-link {
     padding-top: 4rem;
     margin-top: -4rem;
 }
-.shop-features img {
-    max-width: 100%;
+.shop-features {
     padding-bottom: 1rem;
 }
-
+.shop-features .col-sm-5 {
+    background-size: cover;
+    background-position: 50%;
+    min-height: 12rem;
+    max-height: 16rem;
+    border-radius: 0.25rem;
+}
+.shop-features img {
+}
 .modal-open {
     padding-right: 10px !important;
 }
@@ -265,6 +277,12 @@ input[type=month] {
     .navbar > .container {
         margin: 0;
     }
+    .navbar-brand-large {
+        display: none;
+    }
+    .navbar-brand-small {
+        display: inline-block;
+    }
     #general-menu {
         position: absolute;
         right: 0;
@@ -306,6 +324,12 @@ input[type=month] {
     }
 }
 @media (min-width: 576px) {
+    .navbar-brand-large {
+        display: inline-block;
+    }
+    .navbar-brand-small {
+        display: none;
+    }
     #general-menu .member-nav-link {
         display: none;
     }

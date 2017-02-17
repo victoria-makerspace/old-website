@@ -18,6 +18,7 @@ var templates = [...]string{"main",
 	"index",
 	"sign-in",
 	"join",
+	"terms",
 	"dashboard",
 	"billing",
 	"tools",
@@ -81,7 +82,6 @@ func (h *Http_server) new_page(name, title string, w http.ResponseWriter, r *htt
 		ResponseWriter: w,
 		Request:        r,
 		Http_server:    h}
-	p.Field["talk_url"] = p.config.Discourse["url"]
 	return p
 }
 
@@ -112,6 +112,7 @@ func (p *page) http_error(code int) {
 func (h *Http_server) root_handler() {
 	h.member_handler()
 	h.join_handler()
+	h.terms_handler()
 	h.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		p := h.new_page("index", "", w, r)
 		if r.URL.Path != "/" {
@@ -191,6 +192,23 @@ func (h *Http_server) join_handler() {
 			}
 			//TODO: embed "talk is down" error
 			p.http_error(500)
+		}
+		p.write_template()
+	})
+}
+
+func (h *Http_server) terms_handler() {
+	h.mux.HandleFunc("/terms", func(w http.ResponseWriter, r *http.Request) {
+		p := h.new_page("terms", "Terms & Conditions", w, r)
+		p.authenticate()
+		if p.Session != nil && p.PostFormValue("agree_to_terms") != "" {
+			if _, err := p.db.Exec("UPDATE member SET agreed_to_terms = true "+
+				"WHERE username = $1", p.Member().Username); err != nil {
+				log.Panic(err)
+			}
+			p.Member().Agreed_to_terms = true
+			http.Redirect(w, r, "/member", 303)
+			return
 		}
 		p.write_template()
 	})

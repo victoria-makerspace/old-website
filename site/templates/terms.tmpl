@@ -1,0 +1,42 @@
+  <div class="container">
+    <h2>Terms and Conditions</h2>
+    <hr>
+    <form method="post" action="/terms">
+      <section>
+        <h4>Liability Waiver</h4>
+        <p>I{{if .Session}}, <strong>{{.Member.Name}}</strong>,{{end}} hereby acknowledge that I fully understand that woodworking, welding, and related
+        activities are inherently dangerous and may require strenuous physical exertion. The areas where
+        woodworking, welding, and related activities are conducted contain many known and unknown hazards. I
+        acknowledge and understand that my participation in any activities at the Victoria Makerspace could
+        result in my exposure to serious personal injury, illness, disability, or death. I also acknowledge that
+        property losses can occur. I understand that Victoria Makerspace has guidelines for safe work practice. I
+        agree to follow these, and maintain the highest level of safe work practices for myself and others.</p>
+        <p>In participating in activities at the Victoria Makerspace I acknowledge that I am 18 years of age or older.
+        Also, I hereby for myself, my heirs, executors, administrators, successors and assigns, release and forever
+        discharge the Victoria Makerspace, its members, board, and any other person or organization assisting it,
+        from any and all actions, causes of actions, claims and demands for, upon or by reason of any damage,
+        loss or injury to person and property which heretofore has been or hereafter may be sustained in
+        consequence of any accident occurring during a Victoria Makerspace activity or my use of the facilities.</p>
+        <p>I am responsible for my own safety at the Victoria Makerspace, this includes safe tool operation, ensuring
+        that tools are in proper working order, and that they are used safely and responsibly. Other members
+        may advise me on safe work practices, but this does not constitute a supervisory relationship and
+        responsibility for safely using the Victoria Makerspace facilities lies entirely on myself.</p>
+        <p>I agree that this waiver and the agreements it contains will be governed and interpreted exclusively in
+        accordance with the laws of the Province of British Columbia, Canada.</p>
+        <p>I agree that if any portion of this agreement is found to be unenforceable, the remaining portions of this
+        agreement shall remain in full force and effect.</p>
+        <p>I further confirm that the terms and conditions of this agreement will apply to any minor that accompanies me and that I am the legal guardian or parent of any such minors. Accordingly I have the authority to sign this document on their behalf. I agree to remain responsible for the supervision and safety of any such minors.</p>
+      </section>
+      {{if and .Session (not .Member.Agreed_to_terms)}}
+      <div class="form-check">
+        <label class="custom-control custom-checkbox">
+          <input type="checkbox" name="agree_to_terms" class="custom-control-input">
+          <span class="custom-control-indicator"></span>
+          <span class="custom-control-description">I confirm that I have read and understood this agreement.</span>
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+      {{end}}
+    </form>
+{{template "footer"}}
+  </div>

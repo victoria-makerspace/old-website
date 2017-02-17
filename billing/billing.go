@@ -130,9 +130,9 @@ func (p *Profile) get_recurring_bills() {
 	rows, err := p.billing.db.Query("SELECT i.id, i.username, i.date, "+
 		"i.end_date, COALESCE(i.description, f.description), "+
 		"COALESCE(i.amount, f.amount), COALESCE(i.recurring, f.recurring), "+
-		"f.category, f.identifier, FROM invoice i LEFT JOIN fee f "+
+		"f.category, f.identifier FROM invoice i LEFT JOIN fee f "+
 		"ON (i.fee = f.id) WHERE CASE WHEN i.paid_by IS NULL THEN "+
-		"i.profile = $1 ELSE i.paid_by = $1 END AND "+
+		"i.username = $1 ELSE i.paid_by = $1 END AND "+
 		"COALESCE(i.recurring, f.recurring) IS NOT NULL AND "+
 		"(i.end_date > now() OR i.end_date IS NULL) ORDER BY i.date DESC",
 		p.member.Username)

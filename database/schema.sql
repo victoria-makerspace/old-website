@@ -10,6 +10,7 @@ CREATE TABLE member (
 	password_salt character(64) UNIQUE,
 	email text NOT NULL UNIQUE,
 	email_validated boolean NOT NULL DEFAULT false,
+	agreed_to_terms boolean NOT NULL DEFAULT false,
 	registered timestamp(0) NOT NULL DEFAULT now()
 );
 CREATE TYPE admin_privilege AS ENUM (
@@ -61,8 +62,8 @@ CREATE TABLE fee (
 COPY fee (category, identifier, amount, description) FROM STDIN;
 membership	regular	50.0	Membership
 membership	student	30.0	Membership (student)
-storage	bathroom-locker	5.0	Bathroom locker
 storage	hall-locker	5.0	Hall locker
+storage	bathroom-locker	5.0	Bathroom locker
 \.
 -- Wall storage is $5/lineal foot, so the corresponding invoice should multiply
 --	by this number.
@@ -79,8 +80,10 @@ CREATE TABLE invoice (
 	id serial PRIMARY KEY,
 	username text NOT NULL REFERENCES member,
 	date date NOT NULL DEFAULT now(),
+	-- Defaults to username when NULL
 	paid_by text REFERENCES member,
 	end_date date,
+	-- description, amount default to fee values when NULL
 	description text,
 	amount real,
 	fee integer REFERENCES fee,
@@ -112,6 +115,7 @@ CREATE TABLE missed_payment (
 	transaction integer REFERENCES transaction,
 	logged timestamp(0) REFERENCES txn_scheduler_log
 );
+-- TODO: multiple members sharing storage
 CREATE TABLE storage (
 	number integer NOT NULL,
 	fee integer NOT NULL REFERENCES fee,
@@ -120,16 +124,21 @@ CREATE TABLE storage (
 	PRIMARY KEY (number, fee)
 );
 -- storage values
---	Hall locker
+--	Hall lockers
 INSERT INTO storage
 SELECT	generate_series(1,12), id
 FROM	fee
 WHERE	category = 'storage' AND identifier = 'hall-locker';
---	Bathroom locker
+--	Bathroom lockers
 INSERT INTO storage
 SELECT generate_series(1,11), id
 FROM	fee
 WHERE	category = 'storage' AND identifier = 'bathroom-locker';
+	-- Bathroom lockers 7 and 8 are reserved for VITP cleaners
+	DELETE FROM storage
+	WHERE number IN (7, 8)
+		AND fee = (SELECT id FROM fee
+			WHERE category = 'storage' AND identifier = 'bathroom-locker');
 --	Wall storage
 INSERT INTO storage
 SELECT generate_subscripts(a, 1), id, unnest(a)

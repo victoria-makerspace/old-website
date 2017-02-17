@@ -1,6 +1,11 @@
   <div class="container">
     <div class="row">
       <div class="col-md-10 col-lg-8 col-xl-7">
+        {{if not .Member.Agreed_to_terms}}
+        <div class="alert alert-danger">
+          <p>Please agree to the <a href="/terms">Terms and Conditions</a> before setting up billing information.</p>
+        </div>
+        {{end}}
         {{with .Field.pay_profile}}
         <section>
           <h4>Transactions history</h4>
@@ -36,7 +41,7 @@
             <table class="table table-sm">
               <thead>
                 <tr>
-                  <th>Name</th>
+                  <th>Description</th>
                   <th>Amount</th>
                   <th>Start date</th>
                   <th></th>
@@ -45,11 +50,11 @@
               <tbody>
               {{range .}}
                 <tr>  
-                  <td>{{.Name}}</td>
+                  <td>{{.Description}}</td>
                   <td>${{.Amount | printf "%.2f"}}</td>
-                  <td>{{.Start_date.Format "2006-01-02"}}</td>
+                  <td>{{.Date.Format "2006-01-02"}}</td>
                   <td>
-                    <button type="submit" name="terminate" value="{{.Name}}" class="btn btn-sm btn-danger">Terminate</button>
+                    <button type="submit" name="terminate" value="{{.Id}}" class="btn btn-sm btn-danger">Terminate</button>
                   </td>
                 </tr>
               {{end}}
@@ -93,8 +98,11 @@
               </form>
             </div>
             {{else}}
-            <h4>Register credit card</h4>
+            <h4>Register credit card<img class="ml-3" style="height: 1.5rem" src="/mcvs_acc_hrz.svg"></h4>
+            <p class="alert alert-info">This form form allows the online payment service <a href="http://www.beanstream.com/home/">Beanstream</a> to create a payment profile, that we can use to process payments and recurring bills.  No credit card information is stored on or touches our server.<br>
+              Credit card registration will not incur a transaction or register you to become a Makerspace member, which must be done below.</p>
             {{end}}
+            <p>All prices and transactions are in Canadian dollars.</p>
             <form action="/member/billing" method="post" id="credit-card" class="px-2 px-sm-3">
               <div class="form-group row mb-2 mb-sm-3">
                 <label for="name" class="col-sm-4 col-form-label">Name</label>
@@ -140,6 +148,9 @@
                 <section>
                     <h4>Membership dues</h4>
                     {{if not .Member.Corporate}}
+                    {{if not .Member.Active}}
+                    <p class="alert alert-info">On initial registration, your membership fee gets prorated for the remainder of the current month, and processed immediately.  Following your first payment, successive membership payments will be processed on the 1st of every month.</p>
+                    {{end}}
                     <form id="billing" class="px-2 px-sm-3" method="post" action="/member/billing">
                         <fieldset class="form-group mb-2 mb-sm-3">
                             <label class="custom-control custom-radio">
@@ -177,12 +188,14 @@
                                 </div>
                             </div>
                         </fieldset>
+                        {{if not .Member.Agreed_to_terms}}
+                        <p class="alert alert-danger">You must agree to the <a href="/terms">Terms & Conditions</a>.</p>
+                        {{else if not .Field.card_number}}
+                        <p class="alert alert-warning">You must register a credit card.</p>
+                        {{end}}
                         <button type="submit" name="update" class="btn btn-secondary">Update</button>
                         {{if not .Member.Active}}
-                        <button type="submit" name="register" class="d-inline-flex btn btn-primary"{{if not .Field.card_number}} disabled{{end}}>Register</button>
-                        {{end}}
-                        {{if not .Field.card_number}}
-                        <p class="d-inline-flex alert alert-warning ml-3">You must register a credit card.</p>
+                        <button type="submit" name="register" class="d-inline-flex btn btn-primary"{{if or (not .Field.card_number) (not .Member.Agreed_to_terms)}} disabled{{end}}>Register</button>
                         {{end}}
                     </form>
                     {{end}}
