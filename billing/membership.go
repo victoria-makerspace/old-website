@@ -42,3 +42,11 @@ func (p *Profile) Delete_student() {
 			p.member.Username)
 	}
 }
+
+//TODO: Cancel storage and other makerspace-related invoices
+//TODO: send card-cancellation e-mail to VITP
+func (p *Profile) Cancel_membership() {
+	invoice := p.Get_membership()
+	p.Cancel_recurring_bill(invoice)
+	p.member.Active = false
+}

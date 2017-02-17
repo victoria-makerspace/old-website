@@ -1,3 +1,30 @@
+  <div class="modal fade" id="terminate_membership" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Terminate membership</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form class="modal-body" action="/member/billing" method="post" novalidate>
+          <p>Terminating your membership fees will result in immediate revocation of access to makerspace.  Any leased lockers/storage will be cancelled and given to the next member on the waitlist.</p>
+          <div class="form-group">
+          <p>Is there a reason for your cancellation that you would be willing to share?</p>
+            <textarea class="form-control" name="cancellation_reason" rows="5"></textarea>
+          </div>
+          <label for="password">Please verify your password:</label>
+          <div class="form-inline">
+            <div class="input-group">
+              <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
+              <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+            </div>
+            <button type="submit" name="terminate_membership" class="btn btn-danger ml-auto">Terminate</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
   <div class="container">
     <div class="row">
       <div class="col-md-10 col-lg-8 col-xl-7">
@@ -54,7 +81,11 @@
                   <td>${{.Amount | printf "%.2f"}}</td>
                   <td>{{.Date.Format "2006-01-02"}}</td>
                   <td>
+                    {{if eq .Fee.Category "membership"}}
+                    <button type="button" data-toggle="modal" data-target="#terminate_membership" class="btn btn-sm btn-danger">Terminate</button>
+                    {{else}}
                     <button type="submit" name="terminate" value="{{.Id}}" class="btn btn-sm btn-danger">Terminate</button>
+                    {{end}}
                   </td>
                 </tr>
               {{end}}
