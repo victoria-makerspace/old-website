@@ -1,0 +1,18 @@
+.navbar-nav {
+    display: flex;
+    flex-direction: row;
+    list-style: none;
+}
+.navbar-nav .glyphicons {
+    margin-right: 0.5rem;
+}
+.navbar-nav .nav-link {
+    padding: 0.5rem;
+    line-height: 2rem;
+    transition: all 0.2s ease-in-out;
+    color: rgba(0,0,0,0.5);
+}
+.navbar-nav .nav-link:hover, .navbar-nav .nav-link:focus {
+    color: rgba(0,0,0,0.9);
+    background-color: rgba(2,117,216,1.0);
+}
