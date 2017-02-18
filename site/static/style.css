@@ -31,11 +31,6 @@ label {
 .navbar-brand > img {
     height: 2.5rem;
 }
-#talk-link {
-    border-radius: 0.25rem 0.25rem 0 0;
-    margin: 0.5rem 0 0 0.25rem;
-    display: inline-block;
-}
 .navbar-collapse {
     padding-top: 0.5rem;
 }

@@ -24,8 +24,9 @@ $(document).ready(function() {
 	if ($("#shop-features").length) {
 		$("body").scrollspy({ target: "#navbar-guest" });
 	}
-    $.ajax("/talk/session/current").fail(function() {
-        $.ajax("/talk/session/sso");
+    var talk_url = $("#talk-link").attr("href");
+    $.ajax(talk_url + "/session/current.json").fail(function() {
+        $.ajax(talk_url + "/session/sso");
     });
 });
 
