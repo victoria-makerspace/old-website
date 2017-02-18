@@ -149,8 +149,10 @@ button.nav-link {
     font-style: italic;
 }
 #notifications a.unread, #notifications a.unread .notification-icon {
-    background-color: rgba(252,248,227,0.6);
     color: #a94442;
+}
+#notifications a.unread {
+    background-color: rgba(252,248,227,0.6);
     box-shadow: 0 0 0 2px rgba(252,248,227,0.25);
 }
 #notifications a:hover {
@@ -159,6 +161,7 @@ button.nav-link {
 #notifications a .notification-icon {
     color: rgba(0,0,0,0.5);
     font-size: 1rem;
+    margin-right: 0.25rem;
 }
 #notifications a .notification-icon + span {
     color: rgba(0,0,0,0.9);

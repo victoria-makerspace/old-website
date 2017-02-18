@@ -40,6 +40,7 @@ func (h *Http_server) billing_handler() {
 		if token := p.PostFormValue("singleUseToken"); token != "" {
 			pay_profile.Update_card(token, p.PostFormValue("name"))
 			http.Redirect(w, r, "/member/billing", 303)
+			return
 		} else if _, ok := p.PostForm["delete-card"]; ok && pay_profile != nil {
 			pay_profile.Delete_card()
 		}
@@ -62,6 +63,7 @@ func (h *Http_server) billing_handler() {
 		if _, ok := p.PostForm["update"]; ok {
 			update_student()
 			http.Redirect(w, r, "/member/billing", 303)
+			return
 		} else if _, ok := p.PostForm["register"]; ok {
 			update_student()
 			if p.Member().Active {
@@ -73,15 +75,9 @@ func (h *Http_server) billing_handler() {
 				write_template(p)
 				return
 			}
-			member_type := "membership_regular"
-			if p.Member().Student {
-				member_type = "membership_student"
-			} else if p.Member().Corporate {
-				//TODO
-			}
-			pay_profile.New_recurring_bill(
-				p.billing.Fees[member_type].Id, p.Member().Username)
+			pay_profile.New_membership()
 			http.Redirect(w, r, "/member/billing", 303)
+			return
 		} else if _, ok := p.PostForm["terminate"]; ok {
 			id, _ := strconv.Atoi(p.PostFormValue("terminate"))
 			if bill := pay_profile.Get_bill(id); bill != nil {
@@ -96,7 +92,8 @@ func (h *Http_server) billing_handler() {
 			}
 			//TODO: reason for cancellation: PostFormValue("cancellation_reason")
 			pay_profile.Cancel_membership()
-			http.Redirect(w, r, "/member", 303)
+			http.Redirect(w, r, "/member/billing", 303)
+			return
 		}
 		write_template(p)
 	})

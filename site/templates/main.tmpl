@@ -49,6 +49,9 @@
             <li class="nav-item">
               <a class="nav-link" href="/member/storage"><span class="glyphicons glyphicons-cargo"></span>storage</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/members"><span class="glyphicons glyphicons-group"></span>members</a>
+            </li>
         </ul>
       </div>
         <div class="collapse" id="member-menu">
@@ -64,13 +67,16 @@
               {{range .}}
               <a class="{{if not .Read}}unread{{end}}" href="{{$talk_url}}
                 {{- if .Topic_id}}/t/{{.Slug}}/{{.Topic_id}}/{{.Post_number}}
-                {{- else if eq .Notification_type 12}}/badges/{{.Data.badge_id}}/{{.Data.badge_slug}}?username={{.Data.username}}{{end}}">
+                {{- else if eq .Notification_type 12}}/badges/{{.Data.badge_id}}/{{.Data.badge_slug}}?username={{.Data.username}}
+                {{- else if eq .Notification_type 16}}/users/{{.Data.username}}/messages/group/{{.Data.group_name}}{{end}}">
                 <span class="notification-icon{{if ne .Notification_type 1}} glyphicons glyphicons-{{.Notification_icon}}{{end}}">{{if eq .Notification_type 1}}@{{end}}</span>
                 {{if .Topic_id}}
                 <span>{{.Data.display_username}}</span>
                 {{.Data.topic_title}}
                 {{else if eq .Notification_type 12}}
                 Earned '{{.Data.badge_name}}'
+                {{else if eq .Notification_type 16}}
+                {{.Data.inbox_count}} messages in your {{.Data.group_name}} inbox
                 {{end}}
               </a>
               {{end}}

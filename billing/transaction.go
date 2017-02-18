@@ -20,6 +20,11 @@ type Transaction struct {
 	order_id   string
 }
 
+func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoice) *Transaction {
+	txn := &Transaction{Profile: p}
+	return txn
+}
+
 /*func (p *Profile) new_transaction(amount float64, name, ip_address string) *Transaction {
 // TODO: reject negative amounts
 

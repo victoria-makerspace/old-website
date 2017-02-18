@@ -209,7 +209,7 @@ func (p *Profile) Get_bill(id int) *Invoice {
 }
 
 //TODO: BUG: not all 'fee' records have non-null 'recurring' fields
-func (p *Profile) New_recurring_bill(fee_id int, username string) {
+func (p *Profile) New_recurring_bill(fee_id int, username string) *Invoice {
 	fee := p.billing.get_fee(fee_id)
 	inv := &Invoice{Username: username,
 		Paid_by:     p.member,
@@ -218,7 +218,7 @@ func (p *Profile) New_recurring_bill(fee_id int, username string) {
 		Interval:    fee.Interval,
 		Fee:         fee}
 	if username != p.member.Username && member.Get(username, p.billing.db) == nil {
-		return
+		return nil
 	}
 	if err := p.billing.db.QueryRow("INSERT INTO invoice (username, paid_by, "+
 		"fee) VALUES ($1, $2, $3) RETURNING id, date", username,
@@ -226,6 +226,7 @@ func (p *Profile) New_recurring_bill(fee_id int, username string) {
 		log.Panic(err)
 	}
 	p.Invoices = append(p.Invoices, inv)
+	return inv
 }
 
 func (p *Profile) Cancel_recurring_bill(i *Invoice) {

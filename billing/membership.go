@@ -4,6 +4,20 @@ import (
 	"time"
 )
 
+func (p *Profile) New_membership() {
+	member_type := "membership_regular"
+	if p.member.Student {
+		member_type = "membership_student"
+	} else if p.member.Corporate {
+		member_type = "membership_corporate"
+		//TODO
+	}
+	fee := p.billing.Fees[member_type]
+	inv := p.New_recurring_bill(fee.Id, p.member.Username)
+	prorated := prorate_month(fee.Amount)
+	p.do_transaction(prorated, fee.Description + " (prorated)", inv)
+}
+
 func (p *Profile) Get_membership() *Invoice {
 	for _, i := range p.Invoices {
 		if i.Fee.Category == "membership" {

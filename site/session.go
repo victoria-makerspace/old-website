@@ -101,6 +101,7 @@ func (p *page) destroy_session() {
 
 var avatar_size_rexp = regexp.MustCompile("{size}")
 
+//TODO: refactor this mess
 // talk_user_data fetches user info from the talk server
 func (p *page) talk_user_data() {
 	var data map[string]interface{}
@@ -146,9 +147,11 @@ func (p *page) talk_user_data() {
 		Topic_id          int
 		Slug              string
 		Data              map[string]interface{}
-	}, 16)
+	}, 12)
+	len := 0
 	for i, v := range data["notifications"].([]interface{})[:12] {
 		if n, ok := v.(map[string]interface{}); ok {
+			len++
 			ntfns[i].Notification_type = int(n["notification_type"].(float64))
 			ntfns[i].Read = n["read"].(bool)
 			ntfns[i].Created_at = n["created_at"].(string)
@@ -178,9 +181,11 @@ func (p *page) talk_user_data() {
 			case 11:
 			case 12:
 				icon = "certificate"
+			case 16:
+				icon = "group"
 			}
 			ntfns[i].Notification_icon = icon
 		}
 	}
-	p.Field["notifications"] = ntfns
+	p.Field["notifications"] = ntfns[:len]
 }
