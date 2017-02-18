@@ -133,7 +133,7 @@ func (b *Billing) get_bill_by_fee(fee *Fee, paid_by *member.Member) *Invoice {
 	)
 	if err := b.db.QueryRow("SELECT i.id, i.username, i.date, "+
 		"i.end_date, COALESCE(i.description, f.description), "+
-		"COALESCE(i.amount, f.amount), COALESCE(i.recurring, f.recurring), "+
+		"COALESCE(i.amount, f.amount), COALESCE(i.recurring, f.recurring) "+
 		"FROM invoice i JOIN fee f "+
 		"ON (i.fee = $1) WHERE i.paid_by = $2", fee.Id, paid_by.Username).Scan(&inv.Id, &inv.Username,
 		&inv.Date, &end_date, &description, &amount, &interval); err != nil {
