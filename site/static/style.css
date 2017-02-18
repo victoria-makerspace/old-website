@@ -246,12 +246,18 @@ button.nav-link {
 .modal-open > .fixed-top {
     margin-right: 10px;
 }
-.modal-header {
-    padding-bottom: 0;
-    border: 0;
-}
 .modal-content {
     background: rgba(247,247,247,0.9);
+}
+.modal-header {
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+}
+.modal-footer {
+    border-top: 1px solid rgba(0,0,0,0.2);
+}
+#sign-in .modal-header {
+    padding-bottom: 0;
+    border: 0;
 }
 body > .container {
     padding-top: 5rem;
