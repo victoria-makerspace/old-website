@@ -7,13 +7,8 @@ import (
 	"time"
 )
 
-// first_of_next_month returns the local time at 00:00 on the first day of next
-//	month
-func first_of_next_month() time.Time {
-	return time.Date(time.Now().Year(), time.Now().Month()+1, 1, 0, 0, 0, 0,
-		time.Local)
-}
-
+//TODO: recurring intervals different than 1 month
+//TODO: run on startup and ensure a payment schedule(s) wasn't missed
 func (b *Billing) payment_scheduler() {
 	for {
 		t := monthly_timer()
@@ -22,9 +17,6 @@ func (b *Billing) payment_scheduler() {
 			// TODO: ensure the scheduler hasn't already run for this month
 			log.Println("Starting payment scheduler")
 			defer log.Println("Payment scheduler completed")
-			// Query to find all open billing registrations for which a
-			//	transaction should occur.
-			//TODO: recurring intervals different than 1 month
 			rows, err := b.db.Query("SELECT i.id, i.profile, " +
 				"COALESCE(i.amount, f.amount) FROM invoice i INNER JOIN fee f " +
 				"ON (i.fee = f.id) WHERE f.recurring = '1 month' AND " +
@@ -70,6 +62,13 @@ func (b *Billing) payment_scheduler() {
 			}
 		}()
 	}
+}
+
+// first_of_next_month returns the local time at 00:00 on the first day of next
+//	month
+func first_of_next_month() time.Time {
+	return time.Date(time.Now().Year(), time.Now().Month()+1, 1, 0, 0, 0, 0,
+		time.Local)
 }
 
 // Fires an event on the first of every month, first thing in the morning

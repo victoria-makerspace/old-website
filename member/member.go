@@ -80,6 +80,7 @@ func New(username, name, email, password string, db *sql.DB) *Member {
 //TODO: support null password keys, and use e-mail verification for login
 //TODO: move db parameter into a suitable receiver
 //TODO: check corporate account
+//TODO: auto-populate a student object in *Member
 func Get(username string, db *sql.DB) *Member {
 	m := &Member{db: db}
 	// Populate m and check if member is active, by asserting whether or not
@@ -91,6 +92,26 @@ func Get(username string, db *sql.DB) *Member {
 		log.Panic(err)
 	}
 	return m
+}
+
+func Get_all_active(db *sql.DB) []*Member {
+	members := make([]*Member, 0)
+	rows, err := db.Query("SELECT m.username, m.name, m.password_key, m.password_salt, m.email, m.agreed_to_terms, m.registered, s.username IS NOT NULL, a.username IS NOT NULL FROM member m NATURAL LEFT JOIN administrator a NATURAL LEFT JOIN student s JOIN (SELECT COALESCE(i.paid_by, i.username) AS paid_by FROM invoice i LEFT JOIN fee f ON (i.fee = f.id) WHERE COALESCE(i.recurring, f.recurring) = '1 month' AND (i.end_date > now() OR i.end_date IS NULL)) inv ON inv.paid_by = m.username")
+	defer rows.Close()
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Panic(err)
+		}
+		return members
+	}
+	for rows.Next() {
+		m := &Member{db: db}
+		if err = rows.Scan(&m.Username, &m.Name, &m.password_key, &m.password_salt, &m.Email, &m.Agreed_to_terms, &m.Registered, &m.Student, &m.Admin);
+			err != nil {
+			log.Panic(err)
+		}
+	}
+	return members
 }
 
 func (m *Member) Authenticate(password string) bool {
@@ -109,3 +130,5 @@ func (m *Member) Change_password(password string) {
 		log.Panic(err)
 	}
 }
+
+//TODO: forgot password reset by e-mail
