@@ -28,34 +28,26 @@
         <img class="navbar-brand-large" src="/logo-simple-text.svg" alt="Victoria Makerspace">
         <img class="navbar-brand-small" src="/logo.svg" alt="Victoria Makerspace">
       </a>
-      <a id="talk-link" class="nav-link glyphicons glyphicons-conversation" href="{{.Talk_url}}" title="Talk forum"></a>
-      <div class="navbar-collapse collapse justify-content-end" id="general-menu">
+      <div class="navbar-collapse collapse" id="general-menu">
         <ul class="navbar-nav">
             {{if .Member.Admin}}
-            <li class="nav-item member-nav-link">
+            <li class="nav-item">
               <a class="nav-link" href="/admin">
                 <span class="glyphicons glyphicons-wrench"></span>admin panel
               </a>
             </li>
             {{end}}
-            <li class="nav-item member-nav-link">
-                <a class="nav-link" href="/member/tools"><span class="glyphicons glyphicons-claw-hammer"></span>tools</a>
+            <li class="nav-item">
+              <a class="nav-link" href="{{.Talk_url}}"><span class="glyphicons glyphicons-conversation"></span>talk</a>
             </li>
-            <li class="nav-item member-nav-link">
-                <a class="nav-link" href="/member/billing"><span class="glyphicons glyphicons-pen"></span>billing</a>
+            <li class="nav-item">
+              <a class="nav-link" href="/member/tools"><span class="glyphicons glyphicons-claw-hammer"></span>tools</a>
             </li>
-            <li class="nav-item member-nav-link">
-                <a class="nav-link" href="/member/storage"><span class="glyphicons glyphicons-cargo"></span>storage</a>
+            <li class="nav-item">
+              <a class="nav-link" href="/member/billing"><span class="glyphicons glyphicons-pen"></span>billing</a>
             </li>
-            <li class="nav-item member-nav-link">
-              <a class="nav-link" href="/member/{{.Member.Username}}/profile">
-                <span class="glyphicons glyphicons-user"></span>profile
-              </a>
-            </li>
-            <li class="nav-item member-nav-link">
-              <a class="nav-link" href="/member/preferences">
-                <span class="glyphicons glyphicons-cogwheel"></span>preferences
-              </a>
+            <li class="nav-item">
+              <a class="nav-link" href="/member/storage"><span class="glyphicons glyphicons-cargo"></span>storage</a>
             </li>
         </ul>
       </div>
@@ -63,11 +55,8 @@
           <ul class="navbar-nav">
             <li class="nav-item" id="member-menu-toolbar">
               <a class="nav-link glyphicons glyphicons-message-full" href="{{.Talk_url}}/users/{{.Member.Username}}/messages" title="Messages"></a>
-              <a class="nav-link member-nav-link glyphicons glyphicons-user" href="{{.Talk_url}}/users/{{.Member.Username}}/summary" title="Profile"></a>
-              {{if .Member.Admin}}
-              <a class="nav-link member-nav-link glyphicons glyphicons-wrench" href="/admin" title="Admin panel"></a>
-              {{end}}
-              <a class="nav-link member-nav-link ml-auto glyphicons glyphicons-cogwheel" href="/member/preferences" title="Preferences"></a>
+              <a class="nav-link glyphicons glyphicons-user" href="{{.Talk_url}}/users/{{.Member.Username}}/summary" title="Profile"></a>
+              <a class="nav-link ml-auto glyphicons glyphicons-cogwheel" href="/member/preferences" title="Preferences"></a>
             </li>
             {{$talk_url := .Talk_url}}
             {{with .Field.notifications}}
@@ -87,18 +76,6 @@
               {{end}}
             </div>
             {{end}}
-            <li class="nav-item member-nav-link">
-                <a class="nav-link" href="/member/tools"><span class="glyphicons glyphicons-claw-hammer"></span>tools</a>
-            </li>
-            <li class="nav-item member-nav-link">
-                <a class="nav-link" href="/member/billing"><span class="glyphicons glyphicons-pen"></span>billing</a>
-            </li>
-            <li class="nav-item member-nav-link">
-                <a class="nav-link" href="/member/storage"><span class="glyphicons glyphicons-cargo"></span>storage</a>
-            </li>
-            <li class="nav-item member-nav-link">
-                <a class="nav-link" href="/members"><span class="glyphicons glyphicons-group"></span>members</a>
-            </li>
             <li class="nav-item" id="sign-out">
             <form action="/sso" method="post">
               <label>sign out

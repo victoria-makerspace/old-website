@@ -88,6 +88,13 @@ button.nav-link {
 #general-toggler {
     margin-top: 0.5rem;
     right: 3rem;
+    display: block !important;
+}
+#general-menu.collapse {
+    display: none !important;
+}
+#general-menu.collapse.show {
+    display: flex !important;
 }
 #member-icon {
     height: 3rem;
@@ -114,8 +121,9 @@ button.nav-link {
     left: 0.2rem;
     bottom: 2px;
 }
-#member-menu .navbar-nav {
+#member-menu .navbar-nav, #general-menu .navbar-nav {
     flex-direction: column;
+    width: 100%;
 }
 #member-menu {
     position: absolute;
@@ -128,9 +136,6 @@ button.nav-link {
     padding: 0;
     background: rgba(247,247,247,0.85);
     width: 16rem;
-}
-#member-menu .member-nav-link .glyphicons {
-    margin-right: 0.5rem;
 }
 #member-menu-toolbar {
     display: flex;
@@ -147,6 +152,11 @@ button.nav-link {
     padding: 0 0.5rem;
     font-size: 0.9rem;
     font-style: italic;
+}
+#notifications a.unread, #notifications a.unread .notification-icon {
+    background-color: rgba(252,248,227,0.6);
+    color: #a94442;
+    box-shadow: 0 0 0 2px rgba(252,248,227,0.25);
 }
 #notifications a:hover {
     background-color: rgba(2,117,216,0.5);
@@ -176,6 +186,28 @@ button.nav-link {
     border-radius: 0.75rem 0;
     height: inherit;
     padding: 0 0.5rem;
+}
+#general-menu {
+    position: absolute;
+    right: 0;
+    top: 3rem;
+    border-radius: 0 0 0.25rem 0.25rem;
+    border-width: 0 1px 1px;
+    border-style: solid;
+    border-color: rgba(0,0,0,0.2);
+    padding: 0;
+    background: rgba(247,247,247,0.85);
+    width: 10rem;
+}
+#general-menu .nav-item:last-child .nav-link {
+    border-bottom-left-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+#general-menu .nav-link .glyphicons {
+    margin-right: 0.5rem;
+}
+#general-menu .nav-link .glyphicons + span {
+    display: inline;
 }
 
 .carousel {
@@ -283,38 +315,6 @@ input[type=month] {
     .navbar-brand-small {
         display: inline-block;
     }
-    #general-menu {
-        position: absolute;
-        right: 0;
-        top: 3rem;
-        border-radius: 0 0 0.25rem 0.25rem;
-        border-width: 0 1px 1px;
-        border-style: solid;
-        border-color: rgba(0,0,0,0.2);
-        padding: 0;
-        background: rgba(247,247,247,0.85);
-        width: 10rem;
-    }
-    #general-menu .navbar-nav {
-        flex-direction: column;
-        margin: 0 0 0 auto;
-    }
-    #general-menu .nav-item:last-child .nav-link {
-        border-bottom-left-radius: 0.25rem;
-        border-bottom-right-radius: 0.25rem;
-    }
-    #general-menu .nav-link .glyphicons {
-        margin-right: 0.5rem;
-    }
-    #general-menu .nav-link .glyphicons + span {
-        display: inline;
-    }
-    #general-menu .member-nav-link {
-        display: block;
-    }
-    #member-menu .member-nav-link {
-        display: none;
-    }
     #notifications a:nth-child(7) ~ a {
         display: none;
     }
@@ -328,18 +328,6 @@ input[type=month] {
     }
     .navbar-brand-small {
         display: none;
-    }
-    #general-menu .member-nav-link {
-        display: none;
-    }
-    #member-menu .member-nav-link {
-        display: block;
-    }
-    #general-menu {
-        margin-right: 3rem;
-    }
-    #general-menu .nav-link {
-        border-radius: 0.25rem 0.25rem 0 0;
     }
     .carousel + .container {
         padding-top: 0;
