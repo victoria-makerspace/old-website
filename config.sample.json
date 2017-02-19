@@ -17,9 +17,5 @@
         "url":           "/talk",
         "sso-secret":    "",
         "api-key":       "",
-        "smtp_address":  "",
-        "smtp_port":     "",
-        "smtp_username": "",
-        "smtp_password": ""
     }
 }

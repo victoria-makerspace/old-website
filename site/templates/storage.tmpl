@@ -1,6 +1,83 @@
   <div class="container">
-  {{range .Field.storage}}
-    {{.}}<br>
-  {{end}}
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-8 col-xl-7">
+        <form action="/member/storage" method="post">
+          <h5>Wall storage</h5>
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th style="width: 6rem">Location #</th>
+                <th>Owner</th>
+                <th>Width</th>
+                <th>Price</th>
+                <th>Waitlist</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .Field.wall_storage}}
+              <tr>
+                <td>{{.Number}}</td>
+                <td>{{if .Invoice -}}
+                  <a href="/members/{{.Invoice.Username}}">@{{.Invoice.Username}}</a>
+                  {{- end}}
+                </td>
+                <td>{{.Size}}'</td>
+                <td></td>
+                <td></td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+          <h5>Hall lockers</h5>
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th style="width: 6rem">#</th>
+                <th>Owner</th>
+                <th>Price</th>
+                <th>Waitlist</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .Field.hall_lockers}}
+              <tr>
+                <td>{{.Number}}</td>
+                <td>{{if .Invoice -}}
+                  <a href="/members/{{.Invoice.Username}}">@{{.Invoice.Username}}</a>
+                  {{- end}}
+                </td>
+                <td></td>
+                <td></td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+          <h5>Bathroom lockers<small class="ml-3 text-muted">Lockers 7 & 8 are owned by VITP</small></h5>
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th style="width: 6rem">#</th>
+                <th>Owner</th>
+                <th>Price</th>
+                <th>Waitlist</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .Field.bathroom_lockers}}
+              <tr>
+                <td>{{.Number}}</td>
+                <td>{{if .Invoice -}}
+                  <a href="/members/{{.Invoice.Username}}">@{{.Invoice.Username}}</a>
+                  {{- end}}
+                </td>
+                <td></td>
+                <td></td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </form>
+      </div>
+    </div>
   {{template "footer"}}
   </div>

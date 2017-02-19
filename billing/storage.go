@@ -6,6 +6,7 @@ import (
 )
 
 type Storage map[string][]struct {
+	Number int
 	Size float64
 	*Invoice
 }
@@ -41,14 +42,16 @@ func (b *Billing) get_storage() {
 		if _, ok := b.Fees[key]; ok {
 			if _, ok := b.Storage[key]; !ok {
 				b.Storage[key] = make([]struct {
+					Number int
 					Size float64
 					*Invoice
 				}, 0)
 			}
 			b.Storage[key] = append(b.Storage[key], struct {
+				Number int
 				Size float64
 				*Invoice
-			}{size.Float64, invoice})
+			}{number, size.Float64, invoice})
 		} else {
 			log.Panicf("Storage fee '%s' not found", fee_identifier)
 		}

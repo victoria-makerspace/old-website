@@ -40,7 +40,9 @@ func (h *Http_server) storage_handler() {
 			return
 		}
 		p.Field["fees"] = p.billing.Fees
-		p.Field["storage"] = p.billing.Storage
+		p.Field["wall_storage"] = p.billing.Storage["storage_wall"]
+		p.Field["hall_lockers"] = p.billing.Storage["storage_hall-locker"]
+		p.Field["bathroom_lockers"] = p.billing.Storage["storage_bathroom-locker"]
 		p.write_template()
 	})
 }
