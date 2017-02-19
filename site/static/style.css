@@ -317,12 +317,12 @@ input[type=month] {
 }
 .storage-table tr td:last-child,
 .storage-table tr th:last-child,
-.storage-table-wall tr th:nth-child(4),
-.storage-table-wall tr td:nth-child(4),
-.storage-table-wall tr td:nth-child(3) {
+#storage-table-wall thead th:nth-child(4),
+#storage-table-wall tr td:nth-child(4),
+#storage-table-wall tr td:nth-child(3) {
     text-align: center;
 }
-.storage-table-wall tr td:nth-child(3) {
+#storage-table-wall tr td:nth-child(3) {
     font-style: italic;
 }
 

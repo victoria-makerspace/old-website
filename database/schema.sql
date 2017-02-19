@@ -119,32 +119,48 @@ CREATE TABLE missed_payment (
 CREATE TABLE storage (
 	number integer NOT NULL,
 	fee integer NOT NULL REFERENCES fee,
+	available boolean NOT NULL DEFAULT true,
 	size real,
 	invoice integer REFERENCES invoice,
 	PRIMARY KEY (number, fee)
 );
+CREATE TABLE storage_waitlist (
+	time timestamp(0) NOT NULL DEFAULT now(),
+	identifier integer NOT NULL REFERENCES fee,
+	username text NOT NULL REFERENCES member,
+	-- NULL signifies waiting for any number
+	number integer,
+	PRIMARY KEY (time, identifier)
+);
 -- storage values
 --	Hall lockers
-INSERT INTO storage
+INSERT INTO storage (number, fee)
 SELECT	generate_series(1,12), id
 FROM	fee
 WHERE	category = 'storage' AND identifier = 'hall-locker';
 --	Bathroom lockers
-INSERT INTO storage
+INSERT INTO storage (number, fee)
 SELECT generate_series(1,11), id
 FROM	fee
 WHERE	category = 'storage' AND identifier = 'bathroom-locker';
 	-- Bathroom lockers 7 and 8 are reserved for VITP cleaners
-	DELETE FROM storage
+	UPDATE storage
+	SET available = false
 	WHERE number IN (7, 8)
 		AND fee = (SELECT id FROM fee
 			WHERE category = 'storage' AND identifier = 'bathroom-locker');
 --	Wall storage
-INSERT INTO storage
+INSERT INTO storage (number, fee, size)
 SELECT generate_subscripts(a, 1), id, unnest(a)
 FROM (
 	SELECT id, ARRAY[2.5,3.5,3,5,4,5,4,4,4,5.5] AS a
 	FROM fee
 	WHERE category = 'storage' AND identifier = 'wall'
 ) f;
+	-- Storage locations 1 and 2 are owned by makerspace for now
+	UPDATE storage
+	SET available = false
+	WHERE number IN (1, 2)
+		AND fee = (SELECT id FROM fee
+			WHERE category = 'storage' AND identifier = 'wall');
 -- /end storage values

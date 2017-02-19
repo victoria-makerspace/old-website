@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+const minimum_txn_amount = 1.00
+
 type Transaction struct {
 	Id int
 	*Profile

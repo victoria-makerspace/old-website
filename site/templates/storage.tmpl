@@ -2,8 +2,9 @@
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
         <form action="/member/storage" method="post">
-          <h5>Wall storage</h5>
-          <table class="table table-sm table-responsive storage-table storage-table-wall">
+          <h5 class="mb-0">Wall storage</h5>
+          <small class="align-top text-muted">Locations 1 &amp; 2 are reserved by Makerspace</small>
+          <table class="table table-sm table-responsive storage-table" id="storage-table-wall">
             <thead>
               <tr>
                 <th>#</th>
@@ -16,10 +17,13 @@
             <tbody>
               {{$username := .Member.Username}}
               {{range .Field.wall_storage}}
-              <tr{{with .Invoice}}{{if eq .Username $username}}
+              <tr{{if not .Available}}
+                  class="text-muted"
+                {{else if .Invoice}}
+                  {{if eq .Invoice.Username $username}}
                   class="table-success"
-                {{end}}{{end}}>
-                <td>{{.Number}}</td>
+                {{- end}}{{end}}>
+                <th scope="row">{{.Number}}</th>
                 {{- with .Invoice -}}
                 <td>
                   <a href="/members/{{.Username}}">@{{.Username}}</a>
@@ -28,94 +32,113 @@
                 <td>-</td>
                 {{- end}}
                 <td>{{.Size}}'</td>
-                <td>${{.Price | printf "%.2f"}}</td>
+                <td>{{if .Available}}${{.Price | printf "%.2f"}}{{else}}-{{end}}</td>
                 <td>
-                  {{- if not .Invoice}}
-                  <button class="btn btn-sm btn-outline-info">Available</button>
+                  {{if not .Available}}
+                  <small>Unavailable</small>
+                  {{else if not .Invoice}}
+                  <button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#storage-available-wall">Available</button>
                   {{else if eq .Username $username}}
-                  <button class="btn btn-sm btn-warning">Cancel</button>
+                  <button type="button" class="btn btn-sm btn-warning" data-toggle="collapse" data-target="#storage-cancel-wall">Cancel</button>
                   {{else}}
-                  <button class="btn btn-sm btn-outline-secondary">Waitlist</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-target="#storage-waitlist-wall">Waitlist</button>
                   {{end -}}
                 </td>
               </tr>
               {{end}}
             </tbody>
           </table>
-          <h5>Hall lockers</h5>
-          <p>Price: $5.00/month</p>
-          <table class="table table-sm table-responsive storage-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Owner</th>
-                <th>Waitlist</th>
-              </tr>
-            </thead>
-            <tbody>
-              {{$username := .Member.Username}}
-              {{range .Field.hall_lockers}}
-              <tr{{with .Invoice}}{{if eq .Username $username}}
-                  class="table-success"
-                {{end}}{{end}}>
-                <td>{{.Number}}</td>
-                {{- with .Invoice -}}
-                <td>
-                  <a href="/members/{{.Username}}">@{{.Username}}</a>
-                </td>
-                {{else}}
-                <td>-</td>
-                {{- end}}
-                <td>
-                  {{- if not .Invoice}}
-                  <button class="btn btn-sm btn-outline-info">Available</button>
-                  {{else if eq .Username $username}}
-                  <button class="btn btn-sm btn-warning">Cancel</button>
-                  {{else}}
-                  <button class="btn btn-sm btn-outline-secondary">Waitlist</button>
-                  {{end -}}
-                </td>
-              </tr>
-              {{end}}
-            </tbody>
-          </table>
-          <h5>Bathroom lockers<small class="ml-3 text-muted">Lockers 7 & 8 are owned by VITP</small></h5>
-          <p>Price: $5.00/month</p>
-          <table class="table table-sm table-responsive storage-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Owner</th>
-                <th>Waitlist</th>
-              </tr>
-            </thead>
-            <tbody>
-              {{$username := .Member.Username}}
-              {{range .Field.bathroom_lockers}}
-              <tr{{with .Invoice}}{{if eq .Username $username}}
-                  class="table-success"
-                {{end}}{{end}}>
-                <td>{{.Number}}</td>
-                {{- with .Invoice -}}
-                <td>
-                  <a href="/members/{{.Username}}">@{{.Username}}</a>
-                </td>
-                {{else}}
-                <td>-</td>
-                {{- end}}
-                <td>
-                  {{- if not .Invoice}}
-                  <button class="btn btn-sm btn-outline-info">Available</button>
-                  {{else if eq .Username $username}}
-                  <button class="btn btn-sm btn-warning">Cancel</button>
-                  {{else}}
-                  <button class="btn btn-sm btn-outline-secondary">Waitlist</button>
-                  {{end -}}
-                </td>
-              </tr>
-              {{end}}
-            </tbody>
-          </table>
+          <div class="row">
+            <div class="col">
+              <h5>Hall lockers</h5>
+              <p>Fee: $5.00/month</p>
+              <table class="table table-sm table-responsive storage-table" id="storage-table-hall-lockers">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Owner</th>
+                    <th>Waitlist</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{$username := .Member.Username}}
+                  {{range .Field.hall_lockers}}
+                  <tr{{if not .Available}}
+                      class="text-muted"
+                    {{else if .Invoice}}
+                      {{if eq .Invoice.Username $username}}
+                      class="table-success"
+                    {{- end}}{{end}}>
+                    <th scope="row">{{.Number}}</th>
+                    {{- with .Invoice -}}
+                    <td>
+                      <a href="/members/{{.Username}}">@{{.Username}}</a>
+                    </td>
+                    {{else}}
+                    <td>-</td>
+                    {{- end}}
+                    <td>
+                      {{if not .Available}}
+                      <small>Unavailable</small>
+                      {{else if not .Invoice}}
+                      <button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#storage-available-locker">Available</button>
+                      {{else if eq .Username $username}}
+                      <button type="button" class="btn btn-sm btn-warning" data-toggle="collapse" data-target="#storage-cancel-hall-locker">Cancel</button>
+                      {{else}}
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-target="#storage-waitlist-hall-locker">Waitlist</button>
+                      {{end -}}
+                    </td>
+                  </tr>
+                  {{end}}
+                </tbody>
+              </table>
+            </div>
+            <div class="col">
+              <h5 class="mb-0">Bathroom lockers</h5>
+              <small class="align-top text-muted">Lockers 7 &amp; 8 are reserved for VITP cleaners</small>
+              <p>Fee: $5.00/month</p>
+              <table class="table table-sm table-responsive storage-table" id="storage-table-bathroom-lockers">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Owner</th>
+                    <th>Waitlist</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{$username := .Member.Username}}
+                  {{range .Field.bathroom_lockers}}
+                  <tr{{if not .Available}}
+                      class="text-muted"
+                    {{else if .Invoice}}
+                      {{if eq .Invoice.Username $username}}
+                      class="table-success"
+                    {{- end}}{{end}}>
+                    <th scope="row">{{.Number}}</th>
+                    {{- with .Invoice -}}
+                    <td>
+                      <a href="/members/{{.Username}}">@{{.Username}}</a>
+                    </td>
+                    {{else}}
+                    <td>-</td>
+                    {{- end}}
+                    <td>
+                      {{if not .Available}}
+                      <small>Unavailable</small>
+                      {{else if not .Invoice}}
+                      <button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#storage-available-bathroom-locker">Available</button>
+                      {{else if eq .Username $username}}
+                      <button type="button" class="btn btn-sm btn-warning" data-toggle="collapse" data-target="#storage-cancel-bathroom-locker">Cancel</button>
+                      {{else}}
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-target="#storage-waitlist-bathroom-locker">Waitlist</button>
+                      {{end -}}
+                    </td>
+                  </tr>
+                  {{end}}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </form>
       </div>
     </div>

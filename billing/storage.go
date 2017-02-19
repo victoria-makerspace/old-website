@@ -9,6 +9,7 @@ type st struct {
 	Number int
 	Size float64
 	Price float64
+	Available bool
 	*Invoice
 }
 type Storage map[string][]st
@@ -16,7 +17,7 @@ type Storage map[string][]st
 //TODO: recover from panics and send http 500 if applicable?
 func (b *Billing) get_storage() {
 	b.Storage = make(Storage)
-	rows, err := b.db.Query("SELECT number, size, invoice, fee " +
+	rows, err := b.db.Query("SELECT number, size, invoice, fee, available " +
 		"FROM storage ORDER BY number ASC")
 	if err != nil {
 		log.Panic(err)
@@ -29,8 +30,10 @@ func (b *Billing) get_storage() {
 			invoice_id      sql.NullInt64
 			invoice         *Invoice
 			fee_id          int
+			available       bool
 		)
-		if err = rows.Scan(&number, &size, &invoice_id, &fee_id); err != nil {
+		if err = rows.Scan(&number, &size, &invoice_id, &fee_id, &available);
+			err != nil {
 			log.Panic(err)
 		}
 		if invoice_id.Valid {
@@ -42,7 +45,7 @@ func (b *Billing) get_storage() {
 			if _, ok := b.Storage[key]; !ok {
 				b.Storage[key] = make([]st, 0)
 			}
-			s := st{number, size.Float64, f.Amount, invoice}
+			s := st{number, size.Float64, f.Amount, available, invoice}
 			if key == "storage_wall" {
 				s.Price *= s.Size
 			}
