@@ -5,18 +5,19 @@ import (
 	"log"
 )
 
-type Storage map[string][]struct {
+type st struct {
 	Number int
 	Size float64
+	Price float64
 	*Invoice
 }
+type Storage map[string][]st
 
 //TODO: recover from panics and send http 500 if applicable?
 func (b *Billing) get_storage() {
 	b.Storage = make(Storage)
-	rows, err := b.db.Query("SELECT s.number, s.size, s.invoice, f.category, " +
-		"f.identifier, f.description FROM storage s JOIN fee f " +
-		"ON s.fee = f.id ORDER BY s.number ASC")
+	rows, err := b.db.Query("SELECT number, size, invoice, fee " +
+		"FROM storage ORDER BY number ASC")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -27,33 +28,27 @@ func (b *Billing) get_storage() {
 			size            sql.NullFloat64
 			invoice_id      sql.NullInt64
 			invoice         *Invoice
-			fee_category    string
-			fee_identifier  string
-			fee_description string
+			fee_id          int
 		)
-		if err = rows.Scan(&number, &size, &invoice_id, &fee_category,
-			&fee_identifier, &fee_description); err != nil {
+		if err = rows.Scan(&number, &size, &invoice_id, &fee_id); err != nil {
 			log.Panic(err)
 		}
 		if invoice_id.Valid {
 			invoice = b.get_bill(int(invoice_id.Int64))
 		}
-		key := fee_category + "_" + fee_identifier
-		if _, ok := b.Fees[key]; ok {
+		//TODO: change Storage type to use *Fee instead of key
+		if f := b.get_fee(fee_id); f != nil {
+			key := f.Category + "_" + f.Identifier
 			if _, ok := b.Storage[key]; !ok {
-				b.Storage[key] = make([]struct {
-					Number int
-					Size float64
-					*Invoice
-				}, 0)
+				b.Storage[key] = make([]st, 0)
 			}
-			b.Storage[key] = append(b.Storage[key], struct {
-				Number int
-				Size float64
-				*Invoice
-			}{number, size.Float64, invoice})
+			s := st{number, size.Float64, f.Amount, invoice}
+			if key == "storage_wall" {
+				s.Price *= s.Size
+			}
+			b.Storage[key] = append(b.Storage[key], s)
 		} else {
-			log.Panicf("Storage fee '%s' not found", fee_identifier)
+			log.Panicf("Storage fee '%s' not found", f.Identifier)
 		}
 	}
 }

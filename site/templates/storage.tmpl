@@ -3,75 +3,115 @@
       <div class="col-md-10 col-lg-8 col-xl-7">
         <form action="/member/storage" method="post">
           <h5>Wall storage</h5>
-          <table class="table table-sm">
+          <table class="table table-sm table-responsive storage-table storage-table-wall">
             <thead>
               <tr>
-                <th style="width: 6rem">Location #</th>
+                <th>#</th>
                 <th>Owner</th>
                 <th>Width</th>
-                <th>Price</th>
+                <th>$/month</th>
                 <th>Waitlist</th>
               </tr>
             </thead>
             <tbody>
+              {{$username := .Member.Username}}
               {{range .Field.wall_storage}}
-              <tr>
+              <tr{{with .Invoice}}{{if eq .Username $username}}
+                  class="table-success"
+                {{end}}{{end}}>
                 <td>{{.Number}}</td>
-                <td>{{if .Invoice -}}
-                  <a href="/members/{{.Invoice.Username}}">@{{.Invoice.Username}}</a>
-                  {{- end}}
+                {{- with .Invoice -}}
+                <td>
+                  <a href="/members/{{.Username}}">@{{.Username}}</a>
                 </td>
+                {{else}}
+                <td>-</td>
+                {{- end}}
                 <td>{{.Size}}'</td>
-                <td></td>
-                <td></td>
+                <td>${{.Price | printf "%.2f"}}</td>
+                <td>
+                  {{- if not .Invoice}}
+                  <button class="btn btn-sm btn-outline-info">Available</button>
+                  {{else if eq .Username $username}}
+                  <button class="btn btn-sm btn-warning">Cancel</button>
+                  {{else}}
+                  <button class="btn btn-sm btn-outline-secondary">Waitlist</button>
+                  {{end -}}
+                </td>
               </tr>
               {{end}}
             </tbody>
           </table>
           <h5>Hall lockers</h5>
-          <table class="table table-sm">
+          <p>Price: $5.00/month</p>
+          <table class="table table-sm table-responsive storage-table">
             <thead>
               <tr>
-                <th style="width: 6rem">#</th>
+                <th>#</th>
                 <th>Owner</th>
-                <th>Price</th>
                 <th>Waitlist</th>
               </tr>
             </thead>
             <tbody>
+              {{$username := .Member.Username}}
               {{range .Field.hall_lockers}}
-              <tr>
+              <tr{{with .Invoice}}{{if eq .Username $username}}
+                  class="table-success"
+                {{end}}{{end}}>
                 <td>{{.Number}}</td>
-                <td>{{if .Invoice -}}
-                  <a href="/members/{{.Invoice.Username}}">@{{.Invoice.Username}}</a>
-                  {{- end}}
+                {{- with .Invoice -}}
+                <td>
+                  <a href="/members/{{.Username}}">@{{.Username}}</a>
                 </td>
-                <td></td>
-                <td></td>
+                {{else}}
+                <td>-</td>
+                {{- end}}
+                <td>
+                  {{- if not .Invoice}}
+                  <button class="btn btn-sm btn-outline-info">Available</button>
+                  {{else if eq .Username $username}}
+                  <button class="btn btn-sm btn-warning">Cancel</button>
+                  {{else}}
+                  <button class="btn btn-sm btn-outline-secondary">Waitlist</button>
+                  {{end -}}
+                </td>
               </tr>
               {{end}}
             </tbody>
           </table>
           <h5>Bathroom lockers<small class="ml-3 text-muted">Lockers 7 & 8 are owned by VITP</small></h5>
-          <table class="table table-sm">
+          <p>Price: $5.00/month</p>
+          <table class="table table-sm table-responsive storage-table">
             <thead>
               <tr>
-                <th style="width: 6rem">#</th>
+                <th>#</th>
                 <th>Owner</th>
-                <th>Price</th>
                 <th>Waitlist</th>
               </tr>
             </thead>
             <tbody>
+              {{$username := .Member.Username}}
               {{range .Field.bathroom_lockers}}
-              <tr>
+              <tr{{with .Invoice}}{{if eq .Username $username}}
+                  class="table-success"
+                {{end}}{{end}}>
                 <td>{{.Number}}</td>
-                <td>{{if .Invoice -}}
-                  <a href="/members/{{.Invoice.Username}}">@{{.Invoice.Username}}</a>
-                  {{- end}}
+                {{- with .Invoice -}}
+                <td>
+                  <a href="/members/{{.Username}}">@{{.Username}}</a>
                 </td>
-                <td></td>
-                <td></td>
+                {{else}}
+                <td>-</td>
+                {{- end}}
+                <td>
+                  {{- if not .Invoice}}
+                  <button class="btn btn-sm btn-outline-info">Available</button>
+                  {{else if eq .Username $username}}
+                  <button class="btn btn-sm btn-warning">Cancel</button>
+                  {{else}}
+                  <button class="btn btn-sm btn-outline-secondary">Waitlist</button>
+                  {{end -}}
+                </td>
               </tr>
               {{end}}
             </tbody>

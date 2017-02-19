@@ -309,6 +309,23 @@ input[type=month] {
     padding-top: 0;
 }
 
+.storage-table tr td {
+    vertical-align: middle;
+}
+.storage-table tr td:nth-child(2) {
+    width: 100%;
+}
+.storage-table tr td:last-child,
+.storage-table tr th:last-child,
+.storage-table-wall tr th:nth-child(4),
+.storage-table-wall tr td:nth-child(4),
+.storage-table-wall tr td:nth-child(3) {
+    text-align: center;
+}
+.storage-table-wall tr td:nth-child(3) {
+    font-style: italic;
+}
+
 @media (max-width: 575px) {
     .navbar > .container {
         margin: 0;
