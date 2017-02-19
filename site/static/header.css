@@ -14,12 +14,11 @@
     display: block;
     transition: all 0.2s ease-in-out;
     color: rgba(0,0,0,0.5);
-    text-align: center;
 }
 .makerspace-talk-header a:hover, .makerspace-talk-header a:focus {
     color: rgba(0,0,0,0.9);
     background-color: rgba(2,117,216,1.0);
-    min-width: 7rem;
+    min-width: 8rem;
 }
 .makerspace-talk-header a:focus {
     box-shadow: 0 0 0 2px rgba(2,117,216,0.25);
@@ -27,6 +26,7 @@
 .makerspace-talk-header a .glyphicons + span {
     display: none;
     margin-left: 0.5rem;
+    font-weight: bold;
 }
 .makerspace-talk-header a:hover .glyphicons + span,
 .makerspace-talk-header a:focus .glyphicons + span {
