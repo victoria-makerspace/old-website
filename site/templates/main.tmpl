@@ -139,14 +139,14 @@
             <div class="navbar-collapse collapse justify-content-end">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{if ne .Name "index"}}/{{end}}#shop-features"><span class="glyphicons glyphicons-hand-saw"></span> shop features</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href=""><span class="glyphicons glyphicons-book-open"></span> classes</a>
-                    </li>
-                    <li class="nav-item">
                         <a id="talk-link" class="nav-link" href="{{.Talk_url}}"><span class="glyphicons glyphicons-conversation"></span> talk</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{if ne .Name "index"}}/{{end}}#shop-features"><span class="glyphicons glyphicons-hand-saw"></span> shop features</a>
+                    </li>
+                    <!--<li class="nav-item">
+                        <a class="nav-link" href=""><span class="glyphicons glyphicons-book-open"></span> classes</a>
+                    </li>-->
                     <li class="nav-item">
                         <a class="nav-link{{if eq .Name "join"}} active{{end}}" href="/join"><span class="glyphicons glyphicons-user-add"></span> &nbsp;join</a>
                     </li>
