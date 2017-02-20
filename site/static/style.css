@@ -227,10 +227,6 @@ button.nav-link {
     transform: translateX(-50%);
     height: 22rem;
 }
-#shop-features {
-    padding-top: 4rem;
-    margin-top: -4rem;
-}
 .shop-features {
     padding-bottom: 1rem;
 }
@@ -240,8 +236,6 @@ button.nav-link {
     min-height: 12rem;
     max-height: 16rem;
     border-radius: 0.25rem;
-}
-.shop-features img {
 }
 .modal-open {
     padding-right: 10px !important;

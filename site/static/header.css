@@ -1,21 +1,21 @@
-@import url('/fonts/fonts.css');
-
-.makerspace-talk-header {
-    border-bottom: 1px solid rgba(0,0,0,0.2);
-    margin: 0;
+html.anon .session,
+html:not(.anon) .anon {
+    display: none !important;
 }
-.makerspace-talk-header ul {
+
+.makerspace-top-menu ul {
+    display: flex;
     flex-direction: row;
     list-style: none;
     margin-bottom: 0;
 }
-.makerspace-talk-header a {
+.makerspace-top-menu a {
     padding: 0.5rem;
     display: block;
     transition: all 0.2s ease-in-out;
     color: rgba(0,0,0,0.5);
 }
-.makerspace-talk-header a:hover, .makerspace-talk-header a:focus {
+.makerspace-top-menu a:hover, .makerspace-top-menu a:focus {
     color: rgba(0,0,0,0.9);
     background-color: rgba(2,117,216,1.0);
     min-width: 8rem;
@@ -32,11 +32,3 @@
 .makerspace-talk-header a:focus .glyphicons + span {
     display: inline;
 }
-
-.anon .makerspace-talk-header .session-nav, .makerspace-talk-header .anon-nav {
-    display: none;
-}
-.makerspace-talk-header .session-nav, .anon .makerspace-talk-header .anon-nav {
-    display: flex;
-}
-

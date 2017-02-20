@@ -14,6 +14,7 @@ import (
 )
 
 var templates = [...]string{"main",
+	"header",
 	"error",
 	"index",
 	"sign-in",

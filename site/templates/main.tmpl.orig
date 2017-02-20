@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192"  href="/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <title>{{if .Title}}{{.Title}} - {{end}}Victoria Makerspace</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="/fonts/fonts.css">
+    <link rel="stylesheet" href="/header.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+{{if .Session}}
+  <nav class="navbar navbar-toggleable navbar-light fixed-top" id="navbar-member">
+    <div class="container">
+      <a id="general-toggler" class="navbar-toggler navbar-toggler-right nav-link glyphicons glyphicons-menu-hamburger" role="button" data-toggle="collapse" data-parent="#navbar-member" data-target="#general-menu" aria-expanded="false"></a>
+      <a id="member-icon" class="navbar-toggler navbar-toggler-right nav-link" role="button" data-toggle="collapse" data-parent="#navbar-member" data-target="#member-menu" aria-expanded="false">
+        {{with .Field.avatar_url}}
+        <img src="{{.}}">
+        {{else}}
+        <div class="glyphicons glyphicons-user"></div>
+        {{end}}
+      </a>
+      <a class="navbar-brand" href="/member" title="Dashboard">
+        <img class="navbar-brand-large" src="/logo-simple-text.svg" alt="Victoria Makerspace">
+        <img class="navbar-brand-small" src="/logo.svg" alt="Victoria Makerspace">
+      </a>
+      <div class="navbar-collapse collapse" id="general-menu">
+        <ul class="navbar-nav">
+            {{if .Member.Admin}}
+            <li class="nav-item">
+              <a class="nav-link" href="/admin">
+                <span class="glyphicons glyphicons-wrench"></span>admin panel
+              </a>
+            </li>
+            {{end}}
+            <li class="nav-item">
+              <a id="talk-link" class="nav-link" href="{{.Talk_url}}"><span class="glyphicons glyphicons-conversation"></span>talk</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/member/tools"><span class="glyphicons glyphicons-claw-hammer"></span>tools</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/member/billing"><span class="glyphicons glyphicons-pen"></span>billing</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/member/storage"><span class="glyphicons glyphicons-cargo"></span>storage</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/members"><span class="glyphicons glyphicons-group"></span>members</a>
+            </li>
+        </ul>
+      </div>
+        <div class="collapse" id="member-menu">
+          <ul class="navbar-nav">
+            <li class="nav-item" id="member-menu-toolbar">
+              <a class="nav-link glyphicons glyphicons-message-full" href="{{.Talk_url}}/users/{{.Member.Username}}/messages" title="Messages"></a>
+              <a class="nav-link glyphicons glyphicons-user" href="{{.Talk_url}}/users/{{.Member.Username}}/summary" title="Profile"></a>
+              <a class="nav-link ml-auto glyphicons glyphicons-cogwheel" href="/member/preferences" title="Preferences"></a>
+            </li>
+            {{$talk_url := .Talk_url}}
+            {{with .Field.notifications}}
+            <div id="notifications">
+              {{range .}}
+              <a class="{{if not .Read}}unread{{end}}" href="{{$talk_url}}
+                {{- if .Topic_id}}/t/{{.Slug}}/{{.Topic_id}}/{{.Post_number}}
+                {{- else if eq .Notification_type 12}}/badges/{{.Data.badge_id}}/{{.Data.badge_slug}}?username={{.Data.username}}
+                {{- else if eq .Notification_type 16}}/users/{{.Data.username}}/messages/group/{{.Data.group_name}}{{end}}">
+                <span class="notification-icon{{if ne .Notification_type 1}} glyphicons glyphicons-{{.Notification_icon}}{{end}}">{{if eq .Notification_type 1}}@{{end}}</span>
+                {{if .Topic_id}}
+                <span>{{.Data.display_username}}</span>
+                {{.Data.topic_title}}
+                {{else if eq .Notification_type 12}}
+                Earned '{{.Data.badge_name}}'
+                {{else if eq .Notification_type 16}}
+                {{.Data.inbox_count}} messages in your {{.Data.group_name}} inbox
+                {{end}}
+              </a>
+              {{end}}
+            </div>
+            {{end}}
+            <li class="nav-item" id="sign-out">
+            <form action="/sso" method="post">
+              <label>sign out
+                <button name="sign-out" type="submit" value="{{.Member.Username}}" class="nav-link glyphicons glyphicons-log-out"></button>
+              </label>
+            </form>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+{{else}}
+    <div class="modal fade" id="sign-in" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Member sign-in</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form class="modal-body" action="/sso" method="post" novalidate>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">@</span>
+                            <input type="text" class="form-control" name="username" placeholder="Username" required>
+                        </div>
+                        <small class="form-control-feedback"></small>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
+                            <input type="password" class="form-control" name="password" placeholder="Password" required>
+                        </div>
+                        <small class="form-control-feedback"></small>
+                    </div>
+                    <div class="float-left">
+                        <label class="custom-control custom-checkbox">
+                            <input type="checkbox" name="save-session" class="custom-control-input" checked>
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Remember me</span>
+                        </label>
+                    </div>
+                    <button type="submit" name="sign-in" class="float-right btn btn-primary">Sign in</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <nav class="navbar navbar-toggleable-sm navbar-light fixed-top" id="navbar-guest">
+        <div class="container">
+            <a class="navbar-toggler navbar-toggler-right nav-link glyphicons glyphicons-menu-hamburger" role="button" data-toggle="collapse" data-target="#navbar-guest .navbar-collapse" aria-expanded="false" aria-label="Toggle navigation"></a>
+            <a class="navbar-brand" href="/">
+                <img src="/logo-simple-text.svg" alt="Victoria Makerspace">
+            </a>
+            <div class="navbar-collapse collapse justify-content-end">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a id="talk-link" class="nav-link" href="{{.Talk_url}}"><span class="glyphicons glyphicons-conversation"></span> talk</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{if ne .Name "index"}}/{{end}}#shop-features"><span class="glyphicons glyphicons-hand-saw"></span> shop features</a>
+                    </li>
+                    <!--<li class="nav-item">
+                        <a class="nav-link" href=""><span class="glyphicons glyphicons-book-open"></span> classes</a>
+                    </li>-->
+                    <li class="nav-item">
+                        <a class="nav-link{{if eq .Name "join"}} active{{end}}" href="/join"><span class="glyphicons glyphicons-user-add"></span> &nbsp;join</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/member" data-toggle="modal" data-target="#sign-in"><span class="glyphicons glyphicons-log-in"></span> sign in</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+{{end}}
+{{define "footer"}}
+        <footer>
+            <hr>
+            <p class="float-right">&copy; 2017 Victoria Makerspace &middot; <a class="glyphicons-social glyphicons-social-gmail" href="mailto:admin@makerspace.ca" title="E-mail"></a> <a class="glyphicons-social glyphicons-social-twitter" href="https://twitter.com/VicMakerspace" title="Twitter"></a> <a class="glyphicons-social glyphicons-social-facebook" href="https://facebook.com/VicMakerspace" title="Facebook"></a></p>
+        </footer>
+{{end}}
+{{if eq .Name "index"}}{{template "index.tmpl" .}}{{end}}
+{{if eq .Name "error"}}{{template "error.tmpl" .}}{{end}}
+{{if eq .Name "sign-in"}}{{template "sign-in.tmpl" .}}{{end}}
+{{if eq .Name "join"}}{{template "join.tmpl" .}}{{end}}
+{{if eq .Name "terms"}}{{template "terms.tmpl" .}}{{end}}
+{{if eq .Name "dashboard"}}{{template "dashboard.tmpl" .}}{{end}}
+{{if eq .Name "billing"}}{{template "billing.tmpl" .}}{{end}}
+{{if eq .Name "tools"}}{{template "tools.tmpl" .}}{{end}}
+{{if eq .Name "storage"}}{{template "storage.tmpl" .}}{{end}}
+
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+    <script src="/script.js"></script>
+    <script src="/form-validation.js"></script>
+</body>
+</html>
