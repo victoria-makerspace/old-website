@@ -106,8 +106,7 @@ func Get_all_active(db *sql.DB) []*Member {
 	}
 	for rows.Next() {
 		m := &Member{db: db}
-		if err = rows.Scan(&m.Username, &m.Name, &m.password_key, &m.password_salt, &m.Email, &m.Agreed_to_terms, &m.Registered, &m.Student, &m.Admin);
-			err != nil {
+		if err = rows.Scan(&m.Username, &m.Name, &m.password_key, &m.password_salt, &m.Email, &m.Agreed_to_terms, &m.Registered, &m.Student, &m.Admin); err != nil {
 			log.Panic(err)
 		}
 	}

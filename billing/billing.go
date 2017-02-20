@@ -126,10 +126,10 @@ func (b *Billing) get_bill(id int) *Invoice {
 func (b *Billing) get_bill_by_fee(fee *Fee, paid_by *member.Member) *Invoice {
 	inv := &Invoice{Fee: fee, Paid_by: paid_by}
 	var (
-		end_date                     pq.NullTime
-		description                  sql.NullString
-		amount                       sql.NullFloat64
-		interval                     sql.NullString
+		end_date    pq.NullTime
+		description sql.NullString
+		amount      sql.NullFloat64
+		interval    sql.NullString
 	)
 	if err := b.db.QueryRow("SELECT i.id, i.username, i.date, "+
 		"i.end_date, COALESCE(i.description, f.description), "+

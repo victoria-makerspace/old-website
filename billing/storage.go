@@ -6,9 +6,9 @@ import (
 )
 
 type st struct {
-	Number int
-	Size float64
-	Price float64
+	Number    int
+	Size      float64
+	Price     float64
 	Available bool
 	*Invoice
 }
@@ -25,15 +25,14 @@ func (b *Billing) get_storage() {
 	defer rows.Close()
 	for rows.Next() {
 		var (
-			number          int
-			size            sql.NullFloat64
-			invoice_id      sql.NullInt64
-			invoice         *Invoice
-			fee_id          int
-			available       bool
+			number     int
+			size       sql.NullFloat64
+			invoice_id sql.NullInt64
+			invoice    *Invoice
+			fee_id     int
+			available  bool
 		)
-		if err = rows.Scan(&number, &size, &invoice_id, &fee_id, &available);
-			err != nil {
+		if err = rows.Scan(&number, &size, &invoice_id, &fee_id, &available); err != nil {
 			log.Panic(err)
 		}
 		if invoice_id.Valid {
