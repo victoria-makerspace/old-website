@@ -11,7 +11,7 @@ html:not(.anon) .anon {
     display: inline-block;
     margin-bottom: 0.5rem;
 }
-.ms-header-logo > img{
+.ms-header-logo > img {
     height: 2.5rem;
 }
 

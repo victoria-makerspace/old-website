@@ -1,0 +1,33 @@
+{{$anon := not .Session}}
+<!DOCTYPE html>
+<html lang="en" {{- if $anon}} class="anon"{{end}}>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Victoria Makerspace member website">
+    <link rel="apple-touch-icon" href="/logo-square-text.png">
+    <link rel="icon" type="image/png" sizes="192x192"  href="/logo-square-plain-192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <title>{{if .Title}}{{.Title}} - {{end}}Victoria Makerspace</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="/fonts/fonts.css">
+    <link rel="stylesheet" href="/header.css">
+</head>
+<body>
+{{template "header.tmpl" .}}
+{{/*if eq .Name "index"}}{{template "index.tmpl" .}}{{end}}
+{{if eq .Name "error"}}{{template "error.tmpl" .}}{{end}}
+{{if eq .Name "sign-in"}}{{template "sign-in.tmpl" .}}{{end}}
+{{if eq .Name "join"}}{{template "join.tmpl" .}}{{end}}
+{{if eq .Name "terms"}}{{template "terms.tmpl" .}}{{end}}
+{{if eq .Name "dashboard"}}{{template "dashboard.tmpl" .}}{{end}}
+{{if eq .Name "billing"}}{{template "billing.tmpl" .}}{{end}}
+{{if eq .Name "tools"}}{{template "tools.tmpl" .}}{{end}}
+{{if eq .Name "storage"}}{{template "storage.tmpl" .}}{{end*/}}
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+    <script src="/script.js"></script>
+    <script src="/form-validation.js"></script>
+</body>
+</html>
