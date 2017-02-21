@@ -85,6 +85,7 @@ func Get(username string, db *sql.DB) *Member {
 	m := &Member{db: db}
 	// Populate m and check if member is active, by asserting whether or not
 	//	they are being currently invoiced.
+	//TODO: use billing.Get_membership()
 	if err := db.QueryRow("SELECT username, name, password_key, password_salt, email, agreed_to_terms, registered, EXISTS (SELECT 1 FROM invoice i INNER JOIN fee f ON (i.fee = f.id) WHERE i.username = $1 AND f.category = 'membership' AND (i.end_date > now() OR i.end_date IS NULL)), EXISTS (SELECT 1 FROM student WHERE username = $1), EXISTS (SELECT 1 FROM administrator WHERE username = $1) FROM member WHERE username = $1", username).Scan(&m.Username, &m.Name, &m.password_key, &m.password_salt, &m.Email, &m.Agreed_to_terms, &m.Registered, &m.Active, &m.Student, &m.Admin); err != nil {
 		if err == sql.ErrNoRows {
 			return nil

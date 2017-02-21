@@ -11,7 +11,7 @@
           <div class="modal-body">
             <p>Terminating your membership fees will result in immediate revocation of access to makerspace.  Any leased lockers/storage will be cancelled and given to the next member on the waitlist.</p>
             <div class="form-group">
-              <textarea class="form-control" name="cancellation_reason" rows="5" placeholder="Is there a reason for your cancellation that you would be willing to share?"></textarea>
+              <textarea class="form-control" name="cancellation_reason" rows="5" placeholder="Is there a reason for your cancellation that you would be willing to share?" autofocus></textarea>
             </div>
           </div>
           <div class="modal-footer align-items-end flex-wrap">
@@ -58,10 +58,10 @@
               <tbody>
                 {{range .}}
                 <tr{{if not .Approved}} title="This transaction was not approved." class="table-danger"{{end}}>
-                  <td>{{.Date.Format "2006-01-02"}}</td>
+                  <td>{{.Time.Format "2006-01-02"}}</td>
                   <td>${{.Amount | printf "%.2f"}}</td>
                   <td>{{.Comment}}</td>
-                  <td><small>x-{{.Card}}</small></td>
+                  <td><small class="text-muted">x-{{.Card}}</small></td>
                   </td>
                 </tr>
                 {{end}}
@@ -232,10 +232,12 @@
                         {{else if not .Field.card_number}}
                         <p class="alert alert-warning">You must register a credit card.</p>
                         {{end}}
-                        <button type="submit" name="update" class="btn btn-secondary">Update</button>
+                      <div class="d-inline-flex flex-row-reverse">
                         {{if not .Member.Active}}
-                        <button type="submit" name="register" class="d-inline-flex btn btn-primary"{{if or (not .Field.card_number) (not .Member.Agreed_to_terms)}} disabled{{end}}>Register</button>
+                        <button type="submit" name="register" class="ml-1 btn btn-primary"{{if or (not .Field.card_number) (not .Member.Agreed_to_terms)}} disabled{{end}}>Register</button>
                         {{end}}
+                        <button type="submit" name="update" class="btn btn-secondary">Update</button>
+                      </div>
                     </form>
                     {{end}}
                 </section>

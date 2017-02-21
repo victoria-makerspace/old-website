@@ -33,7 +33,7 @@
         <ul class="navbar-nav">
             {{if .Member.Admin}}
             <li class="nav-item">
-              <a class="nav-link" href="/admin">
+              <a class="nav-link{{if eq .Name "admin"}} active{{end}}" href="/admin">
                 <span class="glyphicons glyphicons-wrench"></span>admin panel
               </a>
             </li>
@@ -42,16 +42,16 @@
               <a id="talk-link" class="nav-link" href="{{.Talk_url}}"><span class="glyphicons glyphicons-conversation"></span>talk</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/member/tools"><span class="glyphicons glyphicons-claw-hammer"></span>tools</a>
+              <a class="nav-link{{if eq .Name "tools"}} active{{end}}" href="/tools"><span class="glyphicons glyphicons-claw-hammer"></span>tools</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/member/billing"><span class="glyphicons glyphicons-pen"></span>billing</a>
+              <a class="nav-link{{if eq .Name "billing"}} active{{end}}" href="/member/billing"><span class="glyphicons glyphicons-pen"></span>billing</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/member/storage"><span class="glyphicons glyphicons-cargo"></span>storage</a>
+              <a class="nav-link{{if eq .Name "storage"}} active{{end}}" href="/member/storage"><span class="glyphicons glyphicons-cargo"></span>storage</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/members"><span class="glyphicons glyphicons-group"></span>members</a>
+              <a class="nav-link{{if eq .Name "members"}} active{{end}}" href="/members"><span class="glyphicons glyphicons-group"></span>members</a>
             </li>
         </ul>
       </div>
@@ -144,6 +144,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{if ne .Name "index"}}/{{end}}#shop-features"><span class="glyphicons glyphicons-hand-saw"></span> shop features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link{{if eq .Name "tools"}} active{{end}}" href="/tools"><span class="glyphicons glyphicons-"></span> tools</a>
                     </li>
                     <!--<li class="nav-item">
                         <a class="nav-link" href=""><span class="glyphicons glyphicons-book-open"></span> classes</a>

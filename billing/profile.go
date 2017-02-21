@@ -34,7 +34,7 @@ func (b *Billing) Get_profile(m *member.Member) *Profile {
 	}
 	if bs, err := b.profile_api.GetProfile(id); err != nil {
 		log.Println(err)
-		*p.Error = "No credit card profile"
+		p.set_error("No credit card profile")
 		return p
 	} else {
 		p.bs_profile = bs
@@ -61,7 +61,7 @@ func (p *Profile) Delete_card() {
 	if _, err := p.bs_profile.DeleteCard(p.billing.profile_api, 1); err != nil {
 		log.Println(err)
 	}
-	*p.Error = "no card"
+	p.set_error("no card")
 	p.bs_profile.Card = beanstream.CreditCard{}
 }
 
@@ -84,11 +84,7 @@ func (p *Profile) Update_card(token, cardholder string) {
 		return
 	}
 	// Clear card error
-	p.Error = nil
-	if _, err = p.billing.db.Exec("UPDATE payment_profile " +
-		"SET invalid_error = NULL"); err != nil {
-		log.Panic(err)
-	}
+	p.clear_error()
 	p.bs_profile.Card = *card
 }
 
@@ -107,5 +103,21 @@ func (p *Profile) new_bs_profile(token, cardholder string) {
 		p.member.Username, rsp.Id); err != nil {
 		log.Panic(err)
 	}
+	p.clear_error()
+}
+
+func (p *Profile) set_error(err string) {
+	*p.Error = err
+	if _, e := p.billing.db.Exec("UPDATE payment_profile "+
+		"SET invalid_error = $1", err); e != nil {
+		log.Panic(e)
+	}
+}
+
+func (p *Profile) clear_error() {
 	p.Error = nil
+	if _, err := p.billing.db.Exec("UPDATE payment_profile " +
+		"SET invalid_error = NULL"); err != nil {
+		log.Panic(err)
+	}
 }

@@ -70,11 +70,6 @@ func (h *Http_server) billing_handler() {
 				p.http_error(422)
 				return
 			}
-			if pay_profile.Error != nil {
-				//TODO: embed error response
-				write_template(p)
-				return
-			}
 			pay_profile.New_membership()
 			http.Redirect(w, r, "/member/billing", 303)
 			return

@@ -2,8 +2,11 @@ package billing
 
 import (
 	"database/sql"
-	//beanstream "github.com/Beanstream/beanstream-go"
+	"fmt"
+	beanstream "github.com/Beanstream/beanstream-go"
 	"log"
+	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -17,13 +20,55 @@ type Transaction struct {
 	Amount     float64
 	Comment    string
 	Card       string // Last 4 digits
-	Ip_address string
+	Ip_address string //TODO
 	Invoice    *Invoice
 	order_id   string
 }
 
 func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoice) *Transaction {
-	txn := &Transaction{Profile: p}
+	if amount < minimum_txn_amount {
+		return nil
+	}
+	order_id := fmt.Sprintf("%d-%s", rand.Intn(1000000), p.member.Username)
+	txn := &Transaction{
+		Profile:  p,
+		Time:     time.Now(),
+		Amount:   amount,
+		Comment:  comment,
+		Invoice:  invoice,
+		order_id: order_id}
+	req := beanstream.PaymentRequest{
+		PaymentMethod: "payment_profile",
+		OrderNumber:   order_id,
+		Amount:        float32(amount),
+		Profile:       beanstream.ProfilePayment{p.bs_profile.Id, 1, true},
+		Comment:       comment}
+	rsp, err := p.billing.payment_api.MakePayment(req)
+	if err != nil {
+		if p.Error != nil {
+			p.set_error("txn error")
+		}
+		log.Println(err)
+		return nil
+	}
+	if !rsp.IsApproved() {
+		if p.Error != nil {
+			p.set_error("txn not approved")
+		}
+		log.Println("Payment of %.2f by %s failed", amount, p.member.Username)
+	} else {
+		p.clear_error()
+	}
+	txn.Id, _ = strconv.Atoi(rsp.ID)
+	txn.Approved = rsp.IsApproved()
+	txn.Card = rsp.Card.LastFour
+	if _, err := p.billing.db.Exec("INSERT INTO transaction "+
+		"(id, profile, approved, time, amount, order_id, comment, card, "+
+		"invoice) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+		txn.Id, p.member.Username, txn.Approved, txn.Time, txn.Amount,
+		txn.order_id, txn.Comment, txn.Card, txn.Invoice.Id); err != nil {
+		log.Panic(err)
+	}
 	return txn
 }
 

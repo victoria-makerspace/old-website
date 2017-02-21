@@ -5,6 +5,10 @@ import (
 )
 
 func (p *Profile) New_membership() {
+	//TODO: change member.Active to current membership Invoice object
+	if p.member.Active {
+		return
+	}
 	member_type := "membership_regular"
 	if p.member.Student {
 		member_type = "membership_student"
@@ -15,7 +19,12 @@ func (p *Profile) New_membership() {
 	fee := p.billing.Fees[member_type]
 	inv := p.New_recurring_bill(fee.Id, p.member.Username)
 	prorated := prorate_month(fee.Amount)
-	p.do_transaction(prorated, fee.Description+" (prorated)", inv)
+	if txn := p.do_transaction(prorated, fee.Description+" (prorated)", inv);
+		txn == nil {
+		if !txn.Approved {
+			//TODO: missed payment, embed error
+		}
+	}
 }
 
 func (p *Profile) Get_membership() *Invoice {
@@ -24,15 +33,8 @@ func (p *Profile) Get_membership() *Invoice {
 			return i
 		}
 	}
-	if i := p.billing.get_bill_by_fee(p.billing.Fees["membership_regular"],
-		p.member); i != nil {
-		return i
-	} else if i := p.billing.get_bill_by_fee(
-		p.billing.Fees["membership_regular"], p.member); i != nil {
-		return i
-	}
-	return p.billing.get_bill_by_fee(p.billing.Fees["membership_corporate"],
-		p.member)
+	//TODO: return invoice when membership paid by someone else
+	return nil
 }
 
 func (p *Profile) Update_student(institution, email string, grad_date time.Time) {
