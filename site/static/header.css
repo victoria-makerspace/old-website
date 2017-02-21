@@ -15,46 +15,45 @@ html:not(.anon) .anon {
     height: 2.5rem;
 }
 
-.ms-top-menu ul {
+#ms-top-menu ul {
     display: flex;
     flex-direction: row;
     list-style: none;
     margin: 0;
     padding: 0;
 }
-.ms-top-menu a {
+#ms-top-menu a {
     padding: 0.1rem 0.5rem;
+    line-height: normal;
     display: block;
     transition: all 0.2s ease-in-out;
     color: rgba(0,0,0,0.5);
     text-decoration: none;
+    outline: none;
 }
-.ms-top-menu a:focus,
-.ms-top-menu a:active,
-.ms-top-menu a.active {
+#ms-top-menu a:focus,
+#ms-top-menu a:active,
+#ms-top-menu a.active {
     color: rgba(0,0,0,0.7);
     background-color: rgba(2,117,216,0.5);
 }
-.ms-top-menu a:hover,
-.ms-top-menu a:focus,
-.ms-top-menu a:active {
+#ms-top-menu a:hover,
+#ms-top-menu a:focus,
+#ms-top-menu a:active {
     min-width: 6rem;
 }
-.ms-top-menu a:hover {
+#ms-top-menu a:hover {
     color: rgba(0,0,0,0.9);
     background-color: rgba(2,117,216,1.0);
 }
-.ms-top-menu a:active {
-    box-shadow: 0 0 0 2px rgba(2,117,216,0.25);
-}
-.ms-top-menu a .glyphicons + span {
+#ms-top-menu a .glyphicons + span {
     display: none;
     margin-left: 0.5rem;
     font-weight: bold;
     vertical-align: middle;
 }
-.ms-top-menu a:hover .glyphicons + span,
-.ms-top-menu a:focus .glyphicons + span,
-.ms-top-menu a:active .glyphicons + span {
+#ms-top-menu a:hover .glyphicons + span,
+#ms-top-menu a:focus .glyphicons + span,
+#ms-top-menu a:active .glyphicons + span {
     display: inline;
 }
