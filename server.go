@@ -18,6 +18,7 @@ var config struct {
 	Database   map[string]string
 	Beanstream map[string]string
 	Discourse  map[string]string
+	Smtp       map[string]string
 }
 
 func init() {

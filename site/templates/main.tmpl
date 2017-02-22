@@ -120,12 +120,15 @@
               <small class="form-control-feedback"></small>
             </div>
             <div class="d-flex justify-content-between">
-              <label class="custom-control custom-checkbox">
-                <input type="checkbox" name="save-session" class="custom-control-input" checked>
-                <span class="custom-control-indicator"></span>
-                <span class="custom-control-description">Remember me</span>
-              </label>
-              <button type="submit" name="sign-in" class="btn btn-primary">Sign in</button>
+              <div class="d-flex flex-column align-items-end">
+                <label class="custom-control custom-checkbox">
+                  <input type="checkbox" name="save-session" class="custom-control-input" checked>
+                  <span class="custom-control-indicator"></span>
+                  <span class="custom-control-description">Remember me</span>
+                </label>
+                <a class="small mr-3" href="/sso/reset">Reset password</a>
+              </div>
+              <button type="submit" name="sign-in" class="mb-auto btn btn-primary">Sign in</button>
             </div>
           </form>
         </div>
@@ -163,8 +166,8 @@
     </nav>
 {{end}}
 {{define "footer"}}
-        <footer>
-            <hr>
+        <footer class="clearfix">
+            <hr class="mb-2">
             <p class="float-right">&copy; 2017 Victoria Makerspace &middot; <a class="glyphicons-social glyphicons-social-gmail" href="mailto:admin@makerspace.ca" title="E-mail"></a> <a class="glyphicons-social glyphicons-social-twitter" href="https://twitter.com/VicMakerspace" title="Twitter"></a> <a class="glyphicons-social glyphicons-social-facebook" href="https://facebook.com/VicMakerspace" title="Facebook"></a></p>
         </footer>
 {{end}}
