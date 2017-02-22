@@ -21,12 +21,12 @@ func (b *Billing) payment_scheduler() {
 				b.log_error(txn_log, txn_attempts, txn_approved, sched_error)
 				err := ""
 				if sched_error != "" {
-					err = "\n\t\tError: " + sched_error
+					err = "\n\tError: " + sched_error
 				}
 				log.Printf("(%d) Payment scheduler (%s) completed:\n"+
-					"\t\t%d scheduled\n"+
-					"\t\t%d attempted\n"+
-					"\t\t%d approved%s\n",
+					"\t%d scheduled\n"+
+					"\t%d attempted\n"+
+					"\t%d approved%s\n",
 					txn_log, interval, txn_todo, txn_attempts, txn_approved,
 					err)
 			}()
