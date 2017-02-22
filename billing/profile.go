@@ -11,7 +11,7 @@ import (
 type Profile struct {
 	Invoices     []*Invoice
 	Transactions []*Transaction
-	Error        *string
+	Error        string
 	billing      *Billing
 	bs_profile   *beanstream.Profile
 	member       *member.Member
@@ -29,7 +29,7 @@ func (b *Billing) Get_profile(m *member.Member) *Profile {
 		if err != sql.ErrNoRows {
 			log.Panic(err)
 		}
-		*p.Error = "No credit card profile"
+		p.Error = "No credit card profile"
 		return p
 	}
 	if bs, err := b.profile_api.GetProfile(id); err != nil {
@@ -39,7 +39,7 @@ func (b *Billing) Get_profile(m *member.Member) *Profile {
 	} else {
 		p.bs_profile = bs
 		if invalid.Valid {
-			p.Error = &invalid.String
+			p.Error = invalid.String
 		}
 	}
 	p.get_recurring_bills()
@@ -107,7 +107,7 @@ func (p *Profile) new_bs_profile(token, cardholder string) {
 }
 
 func (p *Profile) set_error(err string) {
-	*p.Error = err
+	p.Error = err
 	if _, e := p.billing.db.Exec("UPDATE payment_profile "+
 		"SET invalid_error = $1", err); e != nil {
 		log.Panic(e)
@@ -115,9 +115,20 @@ func (p *Profile) set_error(err string) {
 }
 
 func (p *Profile) clear_error() {
-	p.Error = nil
+	p.Error = ""
 	if _, err := p.billing.db.Exec("UPDATE payment_profile " +
 		"SET invalid_error = NULL"); err != nil {
 		log.Panic(err)
 	}
+}
+
+func (b *Billing) get_all_profiles() []*Profile {
+	profiles := make([]*Profile, 0)
+	members := member.Get_all(b.db)
+	for _, m := range members {
+		if p := b.Get_profile(m); p != nil {
+			profiles = append(profiles, p)
+		}
+	}
+	return profiles
 }

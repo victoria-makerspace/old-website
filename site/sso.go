@@ -72,13 +72,28 @@ func (h *Http_server) sso_handler() {
 	h.mux.HandleFunc("/sso", func(w http.ResponseWriter, r *http.Request) {
 		p := h.new_page("sso", "Sign-in", w, r)
 		p.authenticate()
-		if p.Session != nil && p.PostFormValue("sign-out") == p.Member().Username {
-			p.destroy_session()
-			http.Redirect(w, r, "/", 303)
-			return
+		p.ParseForm()
+		if p.Session != nil {
+			if p.PostFormValue("sign-out") == p.Member().Username {
+				p.destroy_session()
+				http.Redirect(w, r, "/", 303)
+				return
+			}
+		} else if _, ok := p.PostForm["sign-in"]; ok {
+			if m := member.Get(p.PostFormValue("username"), p.db); m != nil {
+				if !m.Authenticate(p.PostFormValue("password")) {
+					//TODO: incorrect password, embed error
+				} else {
+					p.new_session(m, !(p.PostFormValue("save-session") == "on"))
+					http.Redirect(w, r, "/member", 303)
+				}
+			} else {
+				//TODO: invalid username, embed error
+			}
 		}
 		q := p.parse_sso_request()
 		if q == nil {
+			p.write_template()
 			return
 		}
 		sso_payload := q.Get("nonce") != "" && q.Get("return_sso_url") != ""

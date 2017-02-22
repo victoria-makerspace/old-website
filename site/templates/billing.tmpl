@@ -37,10 +37,14 @@
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
         {{if not .Member.Agreed_to_terms}}
-        <div class="alert alert-danger">
-          <p>Please agree to the <a href="/terms">Terms and Conditions</a> before setting up billing information.</p>
-        </div>
+        <p class="alert alert-danger">
+          Please agree to the <a href="/terms">Terms and Conditions</a> before setting up billing information.
+        </p>
         {{end}}
+        <p class="alert alert-info">
+          All prices and transactions are in Canadian dollars.<br>
+          Billing inquiries should be addressed to <a href="mailto:accounting@makerspace.ca">accounting@makerspace.ca</a>.
+        </p>
         {{with .Field.pay_profile}}
         <section>
           <h4>Transactions history</h4>
@@ -141,7 +145,6 @@
             <p class="alert alert-info">This form form allows the online payment service <a href="http://www.beanstream.com/home/">Beanstream</a> to create a payment profile, that we can use to process payments and recurring bills.  No credit card information is stored on or touches our server.<br>
               Credit card registration will not incur a transaction or register you to become a Makerspace member, which must be done below.</p>
             {{end}}
-            <p>All prices and transactions are in Canadian dollars.</p>
             <form action="/member/billing" method="post" id="credit-card" class="px-2 px-sm-3">
               <div class="form-group row mb-2 mb-sm-3">
                 <label for="name" class="col-sm-4 col-form-label">Name</label>

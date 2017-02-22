@@ -96,40 +96,40 @@
   </nav>
 {{else}}
     <div class="modal fade" id="sign-in" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Member sign-in</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form class="modal-body" action="/sso" method="post" novalidate>
-                    <div class="form-group">
-                        <div class="input-group">
-                            <span class="input-group-addon">@</span>
-                            <input type="text" class="form-control" name="username" placeholder="Username" required>
-                        </div>
-                        <small class="form-control-feedback"></small>
-                    </div>
-                    <div class="form-group">
-                        <div class="input-group">
-                            <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
-                            <input type="password" class="form-control" name="password" placeholder="Password" required>
-                        </div>
-                        <small class="form-control-feedback"></small>
-                    </div>
-                    <div class="float-left">
-                        <label class="custom-control custom-checkbox">
-                            <input type="checkbox" name="save-session" class="custom-control-input" checked>
-                            <span class="custom-control-indicator"></span>
-                            <span class="custom-control-description">Remember me</span>
-                        </label>
-                    </div>
-                    <button type="submit" name="sign-in" class="float-right btn btn-primary">Sign in</button>
-                </form>
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Member sign-in</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <form class="modal-body" action="/sso" method="post" novalidate>
+            <div class="form-group">
+              <div class="input-group">
+                <span class="input-group-addon">@</span>
+                <input type="text" class="form-control" name="username" placeholder="Username" required>
+              </div>
+              <small class="form-control-feedback"></small>
             </div>
+            <div class="form-group">
+              <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
+                <input type="password" class="form-control" name="password" placeholder="Password" required>
+              </div>
+              <small class="form-control-feedback"></small>
+            </div>
+            <div class="d-flex justify-content-between">
+              <label class="custom-control custom-checkbox">
+                <input type="checkbox" name="save-session" class="custom-control-input" checked>
+                <span class="custom-control-indicator"></span>
+                <span class="custom-control-description">Remember me</span>
+              </label>
+              <button type="submit" name="sign-in" class="btn btn-primary">Sign in</button>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
     <nav class="navbar navbar-toggleable-sm navbar-light fixed-top" id="navbar-guest">
         <div class="container">
@@ -170,7 +170,7 @@
 {{end}}
 {{if eq .Name "index"}}{{template "index.tmpl" .}}{{end}}
 {{if eq .Name "error"}}{{template "error.tmpl" .}}{{end}}
-{{if eq .Name "sign-in"}}{{template "sign-in.tmpl" .}}{{end}}
+{{if eq .Name "sso"}}{{template "sso.tmpl" .}}{{end}}
 {{if eq .Name "join"}}{{template "join.tmpl" .}}{{end}}
 {{if eq .Name "terms"}}{{template "terms.tmpl" .}}{{end}}
 {{if eq .Name "dashboard"}}{{template "dashboard.tmpl" .}}{{end}}

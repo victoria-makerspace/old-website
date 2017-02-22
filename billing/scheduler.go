@@ -2,66 +2,139 @@ package billing
 
 import (
 	"database/sql"
-	"github.com/vvanpo/makerspace/member"
 	"log"
 	"time"
 )
 
 //TODO: recurring intervals different than 1 month
-//TODO: run on startup and ensure a payment schedule(s) wasn't missed
 func (b *Billing) payment_scheduler() {
 	for {
-		t := monthly_timer()
-		<-t.C
-		go func() {
-			// TODO: ensure the scheduler hasn't already run for this month
-			log.Println("Starting payment scheduler")
-			defer log.Println("Payment scheduler completed")
-			rows, err := b.db.Query("SELECT i.id, i.profile, " +
-				"COALESCE(i.amount, f.amount) FROM invoice i INNER JOIN fee f " +
-				"ON (i.fee = f.id) WHERE f.recurring = '1 month' AND " +
-				"(i.end_date >= now() OR i.end_date IS NULL)")
-			if err != nil {
-				if err != sql.ErrNoRows {
-					log.Panic(err)
+		run := func(interval string) {
+			var sched_error string
+			txn_todo := b.count_recurring(interval)
+			txn_attempts := 0
+			txn_approved := 0
+			txn_log := b.log_scheduled(interval, txn_todo)
+			log.Printf("(%d) Starting payment scheduler (%s): %d txns\n",
+				txn_log, interval, txn_todo)
+			defer func() {
+				b.log_error(txn_log, txn_attempts, txn_approved, sched_error)
+				err := ""
+				if sched_error != "" {
+					err = "\n\t\tError: " + sched_error
 				}
-				return
-			}
-			defer rows.Close()
-			type payment struct {
-				id      int
-				profile *Profile
-				amount  float64
-			}
-			var (
-				payments         []payment
-				members          map[string]*member.Member
-				profiles         map[string]*Profile
-				profile_username string
-			)
-			for rows.Next() {
-				pmnt := payment{}
-				if err = rows.Scan(&pmnt.id, &profile_username, &pmnt.amount); err != nil {
-					log.Panic(err)
-				}
-				if _, ok := members[profile_username]; !ok {
-					members[profile_username] = member.Get(profile_username, b.db)
-				}
-				// Ensure no redundant profile queries are sent to Beanstream
-				if _, ok := profiles[profile_username]; !ok {
-					if profile := b.Get_profile(members[profile_username]); profile != nil {
-						profiles[profile_username] = profile
-					} else {
-						log.Println("Could not fetch Beanstream profile for " + profile_username)
-						//// TODO: missed payment
+				log.Printf("(%d) Payment scheduler (%s) completed:\n"+
+					"\t\t%d scheduled\n"+
+					"\t\t%d attempted\n"+
+					"\t\t%d approved%s\n",
+					txn_log, interval, txn_todo, txn_attempts, txn_approved,
+					err)
+			}()
+			profiles := b.get_all_profiles()
+			for _, p := range profiles {
+				for _, inv := range p.Invoices {
+					txn_attempts += 1
+					txn := p.do_recurring_txn(inv)
+					txn.log_recurring_txn(txn_log)
+					if txn.Approved {
+						txn_approved += 1
 					}
 				}
-				// Do transaction
-
-				payments = append(payments, pmnt)
 			}
-		}()
+			sched_error = ""
+		}
+		//TODO: for intervals := b.get_intervals() {
+		if !b.has_run("1 month") {
+			go run("1 month")
+		}
+		t := monthly_timer()
+		<-t.C
+		go run("1 month")
 	}
+}
+
+func (b *Billing) log_scheduled(interval string, txn_todo int) int {
+	var log_id int
+	if err := b.db.QueryRow("INSERT INTO txn_scheduler_log (interval, txn_todo) "+
+		"VALUES ($1, $2) RETURNING id", interval, txn_todo).Scan(&log_id);
+		err != nil {
+		log.Panic(err)
+	}
+	return log_id
+}
+
+func (b *Billing) log_error(log_id, txn_attempts, txn_approved int, e string) {
+	if e == "" {
+		return
+	}
+	if _, err := b.db.Exec(
+		"UPDATE txn_scheduler_log "+
+		"SET "+
+		"	txn_attempts = $2, "+
+		"	txn_approved = $3, "+
+		"	error = $4, "+
+		"WHERE id = $1",
+		log_id, txn_attempts, txn_approved, e);
+		err != nil {
+		log.Panic(err)
+	}
+}
+
+func (b *Billing) get_intervals() []string {
+	ints := make([]string, 0)
+	rows, err := b.db.Query(
+		"SELECT COALESCE(i.recurring, f.recurring) rc"+
+		"FROM invoice i "+
+		"LEFT JOIN fee f "+
+		"ON i.fee = f.id "+
+		"WHERE COALESCE(i.recurring, f.recurring) IS NOT NULL "+
+		"	AND (i.end_date > now() OR i.end_date IS NULL) "+
+		"GROUP BY rc")
+	defer rows.Close()
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return ints
+		}
+		log.Panic(err)
+	}
+	for rows.Next() {
+		var i string
+		rows.Scan(&i)
+		ints = append(ints, i)
+	}
+	return ints
+}
+
+func (b *Billing) count_recurring(interval string) int {
+	var count int
+	if err := b.db.QueryRow(
+		"SELECT COUNT(*) "+
+		"FROM invoice i "+
+		"LEFT JOIN fee f "+
+		"ON (i.fee = f.id) "+
+		"WHERE "+
+		"	COALESCE(i.recurring, f.recurring) = $1 "+
+		"	AND (i.end_date > now() OR i.end_date IS NULL)",
+		interval).Scan(&count); err != nil {
+		log.Panic(err)
+	}
+	return count
+}
+
+func (b *Billing) has_run(interval string) bool {
+	var has_run bool
+	if err := b.db.QueryRow(
+		"SELECT NOT age(time) > $1 "+
+		"FROM txn_scheduler_log "+
+		"WHERE interval = $1 "+
+		"ORDER BY time DESC "+
+		"LIMIT 1", interval).Scan(&has_run); err != nil {
+		if err == sql.ErrNoRows {
+			return false
+		}
+		log.Panic(err)
+	}
+	return has_run
 }
 
 // first_of_next_month returns the local time at 00:00 on the first day of next

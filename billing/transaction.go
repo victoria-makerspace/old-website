@@ -27,6 +27,8 @@ type Transaction struct {
 
 func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoice) *Transaction {
 	if amount < minimum_txn_amount {
+		log.Printf("Transaction for %s below minimum amount (%f < %f)",
+			p.member.Username, amount, minimum_txn_amount)
 		return nil
 	}
 	order_id := fmt.Sprintf("%d-%s", rand.Intn(1000000), p.member.Username)
@@ -45,14 +47,14 @@ func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoic
 		Comment:       comment}
 	rsp, err := p.billing.payment_api.MakePayment(req)
 	if err != nil {
-		if p.Error != nil {
+		if p.Error != "" {
 			p.set_error("txn error")
 		}
 		log.Println(err)
 		return nil
 	}
 	if !rsp.IsApproved() {
-		if p.Error != nil {
+		if p.Error != "" {
 			p.set_error("txn not approved")
 		}
 		log.Println("Payment of %.2f by %s failed", amount, p.member.Username)
@@ -62,6 +64,11 @@ func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoic
 	txn.Id, _ = strconv.Atoi(rsp.ID)
 	txn.Approved = rsp.IsApproved()
 	txn.Card = rsp.Card.LastFour
+	approved := "approved"
+	if !txn.Approved {
+		approved = "failed (" + fmt.Sprint(rsp.Message) + ")"
+	}
+	log.Printf("Transaction %d for %s %s", txn.Id, p.member.Username, approved)
 	if _, err := p.billing.db.Exec("INSERT INTO transaction "+
 		"(id, profile, approved, time, amount, order_id, comment, card, "+
 		"invoice) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
@@ -70,6 +77,20 @@ func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoic
 		log.Panic(err)
 	}
 	return txn
+}
+
+func (p *Profile) do_recurring_txn(i *Invoice) *Transaction {
+	return p.do_transaction(i.Amount, i.Description, i)
+}
+
+func (t *Transaction) log_recurring_txn(log_id int) {
+	if _, err := t.Profile.billing.db.Exec(
+		"UPDATE transaction "+
+		"SET logged = $1 "+
+		"WHERE id = $2",
+		log_id, t.Id); err != nil {
+		log.Panic(err)
+	}
 }
 
 /*func (p *Profile) new_transaction(amount float64, name, ip_address string) *Transaction {

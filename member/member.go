@@ -95,8 +95,47 @@ func Get(username string, db *sql.DB) *Member {
 	return m
 }
 
+func Get_all(db *sql.DB) []*Member {
+	members := make([]*Member, 0)
+	rows, err := db.Query(
+		"SELECT "+
+		"	m.username, "+
+		"	m.name, "+
+		"	m.password_key, "+
+		"	m.password_salt, "+
+		"	m.email, "+
+		"	m.agreed_to_terms, "+
+		"	m.registered, "+
+		"	s.username IS NOT NULL, "+
+		"	a.username IS NOT NULL "+
+		"FROM member m "+
+		"NATURAL LEFT JOIN administrator a "+
+		"NATURAL LEFT JOIN student s")
+	defer rows.Close()
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Panic(err)
+		}
+		return members
+	}
+	for rows.Next() {
+		var password_key, password_salt sql.NullString
+		m := &Member{db: db}
+		if err = rows.Scan(&m.Username, &m.Name, &password_key,
+			&password_salt, &m.Email, &m.Agreed_to_terms, &m.Registered,
+			&m.Student, &m.Admin); err != nil {
+			log.Panic(err)
+		}
+		m.password_key = password_key.String
+		m.password_salt = password_salt.String
+		members = append(members, m)
+	}
+	return members
+}
+
 func Get_all_active(db *sql.DB) []*Member {
 	members := make([]*Member, 0)
+	//TODO: BUG: should by on f.category = 'membership'
 	rows, err := db.Query("SELECT m.username, m.name, m.password_key, m.password_salt, m.email, m.agreed_to_terms, m.registered, s.username IS NOT NULL, a.username IS NOT NULL FROM member m NATURAL LEFT JOIN administrator a NATURAL LEFT JOIN student s JOIN (SELECT COALESCE(i.paid_by, i.username) AS paid_by FROM invoice i LEFT JOIN fee f ON (i.fee = f.id) WHERE COALESCE(i.recurring, f.recurring) = '1 month' AND (i.end_date > now() OR i.end_date IS NULL)) inv ON inv.paid_by = m.username")
 	defer rows.Close()
 	if err != nil {
