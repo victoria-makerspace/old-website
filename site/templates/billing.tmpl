@@ -45,7 +45,7 @@
           All prices and transactions are in Canadian dollars.<br>
           Billing inquiries should be addressed to <a href="mailto:accounting@makerspace.ca">accounting@makerspace.ca</a>.
         </p>
-        {{with .Field.pay_profile}}
+        {{with .Member.Payment}}
         <section>
           <h4>Transactions history</h4>
           <div class="px-2 px-sm-3">
@@ -189,7 +189,6 @@
                 <hr>
                 <section>
                     <h4>Membership dues</h4>
-                    {{if not .Member.Corporate}}
                     {{if not .Member.Active}}
                     <p class="alert alert-info">On initial registration, your membership fee gets prorated for the remainder of the current month, and processed immediately.  Following your first payment, successive membership payments will be processed on the 1st of every month.</p>
                     {{end}}
@@ -211,21 +210,21 @@
                             <div class="form-group row mb-2"> 
                                 <label for="institution" class="col-sm-4 col-form-label">Institution name</label>
                                 <div class="col-sm-8">
-                                    <input type="text" class="form-control" id="institution" name="institution" {{if .Member.Student}} value="{{.Field.student_institution}}" required{{end}}>
+                                    <input type="text" class="form-control" id="institution" name="institution" {{if .Member.Student}} value="{{.Member.Student.Institution}}" required{{end}}>
                                     <small class="form-control-feedback"></small>
                                 </div>
                             </div>
                             <div class="form-group row mb-2"> 
                                 <label for="student_email" class="col-sm-4 col-form-label">Student E-mail</label>
                                 <div class="col-sm-8">
-                                    <input type="email" class="form-control" name="student_email" {{if .Member.Student}} value="{{.Field.student_email}}" required{{end}}>
+                                    <input type="email" class="form-control" name="student_email" {{if .Member.Student}} value="{{.Member.Student.Email}}" required{{end}}>
                                     <small class="form-control-feedback"></small>
                                 </div>
                             </div>
                             <div class="form-group row mb-sm-2">
                                 <label for="graduation" class="col-sm-4 col-form-label">Expected graduation</label>
                                 <div class="col-sm-8">
-                                    <input type="month" class="form-control" id="graduation" name="graduation"{{if .Member.Student}} value="{{.Field.student_graduation_date}}" required{{end}}>
+                                    <input type="month" class="form-control" id="graduation" name="graduation"{{if .Member.Student}} value="{{.Member.Student.Graduation_date.Format "2006-01"}}" required{{end}}>
                                     <small class="form-control-feedback"></small>
                                 </div>
                             </div>
@@ -242,7 +241,6 @@
                         <button type="submit" name="update" class="btn btn-secondary">Update</button>
                       </div>
                     </form>
-                    {{end}}
                 </section>
             </div>
         </div>

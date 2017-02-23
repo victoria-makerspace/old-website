@@ -17,9 +17,9 @@ func (p *Profile) New_membership(is_student bool) *Invoice {
 	prorated := prorate_month(fee.Amount)
 	if txn := p.do_transaction(prorated, fee.Description+" (prorated)", inv);
 		txn == nil {
-		if !txn.Approved {
-			//TODO: missed payment, embed error
-		}
+		//TODO: missed payment, embed error
+	} else if !txn.Approved {
+		//TODO: missed payment, embed error
 	}
 	return inv
 }

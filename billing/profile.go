@@ -59,7 +59,6 @@ func (b *Billing) Get_profile(member_id int) *Profile {
 	p.bs_id = profile_id.String
 	p.Error = Error(invalid.Int64)
 	/////TODO: p.Recurring_bills() if len(Invoices) = 0, get_recurring...etc
-	log.Println("INVOICES: ", p.Invoices)
 	p.get_recurring_bills()
 	p.get_transactions()
 	return p
@@ -158,7 +157,7 @@ func (p *Profile) set_error(err Error) {
 func (p *Profile) clear_error() {
 	p.Error = None
 	if _, err := p.db.Exec("UPDATE payment_profile " +
-		"SET error = NULL"+
+		"SET error = NULL "+
 		"WHERE member = $1", p.member_id);
 		err != nil {
 		log.Panic(err)

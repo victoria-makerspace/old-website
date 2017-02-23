@@ -1,4 +1,5 @@
 {{$talk_url := .Url -}}
+{{$talk_user := false}}
 {{if .Member}}{{$talk_user := .Member.Talk_user}}{{end}}
 <!DOCTYPE html>
 <html lang="en">
@@ -21,8 +22,8 @@
     <div class="container">
       <a id="general-toggler" class="navbar-toggler navbar-toggler-right nav-link glyphicons glyphicons-menu-hamburger" role="button" data-toggle="collapse" data-parent="#navbar-member" data-target="#general-menu" aria-expanded="false"></a>
       <a id="member-icon" class="navbar-toggler navbar-toggler-right nav-link" role="button" data-toggle="collapse" data-parent="#navbar-member" data-target="#member-menu" aria-expanded="false">
-        {{with .Field.avatar_url}}
-        <img src="{{.}}">
+        {{with $talk_user}}
+        <img src="{{.Avatar_url "120"}}">
         {{else}}
         <div class="glyphicons glyphicons-user"></div>
         {{end}}
@@ -85,9 +86,9 @@
             </div>
             {{end}}
             <li class="nav-item" id="sign-out">
-            <form action="/sso" method="post">
+            <form action="/sso/sign-out" method="post">
               <label>sign out
-                <button name="sign-out" type="submit" value="{{.Member.Username}}" class="nav-link glyphicons glyphicons-log-out"></button>
+                <button name="sign-out" type="submit" value="{{.Member.Id}}" class="nav-link glyphicons glyphicons-log-out"></button>
               </label>
             </form>
           </li>

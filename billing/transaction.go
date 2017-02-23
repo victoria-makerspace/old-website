@@ -31,7 +31,7 @@ func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoic
 			p.member_id, amount, minimum_txn_amount)
 		return nil
 	}
-	if p.Error == No_profile {
+	if p.Error != None {
 		//TODO: missed payment
 		return nil
 	}
@@ -47,7 +47,7 @@ func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoic
 		PaymentMethod: "payment_profile",
 		OrderNumber:   order_id,
 		Amount:        float32(amount),
-		Profile:       beanstream.ProfilePayment{p.bs_profile.Id, 1, true},
+		Profile:       beanstream.ProfilePayment{p.bs_id, 1, true},
 		Comment:       comment}
 	rsp, err := p.payment_api.MakePayment(req)
 	if err != nil {
