@@ -12,7 +12,8 @@ CREATE TABLE member (
 	email text NOT NULL UNIQUE,
 	email_validated boolean NOT NULL DEFAULT false,
 	agreed_to_terms boolean NOT NULL DEFAULT false,
-	registered timestamp(0) NOT NULL DEFAULT now()
+	registered timestamp(0) NOT NULL DEFAULT now(),
+	gratuitous boolean NOT NULL DEFAULT false
 );
 CREATE TYPE admin_privilege AS ENUM (
 	'modify-member',
@@ -37,9 +38,9 @@ CREATE TABLE session_http (
 );
 CREATE TABLE payment_profile (
 	member integer PRIMARY KEY REFERENCES member,
-	id text UNIQUE NOT NULL,
+	id text UNIQUE,
 	-- NULL or 0 value implies profile is valid
-	error integer
+	error integer DEFAULT 1
 );
 CREATE TYPE fee_category AS ENUM (
 	'membership',
@@ -80,7 +81,7 @@ CREATE TABLE invoice (
 	member integer NOT NULL REFERENCES member,
 	date date NOT NULL DEFAULT now(),
 	-- Defaults to username when NULL
-	paid_by integer REFERENCES member,
+	paid_by integer NOT NULL REFERENCES payment_profile,
 	end_date date,
 	-- description, amount default to fee values when NULL
 	description text,

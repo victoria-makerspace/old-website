@@ -4,14 +4,13 @@ import (
 	"database/sql"
 	beanstream "github.com/Beanstream/beanstream-go"
 	"github.com/lib/pq"
-	"github.com/vvanpo/makerspace/member"
 	"log"
 	"math/rand"
 	"time"
 )
 
 type Billing struct {
-	Fees map[string]*Fee
+	Fees map[int]*Fee
 	Storage
 	db          *sql.DB
 	config      beanstream.Config
@@ -19,10 +18,9 @@ type Billing struct {
 	payment_api beanstream.PaymentsAPI
 	profile_api beanstream.ProfilesAPI
 	report_api  beanstream.ReportsAPI
-	*member.Members
 }
 
-func Billing_new(merchant_id, payments_api_key, profiles_api_key, reports_api_key string, members *member.Members, db *sql.DB) *Billing {
+func Billing_new(merchant_id, payments_api_key, profiles_api_key, reports_api_key string, db *sql.DB) *Billing {
 	rand.Seed(time.Now().UTC().UnixNano())
 	b := &Billing{
 		db:     db,
@@ -31,8 +29,7 @@ func Billing_new(merchant_id, payments_api_key, profiles_api_key, reports_api_ke
 			payments_api_key,
 			profiles_api_key,
 			reports_api_key,
-			"www", "api", "v1", "-8:00"},
-		Members: members}
+			"www", "api", "v1", "-8:00"}}
 	b.gateway = beanstream.Gateway{b.config}
 	b.payment_api = b.gateway.Payments()
 	b.profile_api = b.gateway.Profiles()
@@ -53,7 +50,7 @@ type Fee struct {
 }
 
 func (b *Billing) get_fees() {
-	b.Fees = make(map[string]*Fee)
+	b.Fees = make(map[int]*Fee)
 	rows, err := b.db.Query("SELECT id, category, identifier, description, amount, recurring FROM fee")
 	if err != nil {
 		log.Panic(err)
@@ -68,13 +65,13 @@ func (b *Billing) get_fees() {
 		}
 		f.Amount = amount.Float64
 		f.Interval = interval.String
-		b.Fees[f.Category+"_"+f.Identifier] = f
+		b.Fees[f.Id] = f
 	}
 }
 
-func (b *Billing) get_fee(id int) *Fee {
+func (b *Billing) find_fee(category, identifier string) *Fee {
 	for _, f := range b.Fees {
-		if f.Id == id {
+		if f.Category == category && f.Identifier == identifier {
 			return f
 		}
 	}
@@ -83,9 +80,9 @@ func (b *Billing) get_fee(id int) *Fee {
 
 type Invoice struct {
 	Id          int
-	Member		*member.Member
+	Member		int
 	Date        time.Time
-	Paid_by     *member.Member
+	Paid_by     int
 	End_date    *time.Time
 	Description string
 	Amount      float64
@@ -96,27 +93,23 @@ type Invoice struct {
 func (b *Billing) get_bill(id int) *Invoice {
 	inv := &Invoice{Id: id}
 	var (
-		paid_by                      sql.NullInt64
 		end_date                     pq.NullTime
 		description                  sql.NullString
 		amount                       sql.NullFloat64
 		interval                     sql.NullString
-		fee_category, fee_identifier sql.NullString
+		fee_id sql.NullInt64
 	)
 	if err := b.db.QueryRow("SELECT i.member, i.date, i.paid_by, "+
 		"i.end_date, COALESCE(i.description, f.description), "+
 		"COALESCE(i.amount, f.amount), COALESCE(i.recurring, f.recurring), "+
-		"f.category, f.identifier FROM invoice i LEFT JOIN fee f "+
-		"ON (i.fee = f.id) WHERE i.id = $1", id).Scan(&inv.Member,
-		&inv.Date, &paid_by, &end_date, &description, &amount, &interval,
-		&fee_category, &fee_identifier); err != nil {
+		"f.id FROM invoice i LEFT JOIN fee f "+
+		"ON i.fee = f.id WHERE i.id = $1", id).Scan(&inv.Member,
+		&inv.Date, &inv.Paid_by, &end_date, &description, &amount, &interval,
+		&fee_id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
 		log.Panic(err)
-	}
-	if m := b.Get_member(paid_by.String); m != nil {
-		inv.Paid_by = m
 	}
 	if end_date.Valid {
 		inv.End_date = &end_date.Time
@@ -124,13 +117,14 @@ func (b *Billing) get_bill(id int) *Invoice {
 	inv.Description = description.String
 	inv.Amount = amount.Float64
 	inv.Interval = interval.String
-	if fee_category.Valid && fee_identifier.Valid {
-		inv.Fee = b.Fees[fee_category.String+"_"+fee_identifier.String]
+	if fee_id.Valid {
+		inv.Fee = b.Fees[int(fee_id.Int64)]
 	}
 	return inv
 }
 
-func (b *Billing) get_bill_by_fee(fee *Fee, paid_by *member.Member) *Invoice {
+//TODO: return a slice
+func (b *Billing) get_bill_by_fee(fee *Fee, paid_by int) *Invoice {
 	inv := &Invoice{Fee: fee, Paid_by: paid_by}
 	var (
 		end_date    pq.NullTime
@@ -138,12 +132,13 @@ func (b *Billing) get_bill_by_fee(fee *Fee, paid_by *member.Member) *Invoice {
 		amount      sql.NullFloat64
 		interval    sql.NullString
 	)
-	if err := b.db.QueryRow("SELECT i.id, i.username, i.date, "+
+	if err := b.db.QueryRow("SELECT i.id, i.member, i.date, "+
 		"i.end_date, COALESCE(i.description, f.description), "+
 		"COALESCE(i.amount, f.amount), COALESCE(i.recurring, f.recurring) "+
 		"FROM invoice i JOIN fee f "+
-		"ON (i.fee = $1) WHERE i.paid_by = $2", fee.Id, paid_by.Username).Scan(&inv.Id, &inv.Username,
-		&inv.Date, &end_date, &description, &amount, &interval); err != nil {
+		"ON i.fee = $1 WHERE i.paid_by = $2", fee.Id, paid_by).Scan(&inv.Id,
+		&inv.Member, &inv.Date, &end_date, &description, &amount, &interval);
+		err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -158,6 +153,7 @@ func (b *Billing) get_bill_by_fee(fee *Fee, paid_by *member.Member) *Invoice {
 	return inv
 }
 
+/*
 //TODO: useless, always get bills via profile
 func (b *Billing) get_all_recurring(interval string) []*Invoice {
 	inv := make([]*Invoice, 0)
@@ -201,29 +197,29 @@ func (b *Billing) get_all_recurring(interval string) []*Invoice {
 		inv = append(inv, i)
 	}
 	return inv
-}
+}*/
 
 //TODO: break out invoice methods into invoice.go
 ///TODO: allow members to register to pay for another member's fees (like their child)
 
 func (p *Profile) get_recurring_bills() {
 	// Select recurring invoices without expired end-dates
-	rows, err := p.billing.db.Query(
+	rows, err := p.db.Query(
 		"SELECT "+
-		"	i.id, i.username, i.date, i.end_date, "+
+		"	i.id, i.member, i.date, i.end_date, "+
 		"	COALESCE(i.description, f.description), "+
 		"	COALESCE(i.amount, f.amount), "+
 		"	COALESCE(i.recurring, f.recurring), "+
 		"	i.fee "+
 		"FROM invoice i "+
 		"LEFT JOIN fee f "+
-		"ON (i.fee = f.id) "+
+		"ON i.fee = f.id "+
 		"WHERE "+
-		"	COALESCE(i.paid_by, i.username) = $1 "+
+		"	i.paid_by = $1 "+
 		"	AND COALESCE(i.recurring, f.recurring) IS NOT NULL "+
 		"	AND (i.end_date > now() OR i.end_date IS NULL) "+
 		"ORDER BY i.date DESC",
-		p.Username)
+		p.member_id)
 	defer rows.Close()
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -232,13 +228,13 @@ func (p *Profile) get_recurring_bills() {
 		log.Panic(err)
 	}
 	for rows.Next() {
-		inv := &Invoice{Paid_by: p.Member}
+		inv := &Invoice{Paid_by: p.member_id}
 		var (
 			end_date                     pq.NullTime
 			description                  sql.NullString
 			fee_id sql.NullInt64
 		)
-		if err = rows.Scan(&inv.Id, &inv.Username, &inv.Date, &end_date,
+		if err = rows.Scan(&inv.Id, &inv.Member, &inv.Date, &end_date,
 			&description, &inv.Amount, &inv.Interval, &fee_id); err != nil {
 			log.Panic(err)
 		}
@@ -246,7 +242,7 @@ func (p *Profile) get_recurring_bills() {
 			inv.End_date = &end_date.Time
 		}
 		inv.Description = description.String
-		inv.Fee = p.billing.get_fee(int(fee_id.Int64))
+		inv.Fee = p.Fees[int(fee_id.Int64)]
 		p.Invoices = append(p.Invoices, inv)
 	}
 }
@@ -262,20 +258,19 @@ func (p *Profile) Get_bill(id int) *Invoice {
 }
 
 //TODO: BUG: not all 'fee' records have non-null 'recurring' fields
-func (p *Profile) New_recurring_bill(fee *Fee, member *member.Member) *Invoice {
-	if fee == nil || member == nil {
+func (p *Profile) New_recurring_bill(fee *Fee, member_id int) *Invoice {
+	if fee == nil {
 		return nil
 	}
-	fee := p.billing.get_fee(fee_id)
-	inv := &Invoice{Member: member,
-		Paid_by:     p.Member,
+	inv := &Invoice{Member: member_id,
+		Paid_by:     p.member_id,
 		Description: fee.Description,
 		Amount:      fee.Amount,
 		Interval:    fee.Interval,
 		Fee:         fee}
-	if err := p.billing.db.QueryRow("INSERT INTO invoice (member, paid_by, "+
-		"fee) VALUES ($1, $2, $3) RETURNING id, date", username,
-		p.Username, fee_id).Scan(&inv.Id, &inv.Date); err != nil {
+	if err := p.db.QueryRow("INSERT INTO invoice (member, paid_by, "+
+		"fee) VALUES ($1, $2, $3) RETURNING id, date", member_id,
+		p.member_id, fee.Id).Scan(&inv.Id, &inv.Date); err != nil {
 		log.Panic(err)
 	}
 	p.Invoices = append(p.Invoices, inv)
@@ -283,7 +278,7 @@ func (p *Profile) New_recurring_bill(fee *Fee, member *member.Member) *Invoice {
 }
 
 func (p *Profile) Cancel_recurring_bill(i *Invoice) {
-	if i == nil || i.Paid_by != p.Member {
+	if i == nil || i.Paid_by != p.member_id {
 		return
 	}
 	for n, v := range p.Invoices {
@@ -291,7 +286,7 @@ func (p *Profile) Cancel_recurring_bill(i *Invoice) {
 			p.Invoices = append(p.Invoices[:n], p.Invoices[n+1:]...)
 		}
 	}
-	if _, err := p.billing.db.Exec("UPDATE invoice SET end_date = now() WHERE "+
+	if _, err := p.db.Exec("UPDATE invoice SET end_date = now() WHERE "+
 		"id = $1 AND (end_date > now() OR end_date IS NULL)", i.Id); err != nil {
 		log.Panic(err)
 	}

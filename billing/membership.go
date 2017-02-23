@@ -1,23 +1,19 @@
 package billing
 
 import (
+	"database/sql"
+	"log"
 	"time"
 )
 
-func (p *Profile) New_membership() {
-	//TODO: change member.Active to current membership Invoice object
-	if p.Active {
-		return
+func (p *Profile) New_membership(is_student bool) {
+	var fee *Fee
+	if is_student {
+		fee = p.find_fee("membership", "student")
+	} else {
+		fee = p.find_fee("membership", "regular")
 	}
-	member_type := "membership_regular"
-	if p.Student {
-		member_type = "membership_student"
-	} else if p.Corporate {
-		member_type = "membership_corporate"
-		//TODO
-	}
-	fee := p.billing.Fees[member_type]
-	inv := p.New_recurring_bill(fee.Id, p.Username)
+	inv := p.New_recurring_bill(fee, p.member_id)
 	prorated := prorate_month(fee.Amount)
 	if txn := p.do_transaction(prorated, fee.Description+" (prorated)", inv);
 		txn == nil {
@@ -28,35 +24,34 @@ func (p *Profile) New_membership() {
 }
 
 func (p *Profile) Get_membership() *Invoice {
-	for _, i := range p.Invoices {
-		if i.Fee.Category == "membership" {
-			return i
+	var id int
+	if err := p.db.QueryRow(
+		"SELECT i.id "+
+		"FROM invoice i "+
+		"JOIN fee f "+
+		"ON f.id = i.fee "+
+		"WHERE i.member = $1 "+
+		"	AND f.category = 'membership'",
+		p.member_id).Scan(&id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
 		}
+		log.Panic(err)
 	}
-	//TODO: return invoice when membership paid by someone else
-	return nil
+	return p.Billing.get_bill(id)
 }
 
-func (p *Profile) Update_student(institution, email string, grad_date time.Time) {
+//TODO: set end_date and regular membership invoice to start after
+func (p *Profile) Change_to_student(grad_date time.Time) {
 	invoice := p.Get_membership()
-	was_student := p.Student
-	p.Update_student(institution, email, grad_date)
-	if !was_student && invoice != nil {
-		p.Cancel_recurring_bill(invoice)
-		p.New_recurring_bill(p.billing.Fees["membership_student"].Id,
-			p.Username)
-	}
+	p.Cancel_recurring_bill(invoice)
+	p.New_recurring_bill(p.find_fee("membership", "student"), p.member_id)
 }
 
-func (p *Profile) Delete_student() {
+func (p *Profile) Change_from_student() {
 	invoice := p.Get_membership()
-	was_student := p.Student
-	p.Delete_student()
-	if was_student && invoice != nil {
-		p.Cancel_recurring_bill(invoice)
-		p.New_recurring_bill(p.billing.Fees["membership_regular"].Id,
-			p.Username)
-	}
+	p.Cancel_recurring_bill(invoice)
+	p.New_recurring_bill(p.find_fee["membership", "regular"], p.member_id)
 }
 
 //TODO: Cancel storage and other makerspace-related invoices
@@ -64,5 +59,4 @@ func (p *Profile) Delete_student() {
 func (p *Profile) Cancel_membership() {
 	invoice := p.Get_membership()
 	p.Cancel_recurring_bill(invoice)
-	p.Active = false
 }

@@ -5,18 +5,16 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"github.com/vvanpo/makerspace/talk"
+	"github.com/vvanpo/makerspace/billing"
 	"golang.org/x/crypto/scrypt"
 	"log"
 	"regexp"
 )
 
 type Members struct {
-	db *sql.DB
-	talk_api *talk.Talk_api
-}
-
-func New_members(db *sql.DB, talk *talk.Talk_api) *Members {
-	return &Members{db, talk}
+	*sql.DB
+	*talk.Talk_api
+	*Billing
 }
 
 func Rand256() string {
@@ -87,23 +85,6 @@ func (ms *Members) New_member(username, name, email, password string) *Member {
 		"RETURNING id, registered",
 		username, name, m.password_key, salt, email).Scan(&m.Id, &m.Registered);
 		err != nil {
-		log.Panic(err)
-	}
-	return m
-}
-
-//TODO: support null password keys, and use e-mail verification for login
-//TODO: check corporate account
-//TODO: auto-populate a student object in *Member
-func (ms *Members) Get_member(username string) *Member {
-	m := &Member{Members: ms}
-	// Populate m and check if member is active, by asserting whether or not
-	//	they are being currently invoiced.
-	//TODO: use Get_membership()
-	if err := m.db.QueryRow("SELECT username, name, password_key, password_salt, email, agreed_to_terms, registered, EXISTS (SELECT 1 FROM invoice i INNER JOIN fee f ON (i.fee = f.id) WHERE i.username = $1 AND f.category = 'membership' AND (i.end_date > now() OR i.end_date IS NULL)), EXISTS (SELECT 1 FROM student WHERE username = $1), EXISTS (SELECT 1 FROM administrator WHERE username = $1) FROM member WHERE username = $1", username).Scan(&m.Username, &m.Name, &m.password_key, &m.password_salt, &m.Email, &m.Agreed_to_terms, &m.Registered, &m.Active, &m.Student, &m.Admin); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
 		log.Panic(err)
 	}
 	return m

@@ -13,42 +13,39 @@ type Student struct {
 	Graduation_date time.Time
 }
 
-func (m *Member) Get_student() *Student {
-	var (
-		institution, email sql.NullString
-		grad_date          pq.NullTime
-	)
+func (m *Member) get_student() {
+	var institution, email sql.NullString
+	var grad_date          pq.NullTime
 	if err := m.db.QueryRow("SELECT institution, student_email, "+
-		"graduation_date FROM student WHERE username = $1", m.Username).
+		"graduation_date FROM student WHERE member = $1", m.Id).
 		Scan(&institution, &email, &grad_date); err != nil {
 		if err != sql.ErrNoRows {
 			log.Panic(err)
 		}
-		return nil
+		return
 	}
-	return &Student{institution.String, email.String, grad_date.Time}
+	m.Student = &Student{institution.String, email.String, grad_date.Time}
 }
 
+//TODO: verify student email
 func (m *Member) Update_student(institution, email string, grad_date time.Time) {
-	var is_student bool
-	if err := m.db.QueryRow("SELECT true FROM student WHERE username = $1",
-		m.Username).Scan(&is_student); err != nil && err != sql.ErrNoRows {
-		log.Panic(err)
-	}
 	query := "INSERT INTO student (username, institution, student_email, " +
 		"graduation_date) VALUES ($1, $2, $3, $4)"
-	if is_student {
+	if m.Student != nil {
 		query = "UPDATE student SET institution = $2, student_email = $3, " +
 			"graduation_date = $4 WHERE username = $1"
+	} else if m.membership != nil {
+		m.Change_to_student(grad_date)
 	}
-	if _, err := m.db.Exec(query, m.Username, institution, email, grad_date); err != nil {
+	if _, err := m.db.Exec(query, m.Username, institution, email, grad_date);
+		err != nil {
 		log.Panic(err)
 	}
-	m.Student = true
+	m.Student = &Student{institution, email, grad_date}
 }
 
 func (m *Member) Delete_student() {
-	m.Student = false
+	m.Student = nil
 	if _, err := m.db.Exec("DELETE FROM student WHERE username = $1",
 		m.Username); err != nil {
 		log.Panic(err)

@@ -3,7 +3,6 @@ package billing
 import (
 	"database/sql"
 	beanstream "github.com/Beanstream/beanstream-go"
-	"github.com/vvanpo/makerspace/member"
 	"log"
 )
 
@@ -22,43 +21,68 @@ type Profile struct {
 	Invoices     []*Invoice
 	Transactions []*Transaction
 	Error
-	billing      *Billing
+	*Billing
+	bs_id		 string
 	bs_profile   *beanstream.Profile
-	*member.Member
+	member_id    int
 }
 
-func (b *Billing) Get_profile(m *member.Member) *Profile {
-	p := &Profile{billing: b, Member: m}
+func (b *Billing) New_profile(member_id int) *Profile {
+	if _, err = p.db.Exec(
+		"INSERT INTO payment_profile (member_id)"+
+		"VALUES ($1)",
+		member_id); err != nil {
+		log.Panic(err)
+	}
+	return &Profile{Billing: b, Error: No_profile, member_id: member_id}
+}
+
+func (b *Billing) Get_profile(member_id int) *Profile {
+	p := &Profile{Billing: b, member_id: member_id}
 	var (
-		id      string
+		profile_id      sql.NullString
 		invalid sql.NullInt64
 	)
 	err := b.db.QueryRow("SELECT id, error FROM payment_profile "+
-		"WHERE member = $1", m.Id).Scan(&id, &invalid)
+		"WHERE member = $1", member_id).Scan(&profile_id, &invalid)
 	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Panic(err)
+		if err == sql.ErrNoRows {
+			return nil
 		}
+		log.Panic(err)
+	}
+	if !profile_id.Valid {
 		p.Error = No_profile
 		return p
 	}
-	if bs, err := b.profile_api.GetProfile(id); err != nil {
-		log.Println(err)
-		p.set_error(No_profile)
-		return p
-	} else {
-		p.bs_profile = bs
-		if invalid.Valid {
-			p.Error = Error(invalid.Int64)
-		}
-	}
+	p.bs_id = profile_id.String
+	p.Error = Error(invalid.Int64)
+	/////TODO: p.Recurring_bills() if len(Invoices) = 0, get_recurring...etc
+	log.Println("INVOICES: ", p.Invoices)
 	p.get_recurring_bills()
 	p.get_transactions()
 	return p
 }
 
+func (p *Profile) bs_profile() *beanstream.Profile {
+	if p.bs_id == "" {
+		return nil
+	}
+	if p.bs_profile != nil {
+		return p.bs_profile
+	}
+	bs, err := p.profile_api.GetProfile(p.bs_id)
+	if err != nil {
+		log.Println(err)
+		p.set_error(No_profile)
+		return nil
+	}
+	p.bs_profile = bs
+	return bs
+}
+
 func (p *Profile) Get_card() *beanstream.CreditCard {
-	if p.bs_profile == nil || p.bs_profile.Card.Number == "" {
+	if p.bs_profile() == nil || p.bs_profile.Card.Number == "" {
 		return nil
 	}
 	return &p.bs_profile.Card
@@ -68,7 +92,8 @@ func (p *Profile) Delete_card() {
 	if p.Get_card() == nil {
 		return
 	}
-	if _, err := p.bs_profile.DeleteCard(p.billing.profile_api, 1); err != nil {
+	if _, err := p.bs_profile.DeleteCard(p.profile_api, 1);
+		err != nil {
 		log.Println(err)
 	}
 	p.set_error(No_card)
@@ -78,17 +103,16 @@ func (p *Profile) Delete_card() {
 func (p *Profile) Update_card(token, cardholder string) {
 	if p.Get_card() != nil {
 		p.Delete_card()
-	}
-	if p.bs_profile == nil {
+	} else if p.bs_profile() == nil {
 		p.new_bs_profile(token, cardholder)
 		return
 	}
-	if _, err := p.billing.profile_api.AddTokenizedCard(p.bs_profile.Id,
+	if _, err := p.profile_api.AddTokenizedCard(p.bs_profile.Id,
 		cardholder, token); err != nil {
 		log.Println(err)
 		return
 	}
-	card, err := p.bs_profile.GetCard(p.billing.profile_api, 1)
+	card, err := p.bs_profile.GetCard(p.profile_api, 1)
 	if err != nil {
 		log.Println(err)
 		return
@@ -102,15 +126,19 @@ func (p *Profile) new_bs_profile(token, cardholder string) {
 	p.bs_profile.Token = beanstream.Token{
 		Token: token,
 		Name:  cardholder}
-	p.bs_profile.Custom = beanstream.CustomFields{Ref1: p.Username}
-	rsp, err := p.billing.profile_api.CreateProfile(*p.bs_profile)
+	p.bs_profile.Custom = beanstream.CustomFields{Ref1: p.member_id}
+	rsp, err := p.profile_api.CreateProfile(*p.bs_profile)
 	if err != nil {
 		log.Println("Failed to create profile: ", err)
 		return
 	}
+	p.bs_id = rsp.Id
 	p.bs_profile.Id = rsp.Id
-	if _, err = p.billing.db.Exec("INSERT INTO payment_profile VALUES ($1, $2)",
-		p.Username, rsp.Id); err != nil {
+	if _, err = p.db.Exec(
+		"UPDATE payment_profile "+
+		"SET id = $2 "+
+		"WHERE member = $1",
+		p.member_id, rsp.Id); err != nil {
 		log.Panic(err)
 	}
 	p.clear_error()
@@ -118,27 +146,41 @@ func (p *Profile) new_bs_profile(token, cardholder string) {
 
 func (p *Profile) set_error(err Error) {
 	p.Error = err
-	if _, e := p.billing.db.Exec("UPDATE payment_profile "+
-		"SET error = $1", err); e != nil {
+	if _, e := p.db.Exec("UPDATE payment_profile "+
+		"SET error = $1 "+
+		"WHERE member = $2", err, p.Id);
+		e != nil {
 		log.Panic(e)
 	}
 }
 
 func (p *Profile) clear_error() {
 	p.Error = None
-	if _, err := p.billing.db.Exec("UPDATE payment_profile " +
-		"SET error = NULL"); err != nil {
+	if _, err := p.db.Exec("UPDATE payment_profile " +
+		"SET error = NULL"+
+		"WHERE member = $1", p.Id);
+		err != nil {
 		log.Panic(err)
 	}
 }
 
+// Retrieves all member profiles with active invoices
 func (b *Billing) get_all_profiles() []*Profile {
 	profiles := make([]*Profile, 0)
-	members := b.Get_all_members()
-	for _, m := range members {
-		if p := b.Get_profile(m); p != nil {
-			profiles = append(profiles, p)
+	rows, err := b.db.Query("SELECT member FROM payment_profile")
+	defer rows.Close()
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return profiles
 		}
+		log.Panic(err)
+	}
+	for rows.Next() {
+		var member_id int
+		if err := rows.Scan(&member_id); err != nil {
+			log.Panic(err)
+		}
+		profiles := append(profiles, b.Get_profile(member_id))
 	}
 	return profiles
 }
