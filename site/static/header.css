@@ -29,11 +29,14 @@ html:not(.anon) .anon {
     transition: all 0.2s ease-in-out;
     color: rgba(0,0,0,0.5);
     text-decoration: none;
+    font-weight: bold;
     outline: none;
 }
 #ms-top-menu a:focus,
 #ms-top-menu a:active,
-#ms-top-menu a.active {
+#ms-top-menu a.active,
+#ms-top-menu #sign-in:focus .glyphicon,
+#ms-top-menu #sign-in:active .glyphicon {
     color: rgba(0,0,0,0.7);
     background-color: rgba(2,117,216,0.5);
 }
@@ -48,12 +51,30 @@ html:not(.anon) .anon {
 }
 #ms-top-menu a .glyphicons + span {
     display: none;
-    margin-left: 0.5rem;
-    font-weight: bold;
-    vertical-align: middle;
+    margin-left: 0.75rem;
 }
 #ms-top-menu a:hover .glyphicons + span,
 #ms-top-menu a:focus .glyphicons + span,
 #ms-top-menu a:active .glyphicons + span {
     display: inline;
+}
+
+#ms-top-menu #sign-in {
+    min-width: auto;
+    background: transparent;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+#ms-top-menu #sign-in .glyphicons {
+    border-radius: 0.75rem 0;
+    padding: 0.1rem 0.7rem 0.1rem 0.4rem;
+    margin-left: 0.25rem;
+    transition: inherit;
+}
+#ms-top-menu #sign-in:focus .glyphicons,
+#ms-top-menu #sign-in:active .glyphicons {
+    background-color: rgba(2,117,216,0.5);
+}
+#ms-top-menu #sign-in:hover .glyphicons {
+    background-color: rgba(2,117,216,1.0);
 }

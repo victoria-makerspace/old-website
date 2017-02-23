@@ -10,12 +10,10 @@ func (h *Http_server) billing_handler() {
 	h.mux.HandleFunc("/member/billing", func(w http.ResponseWriter,
 		r *http.Request) {
 		p := h.new_page("billing", "Billing", w, r)
-		p.authenticate()
-		if p.Session == nil {
-			p.http_error(403)
+		if !p.must_authenticate() {
 			return
 		}
-		pay_profile := p.billing.Get_profile(p.Member())
+		pay_profile := p.Get_profile(p.Member())
 		write_template := func(p *page) {
 			if p.Member().Student {
 				student := p.Member().Get_student()

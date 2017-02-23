@@ -4,7 +4,8 @@ CREATE SCHEMA makerspace;
 ALTER DATABASE makerspace SET search_path TO makerspace, pg_catalog;
 
 CREATE TABLE member (
-	username text PRIMARY KEY,
+	id serial PRIMARY KEY,
+	username text NOT NULL UNIQUE,
 	name text NOT NULL,
 	password_key character(64),
 	password_salt character(64) UNIQUE,
@@ -18,29 +19,27 @@ CREATE TYPE admin_privilege AS ENUM (
 	'revoke-member',
 	'do-transactions');
 CREATE TABLE administrator (
-	username text PRIMARY KEY REFERENCES member,
+	member integer PRIMARY KEY REFERENCES member,
 	privileges admin_privilege[]
 );
 CREATE TABLE student (
-	username text PRIMARY KEY REFERENCES member,
+	member integer PRIMARY KEY REFERENCES member,
 	institution text,
 	student_email text,
 	graduation_date date
 );
 CREATE TABLE session_http (
 	token character(64) PRIMARY KEY,
-	username text NOT NULL REFERENCES member,
+	member integer NOT NULL REFERENCES member,
 	sign_in_time timestamp(0) NOT NULL DEFAULT now(),
 	last_seen timestamp(0) NOT NULL DEFAULT now(),
 	expires timestamp(0)
 );
-CREATE TYPE payment_profile_error AS ENUM (
-	'no card');
 CREATE TABLE payment_profile (
-	username text PRIMARY KEY REFERENCES member,
+	member integer PRIMARY KEY REFERENCES member,
 	id text UNIQUE NOT NULL,
-	-- NULL value implies profile is valid
-	invalid_error payment_profile_error
+	-- NULL or 0 value implies profile is valid
+	error integer
 );
 CREATE TYPE fee_category AS ENUM (
 	'membership',
@@ -78,10 +77,10 @@ membership	corporate	Membership (corporate)	\N
 -- /end fee values
 CREATE TABLE invoice (
 	id serial PRIMARY KEY,
-	username text NOT NULL REFERENCES member,
+	member integer NOT NULL REFERENCES member,
 	date date NOT NULL DEFAULT now(),
 	-- Defaults to username when NULL
-	paid_by text REFERENCES member,
+	paid_by integer REFERENCES member,
 	end_date date,
 	-- description, amount default to fee values when NULL
 	description text,
@@ -104,7 +103,7 @@ CREATE TABLE txn_scheduler_log (
 CREATE TABLE transaction (
 	-- Beanstream value
 	id integer PRIMARY KEY,
-	profile text NOT NULL REFERENCES payment_profile,
+	profile integer NOT NULL REFERENCES payment_profile,
 	approved boolean NOT NULL,
 	time timestamp(0) NOT NULL DEFAULT now(),
 	amount real NOT NULL,
@@ -134,7 +133,7 @@ CREATE TABLE storage (
 CREATE TABLE storage_waitlist (
 	time timestamp(0) NOT NULL DEFAULT now(),
 	identifier integer NOT NULL REFERENCES fee,
-	username text NOT NULL REFERENCES member,
+	member integer NOT NULL REFERENCES member,
 	-- NULL signifies waiting for any number
 	number integer,
 	PRIMARY KEY (time, identifier)

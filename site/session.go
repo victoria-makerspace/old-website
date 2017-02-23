@@ -2,7 +2,6 @@ package site
 
 import (
 	"database/sql"
-	"encoding/json"
 	"github.com/lib/pq"
 	"github.com/vvanpo/makerspace/member"
 	"log"
@@ -58,7 +57,6 @@ func (p *page) new_session(m *member.Member, expires bool) {
 	}
 	p.set_session_cookie(token, expires)
 	p.Session = &session{Member: m, token: token}
-	p.talk_user_data()
 }
 
 // authenticate validates the session cookie, setting p.Session if valid
@@ -79,13 +77,12 @@ func (p *page) authenticate() {
 		}
 		log.Panic(err)
 	}
-	p.Session = &session{Member: member.Get(username, p.db),
+	p.Session = &session{Member: p.Get_member(username),
 		token: member.Rand256()}
 	p.set_session_cookie(p.Session.token, expires.Valid)
 	if _, err := p.db.Exec("UPDATE session_http SET token = $1, last_seen = now(), expires = now() + interval '1 year' WHERE token = $2", p.Session.token, cookie.Value); err != nil {
 		log.Panic(err)
 	}
-	p.talk_user_data()
 }
 
 // destroy_session invalidates the current session.
@@ -100,7 +97,7 @@ func (p *page) destroy_session() {
 }
 
 var avatar_size_rexp = regexp.MustCompile("{size}")
-
+/*
 //TODO: refactor this mess
 // talk_user_data fetches user info from the talk server
 func (p *page) talk_user_data() {
@@ -188,4 +185,4 @@ func (p *page) talk_user_data() {
 		}
 	}
 	p.Field["notifications"] = ntfns[:len]
-}
+}*/

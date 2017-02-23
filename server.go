@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"github.com/vvanpo/makerspace/billing"
+	"github.com/vvanpo/makerspace/member"
 	"github.com/vvanpo/makerspace/site"
+	"github.com/vvanpo/makerspace/talk"
 	"io/ioutil"
 	"log"
 	"os"
@@ -41,12 +43,16 @@ func init() {
 func main() {
 	db := Database(config.Database)
 	bs := config.Beanstream
-	b := billing.Billing_new(bs["merchant-id"], bs["payments-api-key"], bs["profiles-api-key"], bs["reports-api-key"], db)
+	talk := talk.New_talk_api(config.Discourse["url"], "system",
+		config.Discourse["api-key"], config.Discourse["sso-secret"])
+	members := member.New_members(db, talk)
+	b := billing.Billing_new(bs["merchant-id"], bs["payments-api-key"],
+		bs["profiles-api-key"], bs["reports-api-key"], members, db)
 	site.Serve(site.Config{
 		config.Domain,
 		config.Port,
 		config.Dir + "/site/templates/",
 		config.Dir + "/site/static/",
-		config.Dir + "/database/data/",
-		config.Discourse}, db, b)
+		config.Dir + "/database/data/"},
+		talk, members, db, b)
 }
