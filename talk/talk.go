@@ -68,13 +68,17 @@ type Talk_user struct {
 func (api *Talk_api) Get_user(id int) *Talk_user {
 	t := &Talk_user{external_id: id, Talk_api: api}
 	j := t.get_json("/users/by-external/" + fmt.Sprint(id) + ".json", t.admin)
-	log.Println(j)
-	if j, ok := j.(map[string]map[string]interface{}); ok {
-		t.avatar_url = j["user"]["avatar_template"].([]byte)
-		t.Card_bg_url = j["user"]["card_background_url"].(string)
-		t.Profile_bg_url = j["user"]["profile_background"].(string)
+	if j, ok := j.(map[string]interface{}); ok {
+		if u, ok := j["user"].(map[string]interface{}); ok {
+			t.id = int(u["id"].(float64))
+			t.Username = u["username"].(string)
+			t.avatar_url = []byte(u["avatar_template"].(string))
+			t.Card_bg_url = u["card_background"].(string)
+			t.Profile_bg_url = u["profile_background"].(string)
+			return t
+		}
 	}
-	return t
+	return nil
 }
 
 var avatar_size_rexp = regexp.MustCompile("{size}")
