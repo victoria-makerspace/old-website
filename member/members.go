@@ -14,7 +14,7 @@ import (
 type Members struct {
 	*sql.DB
 	*talk.Talk_api
-	*Billing
+	*billing.Billing
 }
 
 func Rand256() string {
@@ -73,7 +73,7 @@ func (ms *Members) New_member(username, name, email, password string) *Member {
 		password_key:  key(password, salt),
 		password_salt: salt,
 		Members:       ms}
-	if err := m.db.QueryRow(
+	if err := m.QueryRow(
 		"INSERT INTO member ("+
 		"	username,"+
 		"	name,"+
@@ -92,7 +92,7 @@ func (ms *Members) New_member(username, name, email, password string) *Member {
 
 func (ms *Members) Get_all_members() []*Member {
 	members := make([]*Member, 0)
-	rows, err := ms.db.Query(
+	rows, err := ms.Query(
 		"SELECT "+
 		"	m.id, "+
 		"	m.username, "+
@@ -129,6 +129,7 @@ func (ms *Members) Get_all_members() []*Member {
 	return members
 }
 
+/*
 func (ms *Members) Get_all_active_members() []*Member {
 	members := make([]*Member, 0)
 	//TODO: BUG: should by on f.category = 'membership'
@@ -147,4 +148,4 @@ func (ms *Members) Get_all_active_members() []*Member {
 		}
 	}
 	return members
-}
+}*/

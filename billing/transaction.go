@@ -27,11 +27,15 @@ type Transaction struct {
 
 func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoice) *Transaction {
 	if amount < minimum_txn_amount {
-		log.Printf("Transaction for %s below minimum amount (%f < %f)",
-			p.Username, amount, minimum_txn_amount)
+		log.Printf("Transaction for member %d below minimum amount (%f < %f)",
+			p.member_id, amount, minimum_txn_amount)
 		return nil
 	}
-	order_id := fmt.Sprintf("%d-%s", rand.Intn(1000000), p.Username)
+	if p.Error == No_profile {
+		//TODO: missed payment
+		return nil
+	}
+	order_id := fmt.Sprintf("%d-%d", rand.Intn(1000000), p.member_id)
 	txn := &Transaction{
 		Profile:  p,
 		Time:     time.Now(),
@@ -45,7 +49,7 @@ func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoic
 		Amount:        float32(amount),
 		Profile:       beanstream.ProfilePayment{p.bs_profile.Id, 1, true},
 		Comment:       comment}
-	rsp, err := p.billing.payment_api.MakePayment(req)
+	rsp, err := p.payment_api.MakePayment(req)
 	if err != nil {
 		//TODO: log missed payment
 		log.Println(err)
@@ -57,7 +61,7 @@ func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoic
 		if p.Error != None {
 			p.set_error(Invalid_card)
 		}
-		log.Println("Payment of %.2f by %s failed", amount, p.Username)
+		log.Println("Payment of %.2f by member %d failed", amount, p.member_id)
 	} else {
 		p.clear_error()
 	}
@@ -68,11 +72,11 @@ func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoic
 	if !txn.Approved {
 		approved = "failed (" + fmt.Sprint(rsp.Message) + ")"
 	}
-	log.Printf("Transaction %d for %s %s", txn.Id, p.Username, approved)
-	if _, err := p.billing.db.Exec("INSERT INTO transaction "+
+	log.Printf("Transaction %d for member %d %s", txn.Id, p.member_id, approved)
+	if _, err := p.db.Exec("INSERT INTO transaction "+
 		"(id, profile, approved, time, amount, order_id, comment, card, "+
 		"invoice) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-		txn.Id, p.Username, txn.Approved, txn.Time, txn.Amount,
+		txn.Id, p.member_id, txn.Approved, txn.Time, txn.Amount,
 		txn.order_id, txn.Comment, txn.Card, txn.Invoice.Id); err != nil {
 		log.Panic(err)
 	}
@@ -84,7 +88,7 @@ func (p *Profile) do_recurring_txn(i *Invoice) *Transaction {
 }
 
 func (t *Transaction) log_recurring_txn(log_id int) {
-	if _, err := t.Profile.billing.db.Exec(
+	if _, err := t.db.Exec(
 		"UPDATE transaction "+
 		"SET logged = $1 "+
 		"WHERE id = $2",
@@ -132,9 +136,9 @@ func (t *Transaction) log_recurring_txn(log_id int) {
 }*/
 
 func (p *Profile) get_transactions() {
-	rows, err := p.billing.db.Query("SELECT id, approved, time, amount, "+
+	rows, err := p.db.Query("SELECT id, approved, time, amount, "+
 		"order_id, comment, card, ip_address, invoice FROM transaction WHERE "+
-		"profile = $1 ORDER BY time DESC", p.Username)
+		"profile = $1 ORDER BY time DESC", p.member_id)
 	defer rows.Close()
 	if err != nil {
 		if err == sql.ErrNoRows {

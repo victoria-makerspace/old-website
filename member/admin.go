@@ -11,9 +11,9 @@ type Admin struct {
 
 func (m *Member) get_admin() {
 	admin := &Admin{}
-	if err := m.db.QueryRow(
+	if err := m.QueryRow(
 		"SELECT privileges "+
-		"FROM student "+
+		"FROM administrator "+
 		"WHERE member = $1", m.Id).
 		Scan(&admin.privileges); err != nil {
 		if err != sql.ErrNoRows {

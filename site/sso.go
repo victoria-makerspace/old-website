@@ -28,7 +28,8 @@ func (h *Http_server) sso_handler() {
 		if p.Session == nil {
 			r.ParseForm()
 			if _, ok := p.PostForm["sign-in"]; ok {
-				if m := h.Get_member(p.PostFormValue("username")); m != nil {
+				if m := h.Get_member_by_username(p.PostFormValue("username"));
+					m != nil {
 					if !m.Authenticate(p.PostFormValue("password")) {
 						response = "incorrect password"
 					} else {
@@ -51,7 +52,8 @@ func (h *Http_server) sso_handler() {
 		p.authenticate()
 		p.ParseForm()
 		if _, ok := p.PostForm["sign-in"]; ok {
-			if m := h.Get_member(p.PostFormValue("username")); m != nil {
+			if m := h.Get_member_by_username(p.PostFormValue("username"));
+				m != nil {
 				if !m.Authenticate(p.PostFormValue("password")) {
 					//TODO: incorrect password, embed error
 				} else {
@@ -73,7 +75,8 @@ func (h *Http_server) sso_handler() {
 		}
 		if p.Session == nil {
 			if _, ok := p.PostForm["sign-in"]; ok {
-				if m := h.Get_member(p.PostFormValue("username")); m != nil {
+				if m := h.Get_member_by_username(p.PostFormValue("username"));
+					m != nil {
 					if !m.Authenticate(p.PostFormValue("password")) {
 						p.write_template()
 						return

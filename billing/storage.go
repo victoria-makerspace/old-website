@@ -39,7 +39,7 @@ func (b *Billing) get_storage() {
 			invoice = b.get_bill(int(invoice_id.Int64))
 		}
 		//TODO: change Storage type to use *Fee instead of key
-		if f := b.get_fee(fee_id); f != nil {
+		if f, ok := b.Fees[fee_id]; ok {
 			key := f.Category + "_" + f.Identifier
 			if _, ok := b.Storage[key]; !ok {
 				b.Storage[key] = make([]st, 0)

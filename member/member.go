@@ -23,7 +23,7 @@ type Member struct {
 	talk            *talk.Talk_user
 	membership		*billing.Invoice
 	*Members
-	*billing.Profile
+	payment         *billing.Profile
 }
 
 //TODO: support null password keys, and use e-mail verification for login
@@ -31,7 +31,7 @@ type Member struct {
 func (ms *Members) Get_member_by_username(username string) *Member {
 	m := &Member{Username: username, Members: ms}
 	var password_key, password_salt sql.NullString
-	if err := m.db.QueryRow(
+	if err := m.QueryRow(
 		"SELECT"+
 		"	id, "+
 		"	name, "+
@@ -43,7 +43,7 @@ func (ms *Members) Get_member_by_username(username string) *Member {
 		"	gratuitous "+
 		"FROM member "+
 		"WHERE username = $1",
-		username).Scan(&m.Id, &m.Name, password_key, password_salt, &m.Email,
+		username).Scan(&m.Id, &m.Name, &password_key, &password_salt, &m.Email,
 		&m.Agreed_to_terms, &m.Registered, &m.gratuitous);
 		err != nil {
 		if err == sql.ErrNoRows {
@@ -62,7 +62,7 @@ func (ms *Members) Get_member_by_username(username string) *Member {
 func (ms *Members) Get_member_by_id(id int) *Member {
 	m := &Member{Id: id, Members: ms}
 	var password_key, password_salt sql.NullString
-	if err := m.db.QueryRow(
+	if err := m.QueryRow(
 		"SELECT"+
 		"	username, "+
 		"	name, "+
@@ -74,7 +74,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 		"	gratuitous "+
 		"FROM member "+
 		"WHERE id = $1",
-		id).Scan(&m.Username, &m.Name, password_key, password_salt, &m.Email,
+		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &m.Email,
 		&m.Agreed_to_terms, &m.Registered, &m.gratuitous);
 		err != nil {
 		if err == sql.ErrNoRows {
@@ -108,7 +108,7 @@ func (m *Member) Active() bool {
 func (m *Member) Change_password(password string) {
 	m.password_salt = Rand256()
 	m.password_key = key(password, m.password_salt)
-	if _, err := m.db.Exec("UPDATE member (password_key, password_salt) SET "+
+	if _, err := m.Exec("UPDATE member (password_key, password_salt) SET "+
 		"password_key = $1, password_salt = $2 WHERE id = $3",
 		m.password_key, m.password_salt, m.Id); err != nil {
 		log.Panic(err)
@@ -119,18 +119,32 @@ func (m *Member) Change_password(password string) {
 
 func (m *Member) Talk_user() *talk.Talk_user {
 	if m.talk == nil {
-		m.talk = m.talk_api.Get_user(m.Id)
+		m.talk = m.Talk_api.Get_user(m.Id)
 	}
 	return m.talk
 }
 
+func (m *Member) Payment() *billing.Profile {
+	if m.payment == nil {
+		m.payment = m.Get_profile(m.Id)
+	}
+	return m.payment
+}
+
 func (m *Member) get_membership() {
-	m.Profile = m.Get_profile(m.Id)
-	if m.Profile == nil {
+	if m.Payment() == nil {
 		return
 	}
-	m.membership = m.Profile.Get_membership()
+	m.membership = m.payment.Get_membership()
 }
 
 func (m *Member) New_membership() {
+	if m.Payment() == nil {
+		m.payment = m.New_profile(m.Id)
+	}
+	if m.Student != nil {
+		m.membership = m.payment.New_membership(true)
+		return
+	}
+	m.membership = m.payment.New_membership(false)
 }

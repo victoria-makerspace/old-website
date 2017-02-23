@@ -36,7 +36,7 @@ func (p *page) unset_session_cookie() {
 	p.ResponseWriter.Header().Set("Set-Cookie", cookie.String())
 }
 
-type session struct {
+type Session struct {
 	*member.Member
 	token string
 }
@@ -44,7 +44,7 @@ type session struct {
 // new_session
 func (p *page) new_session(m *member.Member, expires bool) {
 	token := member.Rand256()
-	query := "INSERT INTO session_http (token, username, expires) VALUES ($1, $2, "
+	query := "INSERT INTO session_http (token, member, expires) VALUES ($1, $2, "
 	// TODO: purge null expiries from database occasionally, since browsers don't
 	//	open forever..
 	if expires {
@@ -52,11 +52,11 @@ func (p *page) new_session(m *member.Member, expires bool) {
 	} else {
 		query += "now() + interval '1 year')"
 	}
-	if _, err := p.db.Exec(query, token, m.Username); err != nil {
+	if _, err := p.db.Exec(query, token, m.Id); err != nil {
 		log.Panic(err)
 	}
 	p.set_session_cookie(token, expires)
-	p.Session = &session{Member: m, token: token}
+	p.Session = &Session{Member: m, token: token}
 }
 
 // authenticate validates the session cookie, setting p.Session if valid
@@ -66,10 +66,10 @@ func (p *page) authenticate() {
 	if err != nil || p.Session != nil {
 		return
 	}
-	var username string
+	var member_id int
 	var expires pq.NullTime
 	// Select non-expired sessions
-	if err := p.db.QueryRow("SELECT username, expires FROM session_http WHERE token = $1 AND (expires > now() OR expires IS NULL)", cookie.Value).Scan(&username, &expires); err != nil {
+	if err := p.db.QueryRow("SELECT member, expires FROM session_http WHERE token = $1 AND (expires > now() OR expires IS NULL)", cookie.Value).Scan(&member_id, &expires); err != nil {
 		if err == sql.ErrNoRows {
 			// Invalid session cookie
 			p.unset_session_cookie()
@@ -77,7 +77,7 @@ func (p *page) authenticate() {
 		}
 		log.Panic(err)
 	}
-	p.Session = &session{Member: p.Get_member(username),
+	p.Session = &Session{Member: p.Get_member_by_id(member_id),
 		token: member.Rand256()}
 	p.set_session_cookie(p.Session.token, expires.Valid)
 	if _, err := p.db.Exec("UPDATE session_http SET token = $1, last_seen = now(), expires = now() + interval '1 year' WHERE token = $2", p.Session.token, cookie.Value); err != nil {

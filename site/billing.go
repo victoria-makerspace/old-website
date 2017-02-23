@@ -7,26 +7,18 @@ import (
 )
 
 func (h *Http_server) billing_handler() {
-	h.mux.HandleFunc("/member/billing", func(w http.ResponseWriter,
-		r *http.Request) {
+	h.mux.HandleFunc("/member/billing", func(w http.ResponseWriter, r *http.Request) {
 		p := h.new_page("billing", "Billing", w, r)
 		if !p.must_authenticate() {
 			return
 		}
-		pay_profile := p.Get_profile(p.Member())
+		pay_profile := p.Payment()
 		write_template := func(p *page) {
-			if p.Member().Student {
-				student := p.Member().Get_student()
-				p.Field["student_institution"] = student.Institution
-				p.Field["student_email"] = student.Email
-				p.Field["student_graduation_date"] = student.Graduation_date.Format("2006-01")
-			}
 			if pay_profile != nil {
 				if card := pay_profile.Get_card(); card != nil {
 					p.Field["card_number"] = card.Number
 					p.Field["card_expiry"] = card.ExpiryMonth + "/20" + card.ExpiryYear
 				}
-				p.Field["pay_profile"] = pay_profile
 			}
 			p.write_template()
 		}
@@ -49,13 +41,13 @@ func (h *Http_server) billing_handler() {
 				p.PostFormValue("graduation") != "" {
 				graduation, err := time.Parse("2006-01", p.PostFormValue("graduation"))
 				if err == nil && graduation.After(time.Now().AddDate(0, 1, 0)) {
-					pay_profile.Update_student(p.PostFormValue("institution"),
+					p.Update_student(p.PostFormValue("institution"),
 						p.PostFormValue("student_email"), graduation)
 				} else {
 					//TODO: embed error in page
 				}
 			} else {
-				pay_profile.Delete_student()
+				p.Delete_student()
 			}
 		}
 		if _, ok := p.PostForm["update"]; ok {
@@ -64,11 +56,11 @@ func (h *Http_server) billing_handler() {
 			return
 		} else if _, ok := p.PostForm["register"]; ok {
 			update_student()
-			if p.Member().Active {
+			if p.Member().Active() {
 				p.http_error(422)
 				return
 			}
-			pay_profile.New_membership()
+			p.New_membership()
 			http.Redirect(w, r, "/member/billing", 303)
 			return
 		} else if _, ok := p.PostForm["terminate"]; ok {

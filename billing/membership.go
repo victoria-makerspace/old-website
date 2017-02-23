@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (p *Profile) New_membership(is_student bool) {
+func (p *Profile) New_membership(is_student bool) *Invoice {
 	var fee *Fee
 	if is_student {
 		fee = p.find_fee("membership", "student")
@@ -21,6 +21,7 @@ func (p *Profile) New_membership(is_student bool) {
 			//TODO: missed payment, embed error
 		}
 	}
+	return inv
 }
 
 func (p *Profile) Get_membership() *Invoice {
@@ -51,7 +52,7 @@ func (p *Profile) Change_to_student(grad_date time.Time) {
 func (p *Profile) Change_from_student() {
 	invoice := p.Get_membership()
 	p.Cancel_recurring_bill(invoice)
-	p.New_recurring_bill(p.find_fee["membership", "regular"], p.member_id)
+	p.New_recurring_bill(p.find_fee("membership", "regular"), p.member_id)
 }
 
 //TODO: Cancel storage and other makerspace-related invoices

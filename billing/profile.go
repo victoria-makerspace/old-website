@@ -2,6 +2,7 @@ package billing
 
 import (
 	"database/sql"
+	"fmt"
 	beanstream "github.com/Beanstream/beanstream-go"
 	"log"
 )
@@ -28,7 +29,7 @@ type Profile struct {
 }
 
 func (b *Billing) New_profile(member_id int) *Profile {
-	if _, err = p.db.Exec(
+	if _, err := b.db.Exec(
 		"INSERT INTO payment_profile (member_id)"+
 		"VALUES ($1)",
 		member_id); err != nil {
@@ -64,7 +65,7 @@ func (b *Billing) Get_profile(member_id int) *Profile {
 	return p
 }
 
-func (p *Profile) bs_profile() *beanstream.Profile {
+func (p *Profile) get_bs_profile() *beanstream.Profile {
 	if p.bs_id == "" {
 		return nil
 	}
@@ -82,7 +83,7 @@ func (p *Profile) bs_profile() *beanstream.Profile {
 }
 
 func (p *Profile) Get_card() *beanstream.CreditCard {
-	if p.bs_profile() == nil || p.bs_profile.Card.Number == "" {
+	if p.get_bs_profile() == nil || p.bs_profile.Card.Number == "" {
 		return nil
 	}
 	return &p.bs_profile.Card
@@ -103,7 +104,7 @@ func (p *Profile) Delete_card() {
 func (p *Profile) Update_card(token, cardholder string) {
 	if p.Get_card() != nil {
 		p.Delete_card()
-	} else if p.bs_profile() == nil {
+	} else if p.get_bs_profile() == nil {
 		p.new_bs_profile(token, cardholder)
 		return
 	}
@@ -126,7 +127,7 @@ func (p *Profile) new_bs_profile(token, cardholder string) {
 	p.bs_profile.Token = beanstream.Token{
 		Token: token,
 		Name:  cardholder}
-	p.bs_profile.Custom = beanstream.CustomFields{Ref1: p.member_id}
+	p.bs_profile.Custom = beanstream.CustomFields{Ref1: fmt.Sprint(p.member_id)}
 	rsp, err := p.profile_api.CreateProfile(*p.bs_profile)
 	if err != nil {
 		log.Println("Failed to create profile: ", err)
@@ -148,7 +149,7 @@ func (p *Profile) set_error(err Error) {
 	p.Error = err
 	if _, e := p.db.Exec("UPDATE payment_profile "+
 		"SET error = $1 "+
-		"WHERE member = $2", err, p.Id);
+		"WHERE member = $2", err, p.member_id);
 		e != nil {
 		log.Panic(e)
 	}
@@ -158,7 +159,7 @@ func (p *Profile) clear_error() {
 	p.Error = None
 	if _, err := p.db.Exec("UPDATE payment_profile " +
 		"SET error = NULL"+
-		"WHERE member = $1", p.Id);
+		"WHERE member = $1", p.member_id);
 		err != nil {
 		log.Panic(err)
 	}
@@ -180,7 +181,7 @@ func (b *Billing) get_all_profiles() []*Profile {
 		if err := rows.Scan(&member_id); err != nil {
 			log.Panic(err)
 		}
-		profiles := append(profiles, b.Get_profile(member_id))
+		profiles = append(profiles, b.Get_profile(member_id))
 	}
 	return profiles
 }

@@ -46,8 +46,8 @@ func main() {
 	talk := talk.New_talk_api(config.Discourse["url"], "system",
 		config.Discourse["api-key"], config.Discourse["sso-secret"])
 	b := billing.Billing_new(bs["merchant-id"], bs["payments-api-key"],
-		bs["profiles-api-key"], bs["reports-api-key"], members, db)
-	members := member.Members{db, talk, b}
+		bs["profiles-api-key"], bs["reports-api-key"], db)
+	members := &member.Members{db, talk, b}
 	site.Serve(site.Config{
 		config.Domain,
 		config.Port,

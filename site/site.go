@@ -3,7 +3,6 @@ package site
 import (
 	"database/sql"
 	"fmt"
-	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/member"
 	"github.com/vvanpo/makerspace/talk"
 	"html/template"
@@ -47,18 +46,16 @@ type Http_server struct {
 	db      *sql.DB
 	*talk.Talk_api
 	*member.Members
-	*billing.Billing
 	tmpl    *template.Template
 }
 
-func Serve(config Config, talk *talk.Talk_api, members *member.Members, db *sql.DB, b *billing.Billing) *Http_server {
+func Serve(config Config, talk *talk.Talk_api, members *member.Members, db *sql.DB) *Http_server {
 	s := &Http_server{
 		config: config,
 		mux: http.NewServeMux(),
 		db: db,
 		Talk_api: talk,
-		Members: members,
-		Billing: b}
+		Members: members}
 	s.srv.Addr = config.Domain + ":" + fmt.Sprint(config.Port)
 	s.srv.Handler = s.mux
 	s.parse_templates()
@@ -70,7 +67,7 @@ func Serve(config Config, talk *talk.Talk_api, members *member.Members, db *sql.
 type page struct {
 	Name     string
 	Title    string
-	Session  *session
+	*Session
 	Field    map[string]interface{} // Data to be passed to templates
 	http.ResponseWriter
 	*http.Request
