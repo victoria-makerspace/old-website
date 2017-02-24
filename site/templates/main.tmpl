@@ -1,6 +1,4 @@
 {{$talk_url := .Url -}}
-{{$talk_user := false}}
-{{if .Member}}{{$talk_user := .Member.Talk_user}}{{end}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +20,7 @@
     <div class="container">
       <a id="general-toggler" class="navbar-toggler navbar-toggler-right nav-link glyphicons glyphicons-menu-hamburger" role="button" data-toggle="collapse" data-parent="#navbar-member" data-target="#general-menu" aria-expanded="false"></a>
       <a id="member-icon" class="navbar-toggler navbar-toggler-right nav-link" role="button" data-toggle="collapse" data-parent="#navbar-member" data-target="#member-menu" aria-expanded="false">
-        {{with $talk_user}}
+        {{with .Member.Talk_user}}
         <img src="{{.Avatar_url 120}}">
         {{else}}
         <div class="glyphicons glyphicons-user"></div>
@@ -65,9 +63,9 @@
               <a class="nav-link glyphicons glyphicons-user" href="{{$talk_url}}/users/{{.Member.Username}}/summary" title="Profile"></a>
               <a class="nav-link ml-auto glyphicons glyphicons-cogwheel" href="/member/preferences" title="Preferences"></a>
             </li>
-            {{with .Field.notifications}}
+            {{with .Member.Talk_user}}
             <div id="notifications">
-              {{range .}}
+              {{/*range .Notifications}}
               <a class="{{if not .Read}}unread{{end}}" href="{{$talk_url}}
                 {{- if .Topic_id}}/t/{{.Slug}}/{{.Topic_id}}/{{.Post_number}}
                 {{- else if eq .Notification_type 12}}/badges/{{.Data.badge_id}}/{{.Data.badge_slug}}?username={{.Data.username}}
@@ -82,7 +80,7 @@
                 {{.Data.inbox_count}} messages in your {{.Data.group_name}} inbox
                 {{end}}
               </a>
-              {{end}}
+              {{end*/}}
             </div>
             {{end}}
             <li class="nav-item" id="sign-out">

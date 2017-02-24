@@ -74,6 +74,7 @@ func (h *Http_server) sso_handler() {
 			p.Field["sso_query"] = r.URL.RawQuery
 		}
 		if p.Session == nil {
+			//TODO: embed return_sso_url
 			if _, ok := p.PostForm["sign-in"]; ok {
 				if m := h.Get_member_by_username(p.PostFormValue("username"));
 					m != nil {
@@ -109,14 +110,15 @@ func (h *Http_server) sso_handler() {
 			return
 		}
 		return_url := "/"
-		if u := p.FormValue("return-url"); u != "" {
-			return_url = u
+		if u := p.FormValue("return_path"); u != "" {
+			return_path = u
 		}
 		//TODO: find a secure way to to sign out that works with discourse
 		p.destroy_session()
-		//TODO: log out from talk
-		// p.talk_api.logout()
-		http.Redirect(w, r, return_url, 303)
+		if t := p.Talk_user(); t != nil {
+			t.Logout()
+		}
+		http.Redirect(w, r, return_path, 303)
 	})
 }
 

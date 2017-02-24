@@ -51,6 +51,7 @@ func (api *Talk_api) post(path string) {
 		log.Println(err)
 		return
 	}
+	log.Println(rsp)
 	rsp.Body.Close()
 }
 
@@ -94,6 +95,7 @@ func (t *Talk_user) Logout() {
 func (t *Talk_user) Sync() {
 }
 
+/*
 func (t *Talk_user) Notifications() []interface{} {
 	if t.notifications != nil {
 		return t.notifications
@@ -101,7 +103,9 @@ func (t *Talk_user) Notifications() []interface{} {
 	j := t.get_json("/notifications.json", t.Username)
 	//TODO: check errors and parse further
 	if n, ok := j.(map[string]interface{}); ok {
-		return n["notifications"].([]interface{})
+		if n, ok := n["notifications"].([]interface{}); ok {
+			return n
+		}
 	}
 	return nil
-}
+}*/
