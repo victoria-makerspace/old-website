@@ -10,13 +10,15 @@ var handlers = make(map[string]func(*page))
 
 func (h *Http_server) set_handlers() {
 	for path, handler := range handlers {
-		h.Handler.(*http.ServeMux).HandleFunc(path, func(w http.ResponseWriter,
-			r *http.Request) {
-			p := h.new_page(w, r)
-			//TODO: recover and do http_error(500)
-			handler(p)
-			write_rsp(p)
-		})
+		f := func(hndlr func(*page)) func(w http.ResponseWriter, r *http.Request) {
+			return func(w http.ResponseWriter, r *http.Request) {
+				p := h.new_page(w, r)
+				//TODO: recover and do http_error(500)
+				hndlr(p)
+				write_rsp(p)
+			}
+		}
+		h.Handler.(*http.ServeMux).HandleFunc(path, f(handler))
 	}
 }
 

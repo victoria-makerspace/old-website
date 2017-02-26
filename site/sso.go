@@ -72,10 +72,12 @@ func sso_sign_out_handler(p *page) {
 	if u := p.FormValue("return_path"); u != "" {
 		return_path = u
 	}
-	//TODO: find a secure way to to sign out that works with discourse
-	p.destroy_session()
-	if m := p.Member; m != nil && m.Talk_user() != nil {
-		m.Talk_user().Logout()
+	if p.must_authenticate() {
+		//TODO: find a secure way to to sign out that works with discourse
+		if t := p.Talk_user(); t != nil {
+			t.Logout()
+		}
+		p.destroy_session()
 	}
 	p.redirect = return_path
 }
