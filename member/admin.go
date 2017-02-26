@@ -13,8 +13,8 @@ func (m *Member) get_admin() {
 	admin := &Admin{}
 	if err := m.QueryRow(
 		"SELECT privileges "+
-		"FROM administrator "+
-		"WHERE member = $1", m.Id).
+			"FROM administrator "+
+			"WHERE member = $1", m.Id).
 		Scan(&admin.privileges); err != nil {
 		if err != sql.ErrNoRows {
 			log.Panic(err)

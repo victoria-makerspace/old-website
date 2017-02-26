@@ -90,8 +90,8 @@ func (p *Profile) do_recurring_txn(i *Invoice) *Transaction {
 func (t *Transaction) log_recurring_txn(log_id int) {
 	if _, err := t.db.Exec(
 		"UPDATE transaction "+
-		"SET logged = $1 "+
-		"WHERE id = $2",
+			"SET logged = $1 "+
+			"WHERE id = $2",
 		log_id, t.Id); err != nil {
 		log.Panic(err)
 	}

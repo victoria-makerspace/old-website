@@ -12,7 +12,7 @@ type st struct {
 	Available bool
 	*Invoice
 }
-type Storage map[string][]st
+type Storage map[*Fee][]st
 
 //TODO: recover from panics and send http 500 if applicable?
 func (b *Billing) get_storage() {
@@ -38,19 +38,17 @@ func (b *Billing) get_storage() {
 		if invoice_id.Valid {
 			invoice = b.get_bill(int(invoice_id.Int64))
 		}
-		//TODO: change Storage type to use *Fee instead of key
-		if f, ok := b.Fees[fee_id]; ok {
-			key := f.Category + "_" + f.Identifier
-			if _, ok := b.Storage[key]; !ok {
-				b.Storage[key] = make([]st, 0)
-			}
-			s := st{number, size.Float64, f.Amount, available, invoice}
-			if key == "storage_wall" {
-				s.Price *= s.Size
-			}
-			b.Storage[key] = append(b.Storage[key], s)
-		} else {
+		f, ok := b.Fees[fee_id]
+		if !ok {
 			log.Panicf("Storage fee '%s' not found", f.Identifier)
 		}
+		if _, ok := b.Storage[f]; !ok {
+			b.Storage[f] = make([]st, 0)
+		}
+		s := st{number, size.Float64, f.Amount, available, invoice}
+		if f.Identifier == "wall" {
+			s.Price *= s.Size
+		}
+		b.Storage[f] = append(b.Storage[f], s)
 	}
 }

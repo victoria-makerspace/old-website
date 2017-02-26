@@ -1,12 +1,12 @@
 package site
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
-	"encoding/json"
 )
 
-var handlers map[string]func(*page)
+var handlers = make(map[string]func(*page))
 
 func (h *Http_server) set_handlers() {
 	for path, handler := range handlers {
@@ -20,7 +20,7 @@ func (h *Http_server) set_handlers() {
 	}
 }
 
-func write_rsp (p *page) {
+func write_rsp(p *page) {
 	for _, c := range p.cookies {
 		http.SetCookie(p.ResponseWriter, c)
 	}
@@ -47,4 +47,3 @@ func write_rsp (p *page) {
 		}
 	}
 }
-

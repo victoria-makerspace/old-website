@@ -6,17 +6,17 @@ import (
 )
 
 type page struct {
-	Name  string
-	Title string
-	Data  map[string]interface{} // Data to be passed to templates or JSON
-	Status       int
+	Name   string
+	Title  string
+	Data   map[string]interface{} // Data to be passed to templates or JSON
+	Status int
 	*Session
 	*Http_server
 	http.ResponseWriter
 	*http.Request
-	cookies		map[string]*http.Cookie
+	cookies      map[string]*http.Cookie
 	srv_template bool // srv_json takes precedence over srv_template
-	srv_json bool
+	srv_json     bool
 	redirect     string
 }
 
@@ -30,7 +30,7 @@ func (h *Http_server) new_page(w http.ResponseWriter, r *http.Request) *page {
 		Http_server:    h,
 		ResponseWriter: w,
 		Request:        r,
-		cookies:           make(map[string]*http.Cookie),
+		cookies:        make(map[string]*http.Cookie),
 		srv_template:   true}
 	return p
 }
@@ -38,7 +38,8 @@ func (h *Http_server) new_page(w http.ResponseWriter, r *http.Request) *page {
 // http_error changes template to error.tmpl, or sets JSON output
 func (p *page) http_error(code int) {
 	p.Name = "error"
-	p.Status = code
 	p.Title = fmt.Sprint(code)
+	p.Status = code
 	p.Data["error"] = http.StatusText(code)
+	p.redirect = ""
 }

@@ -4,8 +4,8 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
-	"github.com/vvanpo/makerspace/talk"
 	"github.com/vvanpo/makerspace/billing"
+	"github.com/vvanpo/makerspace/talk"
 	"golang.org/x/crypto/scrypt"
 	"log"
 	"regexp"
@@ -49,9 +49,8 @@ func (ms *Members) Check_username_availability(username string) (available bool,
 	var count int
 	if err := ms.QueryRow(
 		"SELECT COUNT(*) "+
-		"FROM member "+
-		"WHERE username = $1", username).Scan(&count);
-		err != nil {
+			"FROM member "+
+			"WHERE username = $1", username).Scan(&count); err != nil {
 		log.Panic(err)
 	}
 	return ms.Check_username(username)
@@ -64,9 +63,8 @@ func (ms *Members) Check_email_availability(email string) (available bool, err s
 	var count int
 	if err := ms.QueryRow(
 		"SELECT COUNT(*) "+
-		"FROM member "+
-		"WHERE email = $1", email).Scan(&count);
-		err != nil {
+			"FROM member "+
+			"WHERE email = $1", email).Scan(&count); err != nil {
 		log.Panic(err)
 	}
 	if count == 1 {
@@ -95,16 +93,15 @@ func (ms *Members) New_member(username, name, email, password string) *Member {
 		Members:       ms}
 	if err := m.QueryRow(
 		"INSERT INTO member ("+
-		"	username,"+
-		"	name,"+
-		"	password_key,"+
-		"	password_salt,"+
-		"	email"+
-		") "+
-		"VALUES ($1, $2, $3, $4, $5) "+
-		"RETURNING id, registered",
-		username, name, m.password_key, salt, email).Scan(&m.Id, &m.Registered);
-		err != nil {
+			"	username,"+
+			"	name,"+
+			"	password_key,"+
+			"	password_salt,"+
+			"	email"+
+			") "+
+			"VALUES ($1, $2, $3, $4, $5) "+
+			"RETURNING id, registered",
+		username, name, m.password_key, salt, email).Scan(&m.Id, &m.Registered); err != nil {
 		log.Panic(err)
 	}
 	return m
@@ -113,20 +110,20 @@ func (ms *Members) New_member(username, name, email, password string) *Member {
 func (ms *Members) Get_all_members() []*Member {
 	members := make([]*Member, 0)
 	rows, err := ms.Query(
-		"SELECT "+
-		"	m.id, "+
-		"	m.username, "+
-		"	m.name, "+
-		"	m.password_key, "+
-		"	m.password_salt, "+
-		"	m.email, "+
-		"	m.agreed_to_terms, "+
-		"	m.registered, "+
-		"	s.username IS NOT NULL, "+
-		"	a.username IS NOT NULL "+
-		"FROM member m "+
-		"NATURAL LEFT JOIN administrator a "+
-		"NATURAL LEFT JOIN student s")
+		"SELECT " +
+			"	m.id, " +
+			"	m.username, " +
+			"	m.name, " +
+			"	m.password_key, " +
+			"	m.password_salt, " +
+			"	m.email, " +
+			"	m.agreed_to_terms, " +
+			"	m.registered, " +
+			"	s.username IS NOT NULL, " +
+			"	a.username IS NOT NULL " +
+			"FROM member m " +
+			"NATURAL LEFT JOIN administrator a " +
+			"NATURAL LEFT JOIN student s")
 	defer rows.Close()
 	if err != nil {
 		if err != sql.ErrNoRows {

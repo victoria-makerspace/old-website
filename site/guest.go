@@ -1,14 +1,13 @@
 package site
 
 import (
+	"log"
 	"net/http"
 	"path"
-	"log"
 )
 
 func init() {
 	handlers["/"] = root_handler
-	handlers["/join"] = join_handler
 	handlers["/terms"] = terms_handler
 }
 
@@ -25,8 +24,7 @@ func static_handler(p *page) {
 	dir := http.Dir(p.config.Static_dir)
 	file, err := dir.Open(path.Clean(p.URL.Path))
 	if err == nil {
-		if f_info, err := file.Stat();
-			err == nil && !f_info.IsDir() {
+		if f_info, err := file.Stat(); err == nil && !f_info.IsDir() {
 			http.ServeContent(p.ResponseWriter, p.Request, f_info.Name(),
 				f_info.ModTime(), file)
 			p.srv_template = false
@@ -43,8 +41,8 @@ func terms_handler(p *page) {
 	if p.Session != nil && p.PostFormValue("agree_to_terms") != "" {
 		if _, err := p.db.Exec(
 			"UPDATE member "+
-			"SET agreed_to_terms = true "+
-			"WHERE id = $1",
+				"SET agreed_to_terms = true "+
+				"WHERE id = $1",
 			p.Member.Id); err != nil {
 			log.Panic(err)
 		}

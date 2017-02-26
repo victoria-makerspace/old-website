@@ -6,9 +6,9 @@ import (
 )
 
 func init() {
-	handlers["sso"] = sso_handler
-	handlers["sso/sign-out"] = sso_sign_out_handler
-	handlers["sso/check-availability.json"] = sso_availability_handler
+	handlers["/sso"] = sso_handler
+	handlers["/sso/sign-out"] = sso_sign_out_handler
+	handlers["/sso/check-availability.json"] = sso_availability_handler
 }
 
 func (p *page) must_authenticate() bool {
@@ -16,7 +16,7 @@ func (p *page) must_authenticate() bool {
 	if p.Session == nil {
 		p.Name = "sso"
 		p.Title = "Sign-in"
-		p.Status(403)
+		p.Status = 403
 		return false
 	}
 	return true
@@ -85,12 +85,11 @@ func sso_availability_handler(p *page) {
 	if u := p.FormValue("username"); u != "" {
 		available, err := p.Check_username_availability(u)
 		p.Data["username"] = available
-		if err != "" {
-			p.Data["username_error"] = err
-		}
+		p.Data["username_error"] = err
 	}
-	if e := p.FormValue("email"); u != "" {
-		available := p.Check_email_availability(e)
+	if e := p.FormValue("email"); e != "" {
+		available, err := p.Check_email_availability(e)
 		p.Data["email"] = available
+		p.Data["email_error"] = err
 	}
 }

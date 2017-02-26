@@ -15,7 +15,7 @@ type Student struct {
 
 func (m *Member) get_student() {
 	var institution, email sql.NullString
-	var grad_date          pq.NullTime
+	var grad_date pq.NullTime
 	if err := m.QueryRow("SELECT institution, student_email, "+
 		"graduation_date FROM student WHERE member = $1", m.Id).
 		Scan(&institution, &email, &grad_date); err != nil {
@@ -37,8 +37,7 @@ func (m *Member) Update_student(institution, email string, grad_date time.Time) 
 	} else if m.membership != nil {
 		m.payment.Change_to_student(grad_date)
 	}
-	if _, err := m.Exec(query, m.Id, institution, email, grad_date);
-		err != nil {
+	if _, err := m.Exec(query, m.Id, institution, email, grad_date); err != nil {
 		log.Panic(err)
 	}
 	m.Student = &Student{institution, email, grad_date}

@@ -59,6 +59,6 @@ func Serve(config Config, talk *talk.Talk_api, members *member.Members, db *sql.
 	h.Handler = http.NewServeMux()
 	h.parse_templates()
 	h.set_handlers()
-	go log.Panic(h.srv.ListenAndServe())
+	go log.Panic(h.ListenAndServe())
 	return h
 }

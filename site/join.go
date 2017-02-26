@@ -4,6 +4,10 @@ import (
 	"log"
 )
 
+func init() {
+	handlers["/join"] = join_handler
+}
+
 //TODO: create talk user
 func join_handler(p *page) {
 	p.Name = "join"
@@ -19,13 +23,11 @@ func join_handler(p *page) {
 	}
 	username := p.PostFormValue("username")
 	email := p.PostFormValue("email")
-	if available, err := p.Check_username_availability(username);
-		!available {
+	if available, err := p.Check_username_availability(username); !available {
 		p.Data["username_error"] = err
 		return
 	}
-	if available, err := p.Check_email_availability(email);
-		!available {
+	if available, err := p.Check_email_availability(email); !available {
 		p.Data["email_error"] = err
 		return
 	}

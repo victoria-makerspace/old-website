@@ -23,7 +23,7 @@ type Billing struct {
 func Billing_new(merchant_id, payments_api_key, profiles_api_key, reports_api_key string, db *sql.DB) *Billing {
 	rand.Seed(time.Now().UTC().UnixNano())
 	b := &Billing{
-		db:     db,
+		db: db,
 		config: beanstream.Config{
 			merchant_id,
 			payments_api_key,
@@ -69,7 +69,7 @@ func (b *Billing) get_fees() {
 	}
 }
 
-func (b *Billing) find_fee(category, identifier string) *Fee {
+func (b *Billing) Find_fee(category, identifier string) *Fee {
 	for _, f := range b.Fees {
 		if f.Category == category && f.Identifier == identifier {
 			return f
@@ -80,7 +80,7 @@ func (b *Billing) find_fee(category, identifier string) *Fee {
 
 type Invoice struct {
 	Id          int
-	Member		int
+	Member      int
 	Date        time.Time
 	Paid_by     int
 	End_date    *time.Time
@@ -93,11 +93,11 @@ type Invoice struct {
 func (b *Billing) get_bill(id int) *Invoice {
 	inv := &Invoice{Id: id}
 	var (
-		end_date                     pq.NullTime
-		description                  sql.NullString
-		amount                       sql.NullFloat64
-		interval                     sql.NullString
-		fee_id sql.NullInt64
+		end_date    pq.NullTime
+		description sql.NullString
+		amount      sql.NullFloat64
+		interval    sql.NullString
+		fee_id      sql.NullInt64
 	)
 	if err := b.db.QueryRow("SELECT i.member, i.date, i.paid_by, "+
 		"i.end_date, COALESCE(i.description, f.description), "+
@@ -137,8 +137,7 @@ func (b *Billing) get_bill_by_fee(fee *Fee, paid_by int) *Invoice {
 		"COALESCE(i.amount, f.amount), COALESCE(i.recurring, f.recurring) "+
 		"FROM invoice i JOIN fee f "+
 		"ON i.fee = $1 WHERE i.paid_by = $2", fee.Id, paid_by).Scan(&inv.Id,
-		&inv.Member, &inv.Date, &end_date, &description, &amount, &interval);
-		err != nil {
+		&inv.Member, &inv.Date, &end_date, &description, &amount, &interval); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -206,19 +205,19 @@ func (p *Profile) get_recurring_bills() {
 	// Select recurring invoices without expired end-dates
 	rows, err := p.db.Query(
 		"SELECT "+
-		"	i.id, i.member, i.date, i.end_date, "+
-		"	COALESCE(i.description, f.description), "+
-		"	COALESCE(i.amount, f.amount), "+
-		"	COALESCE(i.recurring, f.recurring), "+
-		"	i.fee "+
-		"FROM invoice i "+
-		"LEFT JOIN fee f "+
-		"ON i.fee = f.id "+
-		"WHERE "+
-		"	i.paid_by = $1 "+
-		"	AND COALESCE(i.recurring, f.recurring) IS NOT NULL "+
-		"	AND (i.end_date > now() OR i.end_date IS NULL) "+
-		"ORDER BY i.date DESC",
+			"	i.id, i.member, i.date, i.end_date, "+
+			"	COALESCE(i.description, f.description), "+
+			"	COALESCE(i.amount, f.amount), "+
+			"	COALESCE(i.recurring, f.recurring), "+
+			"	i.fee "+
+			"FROM invoice i "+
+			"LEFT JOIN fee f "+
+			"ON i.fee = f.id "+
+			"WHERE "+
+			"	i.paid_by = $1 "+
+			"	AND COALESCE(i.recurring, f.recurring) IS NOT NULL "+
+			"	AND (i.end_date > now() OR i.end_date IS NULL) "+
+			"ORDER BY i.date DESC",
 		p.member_id)
 	defer rows.Close()
 	if err != nil {
@@ -230,9 +229,9 @@ func (p *Profile) get_recurring_bills() {
 	for rows.Next() {
 		inv := &Invoice{Paid_by: p.member_id}
 		var (
-			end_date                     pq.NullTime
-			description                  sql.NullString
-			fee_id sql.NullInt64
+			end_date    pq.NullTime
+			description sql.NullString
+			fee_id      sql.NullInt64
 		)
 		if err = rows.Scan(&inv.Id, &inv.Member, &inv.Date, &end_date,
 			&description, &inv.Amount, &inv.Interval, &fee_id); err != nil {

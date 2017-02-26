@@ -56,8 +56,7 @@ func (b *Billing) payment_scheduler() {
 func (b *Billing) log_scheduled(interval string, txn_todo int) int {
 	var log_id int
 	if err := b.db.QueryRow("INSERT INTO txn_scheduler_log (interval, txn_todo) "+
-		"VALUES ($1, $2) RETURNING id", interval, txn_todo).Scan(&log_id);
-		err != nil {
+		"VALUES ($1, $2) RETURNING id", interval, txn_todo).Scan(&log_id); err != nil {
 		log.Panic(err)
 	}
 	return log_id
@@ -69,13 +68,12 @@ func (b *Billing) log_error(log_id, txn_attempts, txn_approved int, e string) {
 	}
 	if _, err := b.db.Exec(
 		"UPDATE txn_scheduler_log "+
-		"SET "+
-		"	txn_attempts = $2, "+
-		"	txn_approved = $3, "+
-		"	error = $4, "+
-		"WHERE id = $1",
-		log_id, txn_attempts, txn_approved, e);
-		err != nil {
+			"SET "+
+			"	txn_attempts = $2, "+
+			"	txn_approved = $3, "+
+			"	error = $4, "+
+			"WHERE id = $1",
+		log_id, txn_attempts, txn_approved, e); err != nil {
 		log.Panic(err)
 	}
 }
@@ -83,13 +81,13 @@ func (b *Billing) log_error(log_id, txn_attempts, txn_approved int, e string) {
 func (b *Billing) get_intervals() []string {
 	ints := make([]string, 0)
 	rows, err := b.db.Query(
-		"SELECT COALESCE(i.recurring, f.recurring) rc"+
-		"FROM invoice i "+
-		"LEFT JOIN fee f "+
-		"ON i.fee = f.id "+
-		"WHERE COALESCE(i.recurring, f.recurring) IS NOT NULL "+
-		"	AND (i.end_date > now() OR i.end_date IS NULL) "+
-		"GROUP BY rc")
+		"SELECT COALESCE(i.recurring, f.recurring) rc" +
+			"FROM invoice i " +
+			"LEFT JOIN fee f " +
+			"ON i.fee = f.id " +
+			"WHERE COALESCE(i.recurring, f.recurring) IS NOT NULL " +
+			"	AND (i.end_date > now() OR i.end_date IS NULL) " +
+			"GROUP BY rc")
 	defer rows.Close()
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -109,12 +107,12 @@ func (b *Billing) count_recurring(interval string) int {
 	var count int
 	if err := b.db.QueryRow(
 		"SELECT COUNT(*) "+
-		"FROM invoice i "+
-		"LEFT JOIN fee f "+
-		"ON (i.fee = f.id) "+
-		"WHERE "+
-		"	COALESCE(i.recurring, f.recurring) = $1 "+
-		"	AND (i.end_date > now() OR i.end_date IS NULL)",
+			"FROM invoice i "+
+			"LEFT JOIN fee f "+
+			"ON (i.fee = f.id) "+
+			"WHERE "+
+			"	COALESCE(i.recurring, f.recurring) = $1 "+
+			"	AND (i.end_date > now() OR i.end_date IS NULL)",
 		interval).Scan(&count); err != nil {
 		log.Panic(err)
 	}
@@ -125,10 +123,10 @@ func (b *Billing) has_run(interval string) bool {
 	var has_run bool
 	if err := b.db.QueryRow(
 		"SELECT NOT age(time) > $1 "+
-		"FROM txn_scheduler_log "+
-		"WHERE interval = $1 "+
-		"ORDER BY time DESC "+
-		"LIMIT 1", interval).Scan(&has_run); err != nil {
+			"FROM txn_scheduler_log "+
+			"WHERE interval = $1 "+
+			"ORDER BY time DESC "+
+			"LIMIT 1", interval).Scan(&has_run); err != nil {
 		if err == sql.ErrNoRows {
 			return false
 		}

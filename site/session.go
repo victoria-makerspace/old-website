@@ -12,7 +12,8 @@ import (
 //TODO: maybe save sessions in a slice in the Http_server object, to persist member data across requests?
 
 func (p *page) set_session_cookie(value string, expires bool) {
-	cookie := &http.Cookie{Name: "session",
+	cookie := &http.Cookie{
+		Name:   "session",
 		Value:  value,
 		Path:   "/",
 		Domain: p.config.Domain,
@@ -26,15 +27,14 @@ func (p *page) set_session_cookie(value string, expires bool) {
 }
 
 func (p *page) unset_session_cookie() {
-	cookie := &http.Cookie{Name: "session",
-		Value:   " ",
-		Path:    "/",
-		Domain:  p.config.Domain,
-		Expires: time.Unix(0, 0),
-		MaxAge:  -1,
-		/* Secure: true, */
+	p.cookies["session"] = &http.Cookie{
+		Name:     "session",
+		Value:    " ",
+		Path:     "/",
+		Domain:   p.config.Domain,
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
 		HttpOnly: true}
-	delete(p.cookies, "session")
 }
 
 type Session struct {

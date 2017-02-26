@@ -1,10 +1,10 @@
 package member
 
 import (
-	"log"
 	"database/sql"
-	"github.com/vvanpo/makerspace/talk"
 	"github.com/vvanpo/makerspace/billing"
+	"github.com/vvanpo/makerspace/talk"
+	"log"
 	"time"
 )
 
@@ -15,15 +15,15 @@ type Member struct {
 	Email           string
 	Agreed_to_terms bool
 	Registered      time.Time
-	gratuitous		bool
+	gratuitous      bool
 	*Admin
 	*Student
-	password_key    string
-	password_salt   string
-	talk            *talk.Talk_user
-	membership		*billing.Invoice
+	password_key  string
+	password_salt string
+	talk          *talk.Talk_user
+	membership    *billing.Invoice
 	*Members
-	payment         *billing.Profile
+	payment *billing.Profile
 }
 
 //TODO: support null password keys, and use e-mail verification for login
@@ -33,19 +33,18 @@ func (ms *Members) Get_member_by_username(username string) *Member {
 	var password_key, password_salt sql.NullString
 	if err := m.QueryRow(
 		"SELECT"+
-		"	id, "+
-		"	name, "+
-		"	password_key, "+
-		"	password_salt, "+
-		"	email, "+
-		"	agreed_to_terms, "+
-		"	registered, "+
-		"	gratuitous "+
-		"FROM member "+
-		"WHERE username = $1",
+			"	id, "+
+			"	name, "+
+			"	password_key, "+
+			"	password_salt, "+
+			"	email, "+
+			"	agreed_to_terms, "+
+			"	registered, "+
+			"	gratuitous "+
+			"FROM member "+
+			"WHERE username = $1",
 		username).Scan(&m.Id, &m.Name, &password_key, &password_salt, &m.Email,
-		&m.Agreed_to_terms, &m.Registered, &m.gratuitous);
-		err != nil {
+		&m.Agreed_to_terms, &m.Registered, &m.gratuitous); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -64,19 +63,18 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 	var password_key, password_salt sql.NullString
 	if err := m.QueryRow(
 		"SELECT"+
-		"	username, "+
-		"	name, "+
-		"	password_key, "+
-		"	password_salt, "+
-		"	email, "+
-		"	agreed_to_terms, "+
-		"	registered, "+
-		"	gratuitous "+
-		"FROM member "+
-		"WHERE id = $1",
+			"	username, "+
+			"	name, "+
+			"	password_key, "+
+			"	password_salt, "+
+			"	email, "+
+			"	agreed_to_terms, "+
+			"	registered, "+
+			"	gratuitous "+
+			"FROM member "+
+			"WHERE id = $1",
 		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &m.Email,
-		&m.Agreed_to_terms, &m.Registered, &m.gratuitous);
-		err != nil {
+		&m.Agreed_to_terms, &m.Registered, &m.gratuitous); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}

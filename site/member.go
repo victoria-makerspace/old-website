@@ -1,46 +1,38 @@
 package site
 
-import (
-	"net/http"
-)
+import ()
 
-func (h *Http_server) member_handler() {
-	h.sso_handler()
-	h.billing_handler()
-	h.tools_handler()
-	h.storage_handler()
-	h.mux.HandleFunc("/member", func(w http.ResponseWriter, r *http.Request) {
-		p := h.new_page("dashboard", "Dashboard", w, r)
-		if !p.must_authenticate() {
-			return
-		}
-		p.write_template()
-	})
+func init() {
+	handlers["/member/dashboard"] = member_handler
+	handlers["/tools"] = tools_handler
+	handlers["/member/storage"] = storage_handler
 }
 
-func (h *Http_server) tools_handler() {
-	h.mux.HandleFunc("/member/tools", func(w http.ResponseWriter, r *http.Request) {
-		p := h.new_page("tools", "Tools", w, r)
-		if !p.must_authenticate() {
-			return
-		}
-		p.write_template()
-	})
+func member_handler(p *page) {
+	p.Name = "dashboard"
+	p.Title = "Dashboard"
+	if !p.must_authenticate() {
+		return
+	}
 }
 
-func (h *Http_server) storage_handler() {
-	h.mux.HandleFunc("/member/storage", func(w http.ResponseWriter, r *http.Request) {
-		p := h.new_page("storage", "Storage", w, r)
-		if !p.must_authenticate() {
-			return
-		}
-		p.Field["fees"] = p.Fees
-		p.Field["wall_storage"] = p.Storage["storage_wall"]
-		p.Field["hall_lockers"] = p.Storage["storage_hall-locker"]
-		p.Field["bathroom_lockers"] = p.Storage["storage_bathroom-locker"]
-		p.write_template()
-	})
+func tools_handler(p *page) {
+	p.Name = "tools"
+	p.Title = "Tools"
+	if !p.must_authenticate() {
+		return
+	}
+}
+
+func storage_handler(p *page) {
+	p.Name = "storage"
+	p.Title = "Storage"
+	if !p.must_authenticate() {
+		return
+	}
+	p.Data["wall_storage"] = p.Storage[p.Find_fee("storage", "wall")]
+	p.Data["hall_lockers"] = p.Storage[p.Find_fee("storage", "hall-locker")]
+	p.Data["bathroom_lockers"] = p.Storage[p.Find_fee("storage", "bathroom-locker")]
 }
 
 //preferences
-// sync_sso

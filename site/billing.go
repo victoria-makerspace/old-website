@@ -1,85 +1,81 @@
 package site
 
 import (
-	"net/http"
 	"strconv"
 	"time"
 )
 
-func (h *Http_server) billing_handler() {
-	h.mux.HandleFunc("/member/billing", func(w http.ResponseWriter, r *http.Request) {
-		p := h.new_page("billing", "Billing", w, r)
-		if !p.must_authenticate() {
-			return
+func init() {
+	handlers["/member/billing"] = billing_handler
+}
+
+func billing_handler(p *page) {
+	p.Name = "billing"
+	p.Title = "Billing"
+	if !p.must_authenticate() {
+		return
+	}
+	if !p.Agreed_to_terms {
+		return
+	}
+	pay_profile := p.Payment()
+	p.ParseForm()
+	if token := p.PostFormValue("singleUseToken"); token != "" {
+		if pay_profile == nil {
+			pay_profile = p.New_profile(p.Member.Id)
 		}
-		pay_profile := p.Payment()
-		write_template := func(p *page) {
-			if pay_profile != nil {
-				if card := pay_profile.Get_card(); card != nil {
-					p.Field["card_number"] = card.Number
-					p.Field["card_expiry"] = card.ExpiryMonth + "/20" + card.ExpiryYear
-				}
-			}
-			p.write_template()
-		}
-		if !p.Member().Agreed_to_terms {
-			write_template(p)
-			return
-		}
-		p.ParseForm()
-		if token := p.PostFormValue("singleUseToken"); token != "" {
-			pay_profile.Update_card(token, p.PostFormValue("name"))
-			http.Redirect(w, r, "/member/billing", 303)
-			return
-		} else if _, ok := p.PostForm["delete-card"]; ok && pay_profile != nil {
-			pay_profile.Delete_card()
-		}
-		update_student := func() {
-			if p.PostFormValue("rate") == "student" &&
-				p.PostFormValue("institution") != "" &&
-				p.PostFormValue("student_email") != "" &&
-				p.PostFormValue("graduation") != "" {
-				graduation, err := time.Parse("2006-01", p.PostFormValue("graduation"))
-				if err == nil && graduation.After(time.Now().AddDate(0, 1, 0)) {
-					p.Update_student(p.PostFormValue("institution"),
-						p.PostFormValue("student_email"), graduation)
-				} else {
-					//TODO: embed error in page
-				}
+		pay_profile.Update_card(token, p.PostFormValue("name"))
+		p.redirect = "/member/billing"
+		return
+	} else if _, ok := p.PostForm["delete-card"]; ok && pay_profile != nil {
+		pay_profile.Delete_card()
+	}
+	update_student := func() {
+		if p.PostFormValue("rate") == "student" &&
+			p.PostFormValue("institution") != "" &&
+			p.PostFormValue("student_email") != "" &&
+			p.PostFormValue("graduation") != "" {
+			graduation, err := time.Parse("2006-01",
+				p.PostFormValue("graduation"))
+			if err == nil && graduation.After(time.Now().AddDate(0, 1, 0)) {
+				p.Update_student(p.PostFormValue("institution"),
+					p.PostFormValue("student_email"), graduation)
 			} else {
-				p.Delete_student()
+				p.Data["graduation_error"] = "Graduation date cannot be in the past"
 			}
+		} else {
+			p.Delete_student()
 		}
-		if _, ok := p.PostForm["update"]; ok {
-			update_student()
-			http.Redirect(w, r, "/member/billing", 303)
-			return
-		} else if _, ok := p.PostForm["register"]; ok {
-			update_student()
-			if p.Member().Active() {
-				p.http_error(422)
-				return
-			}
-			p.New_membership()
-			http.Redirect(w, r, "/member/billing", 303)
-			return
-		} else if _, ok := p.PostForm["terminate"]; ok {
-			id, _ := strconv.Atoi(p.PostFormValue("terminate"))
-			if bill := pay_profile.Get_bill(id); bill != nil {
-				pay_profile.Cancel_recurring_bill(bill)
-			}
-			// Redirect not really necessary as double-submission is harmless.
-		} else if _, ok := p.PostForm["terminate_membership"]; ok {
-			if !p.Member().Authenticate(p.PostFormValue("password")) {
-				//TODO: embed error
-				write_template(p)
-				return
-			}
-			//TODO: reason for cancellation: PostFormValue("cancellation_reason")
-			pay_profile.Cancel_membership()
-			http.Redirect(w, r, "/member/billing", 303)
+	}
+	if _, ok := p.PostForm["update"]; ok {
+		update_student()
+		p.redirect = "/member/billing"
+		return
+	} else if pay_profile == nil {
+		return
+	} else if _, ok := p.PostForm["register"]; ok {
+		update_student()
+		if p.Active() {
+			p.http_error(422)
 			return
 		}
-		write_template(p)
-	})
+		p.New_membership()
+		p.redirect = "/member/billing"
+		return
+	} else if _, ok := p.PostForm["terminate"]; ok {
+		id, _ := strconv.Atoi(p.PostFormValue("terminate"))
+		if bill := pay_profile.Get_bill(id); bill != nil {
+			pay_profile.Cancel_recurring_bill(bill)
+		}
+		// Redirect not really necessary as double-submission is harmless.
+	} else if _, ok := p.PostForm["terminate_membership"]; ok {
+		if !p.Member.Authenticate(p.PostFormValue("password")) {
+			p.Data["password_error"] = "Incorrect password"
+			return
+		}
+		//TODO: reason for cancellation: PostFormValue("cancellation_reason")
+		pay_profile.Cancel_membership()
+		p.redirect = "/member/billing"
+		return
+	}
 }

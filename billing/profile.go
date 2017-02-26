@@ -23,15 +23,15 @@ type Profile struct {
 	Transactions []*Transaction
 	Error
 	*Billing
-	bs_id		 string
-	bs_profile   *beanstream.Profile
-	member_id    int
+	bs_id      string
+	bs_profile *beanstream.Profile
+	member_id  int
 }
 
 func (b *Billing) New_profile(member_id int) *Profile {
 	if _, err := b.db.Exec(
 		"INSERT INTO payment_profile (member_id)"+
-		"VALUES ($1)",
+			"VALUES ($1)",
 		member_id); err != nil {
 		log.Panic(err)
 	}
@@ -41,8 +41,8 @@ func (b *Billing) New_profile(member_id int) *Profile {
 func (b *Billing) Get_profile(member_id int) *Profile {
 	p := &Profile{Billing: b, member_id: member_id}
 	var (
-		profile_id      sql.NullString
-		invalid sql.NullInt64
+		profile_id sql.NullString
+		invalid    sql.NullInt64
 	)
 	err := b.db.QueryRow("SELECT id, error FROM payment_profile "+
 		"WHERE member = $1", member_id).Scan(&profile_id, &invalid)
@@ -92,8 +92,7 @@ func (p *Profile) Delete_card() {
 	if p.Get_card() == nil {
 		return
 	}
-	if _, err := p.bs_profile.DeleteCard(p.profile_api, 1);
-		err != nil {
+	if _, err := p.bs_profile.DeleteCard(p.profile_api, 1); err != nil {
 		log.Println(err)
 	}
 	p.set_error(No_card)
@@ -107,8 +106,8 @@ func (p *Profile) Update_card(token, cardholder string) {
 		p.new_bs_profile(token, cardholder)
 		return
 	}
-	if _, err := p.profile_api.AddTokenizedCard(p.bs_profile.Id,
-		cardholder, token); err != nil {
+	if _, err := p.profile_api.AddTokenizedCard(p.bs_profile.Id, cardholder,
+		token); err != nil {
 		log.Println(err)
 		return
 	}
@@ -136,8 +135,8 @@ func (p *Profile) new_bs_profile(token, cardholder string) {
 	p.bs_profile.Id = rsp.Id
 	if _, err = p.db.Exec(
 		"UPDATE payment_profile "+
-		"SET id = $2 "+
-		"WHERE member = $1",
+			"SET id = $2 "+
+			"WHERE member = $1",
 		p.member_id, rsp.Id); err != nil {
 		log.Panic(err)
 	}
@@ -148,18 +147,16 @@ func (p *Profile) set_error(err Error) {
 	p.Error = err
 	if _, e := p.db.Exec("UPDATE payment_profile "+
 		"SET error = $1 "+
-		"WHERE member = $2", err, p.member_id);
-		e != nil {
+		"WHERE member = $2", err, p.member_id); e != nil {
 		log.Panic(e)
 	}
 }
 
 func (p *Profile) clear_error() {
 	p.Error = None
-	if _, err := p.db.Exec("UPDATE payment_profile " +
+	if _, err := p.db.Exec("UPDATE payment_profile "+
 		"SET error = NULL "+
-		"WHERE member = $1", p.member_id);
-		err != nil {
+		"WHERE member = $1", p.member_id); err != nil {
 		log.Panic(err)
 	}
 }

@@ -1,28 +1,28 @@
 package talk
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"net/url"
-	"log"
 	"regexp"
 )
 
 type Talk_api struct {
-	Base_url string
-	Path string
-	admin string
-	api_key string
+	Base_url   string
+	Path       string
+	admin      string
+	api_key    string
 	sso_secret string
 }
 
-func New_talk_api (config map[string]string) *Talk_api {
+func New_talk_api(config map[string]string) *Talk_api {
 	return &Talk_api{
-		Base_url: config["base-url"],
-		Path: config["path"],
-		admin: config["admin"],
-		api_key: config["api-key"],
+		Base_url:   config["base-url"],
+		Path:       config["path"],
+		admin:      config["admin"],
+		api_key:    config["api-key"],
 		sso_secret: config["sso-secret"]}
 }
 
@@ -60,7 +60,7 @@ func (api *Talk_api) post(path string, form url.Values) {
 	if _, ok := form["api_username"]; !ok {
 		form.Set("api_username", api.admin)
 	}
-	rsp, err := http.PostForm(api.Url() + path, form)
+	rsp, err := http.PostForm(api.Url()+path, form)
 	if err != nil {
 		log.Println(err)
 		return
@@ -70,7 +70,7 @@ func (api *Talk_api) post(path string, form url.Values) {
 
 func (api *Talk_api) Check_username(username string) (available bool, err string) {
 	j := api.get_json("/users/check_username.json", api.admin,
-		"username=" + url.QueryEscape(username))
+		"username="+url.QueryEscape(username))
 	if j, ok := j.(map[string]interface{}); ok {
 		if available, ok := j["available"]; ok {
 			if available.(bool) {
@@ -87,19 +87,19 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 }
 
 type Talk_user struct {
-	external_id int
-	id int
-	Username string
-	avatar_url []byte
-	Card_bg_url string
+	external_id    int
+	id             int
+	Username       string
+	avatar_url     []byte
+	Card_bg_url    string
 	Profile_bg_url string
-	notifications []interface{}
+	notifications  []interface{}
 	*Talk_api
 }
 
 func (api *Talk_api) Get_user(id int) *Talk_user {
 	t := &Talk_user{external_id: id, Talk_api: api}
-	j := t.get_json("/users/by-external/" + fmt.Sprint(id) + ".json", t.admin)
+	j := t.get_json("/users/by-external/"+fmt.Sprint(id)+".json", t.admin)
 	if j, ok := j.(map[string]interface{}); ok {
 		if u, ok := j["user"].(map[string]interface{}); ok {
 			t.id = int(u["id"].(float64))
@@ -114,6 +114,7 @@ func (api *Talk_api) Get_user(id int) *Talk_user {
 }
 
 var avatar_size_rexp = regexp.MustCompile("{size}")
+
 func (t *Talk_user) Avatar_url(size int) string {
 	return t.Base_url + string(avatar_size_rexp.ReplaceAll(t.avatar_url,
 		[]byte(fmt.Sprint(size))))
