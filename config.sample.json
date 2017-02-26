@@ -1,21 +1,29 @@
 {
-    "domain": "",
-    "port": 80,
-    "dir": "/home/makerspace",
+    "domain":   "",
+    "port":     1080,
+    "dir":      "/home/makerspace",
     "database": {
-            "dbname": "makerspace",
-            "host": "/var/run/postgresql",
-            "sslmode": "disable"
+            "dbname":   "makerspace",
+            "host":     "/var/run/postgresql",
+            "sslmode":  "disable"
     },
     "beanstream": {
-        "merchant-id": "",
+        "merchant-id":      "",
         "payments-api-key": "",
         "profiles-api-key": "",
-        "reports-api-key": ""
+        "reports-api-key":  ""
     },
-    "discourse": {
-        "url":           "/talk",
-        "sso-secret":    "",
-        "api-key":       "",
+    "talk": {
+        "base-url":     "",
+        "path":         "/talk",
+        "admin":        "system",
+        "sso-secret":   "",
+        "api-key":      ""
+    },
+    "smtp": {
+        "address":  "",
+        "port":     "587",
+        "username": "",
+        "password": ""
     }
 }

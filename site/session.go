@@ -6,9 +6,10 @@ import (
 	"github.com/vvanpo/makerspace/member"
 	"log"
 	"net/http"
-	"regexp"
 	"time"
 )
+
+//TODO: maybe save sessions in a slice in the Http_server object, to persist member data across requests?
 
 func (p *page) set_session_cookie(value string, expires bool) {
 	cookie := &http.Cookie{Name: "session",
@@ -21,7 +22,7 @@ func (p *page) set_session_cookie(value string, expires bool) {
 	if !expires {
 		cookie.Expires = time.Now().AddDate(1, 0, 0)
 	}
-	http.SetCookie(p.ResponseWriter, cookie)
+	p.cookies["session"] = cookie
 }
 
 func (p *page) unset_session_cookie() {
@@ -33,7 +34,7 @@ func (p *page) unset_session_cookie() {
 		MaxAge:  -1,
 		/* Secure: true, */
 		HttpOnly: true}
-	p.ResponseWriter.Header().Set("Set-Cookie", cookie.String())
+	delete(p.cookies, "session")
 }
 
 type Session struct {
@@ -96,7 +97,6 @@ func (p *page) destroy_session() {
 	p.unset_session_cookie()
 }
 
-var avatar_size_rexp = regexp.MustCompile("{size}")
 /*
 //TODO: refactor this mess
 // talk_user_data fetches user info from the talk server

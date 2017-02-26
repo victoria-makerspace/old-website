@@ -42,17 +42,37 @@ func key(password, salt string) string {
 var username_rexp = regexp.MustCompile(``)
 var name_rexp = regexp.MustCompile(`^(?:[\pL\pN\pM\pP]+ ?)+$`)
 
-func (ms *Members) Check_username(username string) (available bool, err string) {
-	//TODO just use talk_api.Check_username
-	if !username_rexp.MatchString(username) {
-		return false, "Invalid username"
-	} else if len(username) < 3 {
-		return false, "Username too short"
-	} else if len(username) > 20 {
-		return false, "Username too long"
+func (ms *Members) Check_username_availability(username string) (available bool, err string) {
+	if username == "" {
+		return false, "Username cannot be blank"
 	}
-	//TODO: check availability
-	return true, ""
+	var count int
+	if err := ms.QueryRow(
+		"SELECT COUNT(*) "+
+		"FROM member "+
+		"WHERE username = $1", username).Scan(&count);
+		err != nil {
+		log.Panic(err)
+	}
+	return ms.Check_username(username)
+}
+
+func (ms *Members) Check_email_availability(email string) (available bool, err string) {
+	if email == "" {
+		return false, "E-mail cannot be blank"
+	}
+	var count int
+	if err := ms.QueryRow(
+		"SELECT COUNT(*) "+
+		"FROM member "+
+		"WHERE email = $1", email).Scan(&count);
+		err != nil {
+		log.Panic(err)
+	}
+	if count == 1 {
+		return true, ""
+	}
+	return false, "E-mail already in use"
 }
 
 // New creates a new user, but will panic if the username already exists.

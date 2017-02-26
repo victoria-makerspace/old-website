@@ -201,7 +201,8 @@ button.nav-link {
     border-bottom-left-radius: 0.25rem;
     border-bottom-right-radius: 0.25rem;
 }
-#general-menu .nav-link .glyphicons {
+#general-menu .nav-link .glyphicons,
+#navbar-guest .nav-link .glyphicons {
     margin-right: 0.5rem;
 }
 #general-menu .nav-link .glyphicons + span {

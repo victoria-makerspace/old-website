@@ -10,26 +10,39 @@ import (
 )
 
 type Talk_api struct {
-	Url string
+	Base_url string
+	Path string
 	admin string
 	api_key string
 	sso_secret string
 }
 
-func New_talk_api (url, admin, api_key, sso_secret string) *Talk_api {
+func New_talk_api (config map[string]string) *Talk_api {
 	return &Talk_api{
-		Url: url,
-		admin: admin,
-		api_key: api_key,
-		sso_secret: sso_secret}
+		Base_url: config["base-url"],
+		Path: config["path"],
+		admin: config["admin"],
+		api_key: config["api-key"],
+		sso_secret: config["sso-secret"]}
 }
 
-func (api *Talk_api) get_json(path, username string) interface{} {
+func (api *Talk_api) Url() string {
+	return api.Base_url + api.Path
+}
+
+// First argument of query is the api_username
+func (api *Talk_api) get_json(path string, query ...string) interface{} {
 	var data interface{}
 	//TODO: perhaps parse as url.URL first in case parameters have already been
 	//	added.
-	rsp, err := http.Get(api.Url + path + "?api_key=" + api.api_key +
-		"&api_username=" + username)
+	url := api.Url() + path + "?api_key=" + api.api_key
+	if len(query) > 0 && query[0] != "" {
+		url += "&api_username=" + query[0]
+		for _, q := range query[1:] {
+			url += "&" + q
+		}
+	}
+	rsp, err := http.Get(url)
 	if err != nil {
 		log.Printf("Talk access error (%s):\n\t%q\n", path, err)
 		return nil
@@ -42,17 +55,35 @@ func (api *Talk_api) get_json(path, username string) interface{} {
 	return data
 }
 
-func (api *Talk_api) post(path string) {
-	v := url.Values{}
-	v.Set("api_key", api.api_key)
-	v.Set("api_username", api.admin)
-	rsp, err := http.PostForm(api.Url + path, v)
+func (api *Talk_api) post(path string, form url.Values) {
+	form.Set("api_key", api.api_key)
+	if _, ok := form["api_username"]; !ok {
+		form.Set("api_username", api.admin)
+	}
+	rsp, err := http.PostForm(api.Url() + path, form)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	log.Println(rsp)
 	rsp.Body.Close()
+}
+
+func (api *Talk_api) Check_username(username string) (available bool, err string) {
+	j := api.get_json("/users/check_username.json", api.admin,
+		"username=" + url.QueryEscape(username))
+	if j, ok := j.(map[string]interface{}); ok {
+		if available, ok := j["available"]; ok {
+			if available.(bool) {
+				return true, ""
+			}
+			return false, "Username not available"
+		}
+		if errors, ok := j["errors"]; ok {
+			return false, errors.([]string)[0]
+		}
+	}
+	log.Panic("Talk server error during Check_username")
+	return false, ""
 }
 
 type Talk_user struct {
@@ -84,15 +115,8 @@ func (api *Talk_api) Get_user(id int) *Talk_user {
 
 var avatar_size_rexp = regexp.MustCompile("{size}")
 func (t *Talk_user) Avatar_url(size int) string {
-	return string(avatar_size_rexp.ReplaceAll(t.avatar_url,
+	return t.Base_url + string(avatar_size_rexp.ReplaceAll(t.avatar_url,
 		[]byte(fmt.Sprint(size))))
-}
-
-func (t *Talk_user) Logout() {
-	t.post("/admin/users/" + fmt.Sprint(t.id) + "/log_out")
-}
-
-func (t *Talk_user) Sync() {
 }
 
 /*

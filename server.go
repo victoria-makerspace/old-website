@@ -19,7 +19,7 @@ var config struct {
 	Dir        string
 	Database   map[string]string
 	Beanstream map[string]string
-	Discourse  map[string]string
+	Talk       map[string]string
 	Smtp       map[string]string
 }
 
@@ -43,8 +43,7 @@ func init() {
 func main() {
 	db := Database(config.Database)
 	bs := config.Beanstream
-	talk := talk.New_talk_api(config.Discourse["url"], "system",
-		config.Discourse["api-key"], config.Discourse["sso-secret"])
+	talk := talk.New_talk_api(config.Talk)
 	b := billing.Billing_new(bs["merchant-id"], bs["payments-api-key"],
 		bs["profiles-api-key"], bs["reports-api-key"], db)
 	members := &member.Members{db, talk, b}
