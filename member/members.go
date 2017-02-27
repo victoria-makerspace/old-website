@@ -53,6 +53,9 @@ func (ms *Members) Check_username_availability(username string) (available bool,
 			"WHERE username = $1", username).Scan(&count); err != nil {
 		log.Panic(err)
 	}
+	if count == 1 {
+		return false, "Username not available"
+	}
 	return ms.Check_username(username)
 }
 
@@ -67,7 +70,7 @@ func (ms *Members) Check_email_availability(email string) (available bool, err s
 			"WHERE email = $1", email).Scan(&count); err != nil {
 		log.Panic(err)
 	}
-	if count == 1 {
+	if count == 0 {
 		return true, ""
 	}
 	return false, "E-mail already in use"
