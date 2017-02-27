@@ -105,8 +105,8 @@ func (api *Talk_api) Get_user(id int) *Talk_user {
 			t.id = int(u["id"].(float64))
 			t.Username = u["username"].(string)
 			t.avatar_url = []byte(u["avatar_template"].(string))
-			t.Card_bg_url = u["card_background"].(string)
-			t.Profile_bg_url = u["profile_background"].(string)
+			t.Card_bg_url = api.Base_url + u["card_background"].(string)
+			t.Profile_bg_url = api.Base_url + u["profile_background"].(string)
 			return t
 		}
 	}

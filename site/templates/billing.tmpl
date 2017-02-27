@@ -36,20 +36,20 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
-        {{if not .Member.Agreed_to_terms}}
+{{if not .Member.Agreed_to_terms}}
         <p class="alert alert-danger">
           Please agree to the <a href="/terms">Terms and Conditions</a> before setting up billing information.
         </p>
-        {{end}}
+{{end}}
         <p class="alert alert-info">
           All prices and transactions are in Canadian dollars.<br>
           Billing inquiries should be addressed to <a href="mailto:accounting@makerspace.ca">accounting@makerspace.ca</a>.
         </p>
-        {{with .Member.Payment}}
+{{with .Member.Payment}}
         <section>
           <h4>Transactions history</h4>
           <div class="px-2 px-sm-3">
-            {{with .Transactions}}
+  {{with .Transactions}}
             <table class="table table-sm table-striped">
               <thead>
                 <tr>
@@ -60,7 +60,7 @@
                 </tr>
               </thead>
               <tbody>
-                {{range .}}
+    {{range .}}
                 <tr{{if not .Approved}} title="This transaction was not approved." class="table-danger"{{end}}>
                   <td>{{.Time.Format "2006-01-02"}}</td>
                   <td>${{.Amount | printf "%.2f"}}</td>
@@ -68,13 +68,13 @@
                   <td><small class="text-muted">x-{{.Card}}</small></td>
                   </td>
                 </tr>
-                {{end}}
+    {{end}}
               </tbody>
             </table>
-            {{else}}
+  {{else}}
             <p>You have no recent transactions.</p>
-            {{end}}
-            {{with .Invoices}}
+  {{end}}
+  {{with .Invoices}}
             <h5>Monthly payments</h5>
             <form action="/member/billing" method="post" id="monthly">
             <table class="table table-sm">
@@ -87,25 +87,25 @@
                 </tr>
               </thead>
               <tbody>
-              {{range .}}
+    {{range .}}
                 <tr>  
                   <td>{{.Description}}</td>
                   <td>${{.Amount | printf "%.2f"}}</td>
                   <td>{{.Date.Format "2006-01-02"}}</td>
                   <td>
-                    {{if eq .Fee.Category "membership"}}
+      {{if eq .Fee.Category "membership"}}
                     <button type="button" data-toggle="modal" data-target="#terminate_membership" class="btn btn-sm btn-danger">Terminate</button>
-                    {{else}}
+      {{else}}
                     <button type="submit" name="terminate" value="{{.Id}}" class="btn btn-sm btn-danger">Terminate</button>
-                    {{end}}
+      {{end}}
                   </td>
                 </tr>
-              {{end}}
+    {{end}}
               </tbody>
             </table>
             </form>
-            {{end}}
-            {{/*with .Get_missed_payments}}
+  {{end}}
+  {{/*with .Get_missed_payments}}
             <h5 class="text-danger">Missed payments</h5>
             <table class="table table-sm table-danger">
               <thead>
@@ -123,33 +123,36 @@
                 </tr>
               </tbody>
             </table>
-            {{end*/}}
+  {{end*/}}
           </div>
         </section>
         <hr>
-        {{end}}
+{{end}}
         <section>
-          {{if .Field.card_number}}
+{{if or (not .Member.Payment) (not .Member.Payment.Get_card)}}
+          <h4>Register credit card<img class="ml-3" style="height: 1.5rem" src="/mcvs_acc_hrz.svg"></h4>
+          <p class="alert alert-info">This form form allows the online payment service <a href="http://www.beanstream.com/home/">Beanstream</a> to create a payment profile, that we can use to process payments and recurring bills.  No credit card information is stored on or touches our server.<br>
+            Credit card registration will not incur a transaction or register you to become a Makerspace member, which must be done below.
+          </p>
+{{else}}
+  {{with .Member.Payment.Get_card}}
           <h4>Update credit card</h4>
-            <div class="row px-2 px-sm-3">
-              <p class="col-sm-9 mb-2 mb-sm-3 text-muted">
-                <strong>Current card:</strong> {{.Field.card_number}}<br>
-                <strong>Expiry:</strong> {{.Field.card_expiry}}
-              </p>
-              <form action="/member/billing" method="post" class="col-sm-3 mb-3 text-sm-right">
-                <button type="submit" name="delete-card" class="btn btn-warning">Delete</button>
-              </form>
-            </div>
-            {{else}}
-            <h4>Register credit card<img class="ml-3" style="height: 1.5rem" src="/mcvs_acc_hrz.svg"></h4>
-            <p class="alert alert-info">This form form allows the online payment service <a href="http://www.beanstream.com/home/">Beanstream</a> to create a payment profile, that we can use to process payments and recurring bills.  No credit card information is stored on or touches our server.<br>
-              Credit card registration will not incur a transaction or register you to become a Makerspace member, which must be done below.</p>
-            {{end}}
+          <div class="row px-2 px-sm-3">
+            <p class="col-sm-9 mb-2 mb-sm-3 text-muted">
+              <strong>Current card:</strong> {{.Number}}<br>
+              <strong>Expiry:</strong> {{.ExpiryMonth}}/20{{.ExpiryYear}}
+            </p>
+            <form action="/member/billing" method="post" class="col-sm-3 mb-3 text-sm-right">
+              <button type="submit" name="delete-card" class="btn btn-warning">Delete</button>
+            </form>
+          </div>
+  {{end}}
+{{end}}
             <form action="/member/billing" method="post" id="credit-card" class="px-2 px-sm-3">
               <div class="form-group row mb-2 mb-sm-3">
                 <label for="name" class="col-sm-4 col-form-label">Name</label>
                 <div class="col-sm-8">
-                  <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if not .Field.card_number}} autofocus{{end}}>
+                  <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if or (not .Member.Payment) (not .Member.Payment.Get_card)}} autofocus{{end}}>
                   <small class="form-control-feedback"></small>
                 </div>
               </div>
@@ -182,7 +185,7 @@
                             </div>
                             <script src="https://payform.beanstream.com/payfields/beanstream_payfields.js" data-submitForm="true"></script>
                             <button type="submit" class="btn btn-primary">
-                                {{if not .Field.card_number}}Register{{else}}Update{{end}}
+                                {{if or (not .Member.Payment) (not .Member.Payment.Get_card)}}Register{{else}}Update{{end}}
                             </button>
                         </form>
                 </section>
@@ -231,12 +234,12 @@
                         </fieldset>
                         {{if not .Member.Agreed_to_terms}}
                         <p class="alert alert-danger">You must agree to the <a href="/terms">Terms & Conditions</a>.</p>
-                        {{else if not .Field.card_number}}
+                        {{else if or (not .Member.Payment) (not .Member.Payment.Get_card)}}
                         <p class="alert alert-warning">You must register a credit card.</p>
                         {{end}}
                       <div class="d-inline-flex flex-row-reverse">
                         {{if not .Member.Active}}
-                        <button type="submit" name="register" class="ml-1 btn btn-primary"{{if or (not .Field.card_number) (not .Member.Agreed_to_terms)}} disabled{{end}}>Register</button>
+                        <button type="submit" name="register" class="ml-1 btn btn-primary"{{if or (or (not .Member.Payment) (not .Member.Payment.Get_card)) (not .Member.Agreed_to_terms)}} disabled{{end}}>Register</button>
                         {{end}}
                         <button type="submit" name="update" class="btn btn-secondary">Update</button>
                       </div>

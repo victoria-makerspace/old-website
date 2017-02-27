@@ -1,3 +1,5 @@
+{{$this_member := .Member}}
+{{$members := .Members}}
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
@@ -15,37 +17,37 @@
               </tr>
             </thead>
             <tbody>
-              {{$username := .Member.Username}}
-              {{range .Field.wall_storage}}
+{{range .Data.wall_storage}}
               <tr{{if not .Available}}
                   class="text-muted"
                 {{else if .Invoice}}
-                  {{if eq .Invoice.Username $username}}
+                  {{if eq .Invoice.Member $this_member.Id}}
                   class="table-success"
                 {{- end}}{{end}}>
                 <th scope="row">{{.Number}}</th>
-                {{- with .Invoice -}}
+  {{- with .Invoice -}}
+    {{$member := $members.Get_member_by_id .Member}}
                 <td>
-                  <a href="/members/{{.Username}}">@{{.Username}}</a>
+                  <a href="/members/{{$member.Username}}">@{{$member.Username}}</a>
                 </td>
-                {{else}}
+  {{else}}
                 <td>-</td>
-                {{- end}}
+  {{- end}}
                 <td>{{.Size}}'</td>
                 <td>{{if .Available}}${{.Price | printf "%.2f"}}{{else}}-{{end}}</td>
                 <td>
-                  {{if not .Available}}
+  {{if not .Available}}
                   <small>Unavailable</small>
-                  {{else if not .Invoice}}
+  {{else if not .Invoice}}
                   <button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#storage-available-wall">Available</button>
-                  {{else if eq .Username $username}}
+  {{else if eq $this_member.Id .Member}}
                   <button type="button" class="btn btn-sm btn-warning" data-toggle="collapse" data-target="#storage-cancel-wall">Cancel</button>
-                  {{else}}
+  {{else}}
                   <button type="button" class="btn btn-sm btn-outline-secondary" data-target="#storage-waitlist-wall">Waitlist</button>
-                  {{end -}}
+  {{end -}}
                 </td>
               </tr>
-              {{end}}
+{{end}}
             </tbody>
           </table>
           <div class="row">
@@ -61,20 +63,20 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {{$username := .Member.Username}}
-                  {{range .Field.hall_lockers}}
+                  {{range .Data.hall_lockers}}
                   <tr{{if not .Available}}
                       class="text-muted"
                     {{else if .Invoice}}
-                      {{if eq .Invoice.Username $username}}
+                      {{if eq .Invoice.Member $this_member.Id}}
                       class="table-success"
                     {{- end}}{{end}}>
                     <th scope="row">{{.Number}}</th>
-                    {{- with .Invoice -}}
+  {{- with .Invoice -}}
+    {{$member := $members.Get_member_by_id .Member}}
                     <td>
-                      <a href="/members/{{.Username}}">@{{.Username}}</a>
+                      <a href="/members/{{$member.Username}}">@{{$member.Username}}</a>
                     </td>
-                    {{else}}
+  {{else}}
                     <td>-</td>
                     {{- end}}
                     <td>
@@ -82,7 +84,7 @@
                       <small>Unavailable</small>
                       {{else if not .Invoice}}
                       <button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#storage-available-locker">Available</button>
-                      {{else if eq .Username $username}}
+                      {{else if eq .Member $this_member.Id}}
                       <button type="button" class="btn btn-sm btn-warning" data-toggle="collapse" data-target="#storage-cancel-hall-locker">Cancel</button>
                       {{else}}
                       <button type="button" class="btn btn-sm btn-outline-secondary" data-target="#storage-waitlist-hall-locker">Waitlist</button>
@@ -106,20 +108,20 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {{$username := .Member.Username}}
-                  {{range .Field.bathroom_lockers}}
+                  {{range .Data.bathroom_lockers}}
                   <tr{{if not .Available}}
                       class="text-muted"
                     {{else if .Invoice}}
-                      {{if eq .Invoice.Username $username}}
+                      {{if eq .Invoice.Member $this_member.Id}}
                       class="table-success"
                     {{- end}}{{end}}>
                     <th scope="row">{{.Number}}</th>
-                    {{- with .Invoice -}}
+  {{- with .Invoice -}}
+    {{$member := $members.Get_member_by_id .Member}}
                     <td>
-                      <a href="/members/{{.Username}}">@{{.Username}}</a>
+                      <a href="/members/{{$member.Username}}">@{{$member.Username}}</a>
                     </td>
-                    {{else}}
+  {{else}}
                     <td>-</td>
                     {{- end}}
                     <td>
@@ -127,7 +129,7 @@
                       <small>Unavailable</small>
                       {{else if not .Invoice}}
                       <button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#storage-available-bathroom-locker">Available</button>
-                      {{else if eq .Username $username}}
+                      {{else if eq .Member $this_member.Id}}
                       <button type="button" class="btn btn-sm btn-warning" data-toggle="collapse" data-target="#storage-cancel-bathroom-locker">Cancel</button>
                       {{else}}
                       <button type="button" class="btn btn-sm btn-outline-secondary" data-target="#storage-waitlist-bathroom-locker">Waitlist</button>
