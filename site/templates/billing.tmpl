@@ -55,7 +55,7 @@
                 <tr>
                   <th>Date</th>
                   <th>Amount</th>
-                  <th>Name</th>
+                  <th>Description</th>
                   <th>Card</th>
                 </tr>
               </thead>
@@ -63,8 +63,8 @@
     {{range .}}
                 <tr{{if not .Approved}} title="This transaction was not approved." class="table-danger"{{end}}>
                   <td>{{.Time.Format "2006-01-02"}}</td>
-                  <td>${{.Amount | printf "%.2f"}}</td>
-                  <td>{{.Comment}}</td>
+                  <td>${{.Invoice.Amount | printf "%.2f"}}</td>
+                  <td>{{.Invoice.Description}}</td>
                   <td><small class="text-muted">x-{{.Card}}</small></td>
                   </td>
                 </tr>
@@ -143,37 +143,41 @@
         <section>
 {{if or (not .Member.Payment) (not .Member.Payment.Get_card)}}
           <h4>Register credit card<img class="ml-3" style="height: 1.5rem" src="/mcvs_acc_hrz.svg"></h4>
-          <p class="alert alert-info">This form form allows the online payment service <a href="http://www.beanstream.com/home/">Beanstream</a> to create a payment profile, that we can use to process payments and recurring bills.  No credit card information is stored on or touches our server.<br>
+          <p class="mx-2 mx-sm-3 alert alert-info">This form form allows the online payment service <a href="http://www.beanstream.com/home/">Beanstream</a> to create a payment profile, that we can use to process payments and recurring bills.  No credit card information is stored on or touches our server.<br>
             Credit card registration will not incur a transaction or register you to become a Makerspace member, which must be done below.
           </p>
 {{else}}
   {{with .Member.Payment.Get_card}}
-          <h4>Update credit card</h4>
-          <div class="row px-2 px-sm-3">
-            <p class="col-sm-9 mb-2 mb-sm-3 text-muted">
-              <strong>Current card:</strong> {{.Number}}<br>
-              <strong>Expiry:</strong> {{.ExpiryMonth}}/20{{.ExpiryYear}}
-            </p>
-            <form action="/member/billing" method="post" class="col-sm-3 mb-3 text-sm-right">
+          <h4>Update credit card<img class="ml-3" style="height: 1.5rem" src="/mcvs_acc_hrz.svg"></h4>
+          <div class="d-flex flex-wrap flex-sm-nowrap justify-content-between px-2 px-sm-3">
+            <dl class="row no-gutters mb-0 mb-sm-3 text-muted">
+              <dt class="col-4">Cardholder:</dt>
+              <dd class="col-8 mb-0 initialism">{{.Name}}</dd>
+              <dt class="col-4">Number:</dt>
+              <dd class="col-8 mb-0">{{.Number}}</dd>
+              <dt class="col-4">Expiry:</dt>
+              <dd class="col-8">{{.ExpiryMonth}}/20{{.ExpiryYear}}</dd>
+            </dl>
+            <form action="/member/billing" method="post" class="mb-3">
               <button type="submit" name="delete-card" class="btn btn-warning">Delete</button>
             </form>
           </div>
   {{end}}
 {{end}}
-            <form action="/member/billing" method="post" id="credit-card" class="px-2 px-sm-3">
-              <div class="form-group row mb-2 mb-sm-3">
-                <label for="name" class="col-sm-4 col-form-label">Name</label>
-                <div class="col-sm-8">
-                  <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if or (not .Member.Payment) (not .Member.Payment.Get_card)}} autofocus{{end}}>
-                  <small class="form-control-feedback"></small>
-                </div>
-              </div>
-              <div class="form-group row mb-2 mb-sm-3">
-                <label for="ccNumber" class="col-sm-4 col-form-label">Card number</label>
+          <form action="/member/billing" method="post" id="credit-card" class="px-2 px-sm-3">
+            <div class="form-group row mb-2 mb-sm-3">
+              <label for="name" class="col-sm-4 col-form-label">Name</label>
               <div class="col-sm-8">
-                <div class="input-group" data-beanstream-target="ccNumber_input">
-                  <span class="input-group-addon glyphicons glyphicons-credit-card"></span>
-                </div>
+                <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if or (not .Member.Payment) (not .Member.Payment.Get_card)}} autofocus{{end}}>
+                <small class="form-control-feedback"></small>
+              </div>
+            </div>
+            <div class="form-group row mb-2 mb-sm-3">
+              <label for="ccNumber" class="col-sm-4 col-form-label">Card number</label>
+            <div class="col-sm-8">
+              <div class="input-group" data-beanstream-target="ccNumber_input">
+                <span class="input-group-addon glyphicons glyphicons-credit-card"></span>
+              </div>
                                     <small data-beanstream-target="ccNumber_error" class="form-control-feedback"></small>
                                 </div>
                             </div>
@@ -204,10 +208,10 @@
                 <hr>
                 <section>
                     <h4>Membership dues</h4>
-                    {{if not .Member.Active}}
-                    <p class="alert alert-info">On initial registration, your membership fee gets prorated for the remainder of the current month, and processed immediately.  Following your first payment, successive membership payments will be processed on the 1st of every month.</p>
-                    {{end}}
                     <form id="billing" class="px-2 px-sm-3" method="post" action="/member/billing">
+                      {{if not .Member.Active}}
+                      <p class="alert alert-info">On initial registration, your membership fee gets prorated for the remainder of the current month, and processed immediately.  Following your first payment, successive membership payments will be processed on the 1st of every month.</p>
+                      {{end}}
                         <fieldset class="form-group mb-2 mb-sm-3">
                             <label class="custom-control custom-radio">
                                 <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not .Member.Student}} checked{{end}}>

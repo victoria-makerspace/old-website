@@ -15,10 +15,9 @@ func (p *Profile) New_membership(is_student bool) *Invoice {
 	}
 	inv := p.New_recurring_bill(fee, p.member_id)
 	prorated := prorate_month(fee.Amount)
-	if txn := p.do_transaction(prorated, fee.Description+" (prorated)", inv); txn == nil {
-		//TODO: missed payment, embed error
-	} else if !txn.Approved {
-		//TODO: missed payment, embed error
+	first_inv := p.New_invoice(p.member_id, prorated, fee.Description+" (prorated)", fee)
+	if txn := p.do_transaction(first_inv); txn == nil || !txn.Approved {
+		//embed error
 	}
 	return inv
 }
@@ -31,7 +30,8 @@ func (p *Profile) Get_membership() *Invoice {
 			"JOIN fee f "+
 			"ON f.id = i.fee "+
 			"WHERE i.member = $1 "+
-			"	AND f.category = 'membership'",
+			"	AND f.category = 'membership'"+
+			"	AND (i.end_date > now() OR i.end_date IS NULL)",
 		p.member_id).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil

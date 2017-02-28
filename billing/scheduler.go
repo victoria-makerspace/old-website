@@ -18,7 +18,7 @@ func (b *Billing) payment_scheduler() {
 			log.Printf("(%d) Starting payment scheduler (%s): %d txns\n",
 				txn_log, interval, txn_todo)
 			defer func() {
-				b.log_error(txn_log, txn_attempts, txn_approved, sched_error)
+				b.log_finished(txn_log, txn_attempts, txn_approved, sched_error)
 				err := ""
 				if sched_error != "" {
 					err = "\n\tError: " + sched_error
@@ -34,9 +34,8 @@ func (b *Billing) payment_scheduler() {
 			for _, p := range profiles {
 				for _, inv := range p.Invoices {
 					txn_attempts += 1
-					txn := p.do_recurring_txn(inv)
-					txn.log_recurring_txn(txn_log)
-					if txn.Approved {
+					txn := p.do_recurring_txn(inv, txn_log)
+					if txn != nil && txn.Approved {
 						txn_approved += 1
 					}
 				}
@@ -62,17 +61,15 @@ func (b *Billing) log_scheduled(interval string, txn_todo int) int {
 	return log_id
 }
 
-func (b *Billing) log_error(log_id, txn_attempts, txn_approved int, e string) {
-	if e == "" {
-		return
-	}
+func (b *Billing) log_finished(log_id, txn_attempts, txn_approved int, e string) {
 	if _, err := b.db.Exec(
 		"UPDATE txn_scheduler_log "+
-			"SET "+
-			"	txn_attempts = $2, "+
-			"	txn_approved = $3, "+
-			"	error = $4, "+
-			"WHERE id = $1",
+		"SET "+
+		"	end_time = now(), "+
+		"	txn_attempts = $2, "+
+		"	txn_approved = $3, "+
+		"	error = $4 "+
+		"WHERE id = $1",
 		log_id, txn_attempts, txn_approved, e); err != nil {
 		log.Panic(err)
 	}
@@ -122,10 +119,10 @@ func (b *Billing) count_recurring(interval string) int {
 func (b *Billing) has_run(interval string) bool {
 	var has_run bool
 	if err := b.db.QueryRow(
-		"SELECT NOT age(time) > $1 "+
+		"SELECT NOT age(start_time) > $1 "+
 			"FROM txn_scheduler_log "+
 			"WHERE interval = $1 "+
-			"ORDER BY time DESC "+
+			"ORDER BY start_time DESC "+
 			"LIMIT 1", interval).Scan(&has_run); err != nil {
 		if err == sql.ErrNoRows {
 			return false

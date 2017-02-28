@@ -93,13 +93,14 @@ CREATE TABLE invoice (
 );
 CREATE TABLE txn_scheduler_log (
 	id serial PRIMARY KEY,
-	time timestamp(0) NOT NULL DEFAULT now(),
+	start_time timestamp(0) NOT NULL DEFAULT now(),
+	end_time timestamp(0),
 	interval interval NOT NULL,
 	error text,
 	txn_todo integer NOT NULL,
 	txn_attempts integer,
 	txn_approved integer,
-	UNIQUE (time, interval)
+	UNIQUE (start_time, interval)
 );
 CREATE TABLE transaction (
 	-- Beanstream value
@@ -112,15 +113,16 @@ CREATE TABLE transaction (
 	comment text,
 	card character(4),
 	ip_address text,
-	invoice integer REFERENCES invoice,
+	invoice integer NOT NULL REFERENCES invoice,
 	logged integer REFERENCES txn_scheduler_log,
 	CHECK (CASE WHEN amount IS NULL THEN invoice IS NOT NULL END)
 );
 CREATE TABLE missed_payment (
 	invoice integer NOT NULL REFERENCES invoice,
-	date date NOT NULL DEFAULT now(),
+	time timestamp(0) NOT NULL DEFAULT now(),
 	transaction integer REFERENCES transaction,
-	logged integer REFERENCES txn_scheduler_log
+	logged integer REFERENCES txn_scheduler_log,
+	PRIMARY KEY (invoice, time)
 );
 -- TODO: multiple members sharing storage
 CREATE TABLE storage (

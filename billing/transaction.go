@@ -17,53 +17,39 @@ type Transaction struct {
 	*Profile
 	Approved   bool
 	Time       time.Time
-	Amount     float64
-	Comment    string
 	Card       string // Last 4 digits
 	Ip_address string //TODO
-	Invoice    *Invoice
+	*Invoice
 	order_id   string
 }
 
-func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoice) *Transaction {
-	if amount < minimum_txn_amount {
+func (p *Profile) do_transaction(invoice *Invoice) *Transaction {
+	if invoice.Amount < minimum_txn_amount {
 		log.Printf("Transaction for member %d below minimum amount (%f < %f)",
-			p.member_id, amount, minimum_txn_amount)
+			p.member_id, invoice.Amount, minimum_txn_amount)
 		return nil
 	}
 	if p.Error != None {
-		//TODO: missed payment
+		p.do_missed_payment(invoice, nil)
 		return nil
 	}
 	order_id := fmt.Sprintf("%d-%d", rand.Intn(1000000), p.member_id)
 	txn := &Transaction{
 		Profile:  p,
 		Time:     time.Now(),
-		Amount:   amount,
-		Comment:  comment,
 		Invoice:  invoice,
 		order_id: order_id}
 	req := beanstream.PaymentRequest{
 		PaymentMethod: "payment_profile",
 		OrderNumber:   order_id,
-		Amount:        float32(amount),
+		Amount:        float32(invoice.Amount),
 		Profile:       beanstream.ProfilePayment{p.bs_id, 1, true},
-		Comment:       comment}
+		Comment:       invoice.Description}
 	rsp, err := p.payment_api.MakePayment(req)
 	if err != nil {
-		//TODO: log missed payment
+		p.do_missed_payment(invoice, nil)
 		log.Println(err)
 		return nil
-	}
-	if !rsp.IsApproved() {
-		//TODO: log missed payment
-		//TODO: make sure unapproved == invalid card
-		if p.Error != None {
-			p.set_error(Invalid_card)
-		}
-		log.Println("Payment of %.2f by member %d failed", amount, p.member_id)
-	} else {
-		p.clear_error()
 	}
 	txn.Id, _ = strconv.Atoi(rsp.ID)
 	txn.Approved = rsp.IsApproved()
@@ -76,15 +62,30 @@ func (p *Profile) do_transaction(amount float64, comment string, invoice *Invoic
 	if _, err := p.db.Exec("INSERT INTO transaction "+
 		"(id, profile, approved, time, amount, order_id, comment, card, "+
 		"invoice) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-		txn.Id, p.member_id, txn.Approved, txn.Time, txn.Amount,
-		txn.order_id, txn.Comment, txn.Card, txn.Invoice.Id); err != nil {
+		txn.Id, p.member_id, txn.Approved, txn.Time, invoice.Amount,
+		txn.order_id, invoice.Description, txn.Card, txn.Invoice.Id);
+		err != nil {
 		log.Panic(err)
+	}
+	if !rsp.IsApproved() {
+		p.do_missed_payment(invoice, txn)
+		//TODO: make sure unapproved == invalid card
+		p.set_error(Invalid_card)
+	} else {
+		p.clear_error()
 	}
 	return txn
 }
 
-func (p *Profile) do_recurring_txn(i *Invoice) *Transaction {
-	return p.do_transaction(i.Amount, i.Description, i)
+func (p *Profile) do_recurring_txn(i *Invoice, log_id int) *Transaction {
+	t := p.do_transaction(i)
+	if t == nil {
+		mp := p.get_missed_payment(i)
+		p.log_missed_payment(mp, log_id)
+		return nil
+	}
+	t.log_recurring_txn(log_id)
+	return t
 }
 
 func (t *Transaction) log_recurring_txn(log_id int) {
@@ -136,8 +137,8 @@ func (t *Transaction) log_recurring_txn(log_id int) {
 }*/
 
 func (p *Profile) get_transactions() {
-	rows, err := p.db.Query("SELECT id, approved, time, amount, "+
-		"order_id, comment, card, ip_address, invoice FROM transaction WHERE "+
+	rows, err := p.db.Query("SELECT id, approved, time, "+
+		"order_id, card, ip_address, invoice FROM transaction WHERE "+
 		"profile = $1 ORDER BY time DESC", p.member_id)
 	defer rows.Close()
 	if err != nil {
@@ -148,19 +149,16 @@ func (p *Profile) get_transactions() {
 	}
 	for rows.Next() {
 		txn := &Transaction{Profile: p}
-		var order_id, comment, card, ip_address sql.NullString
-		var invoice_id sql.NullInt64
-		if err = rows.Scan(&txn.Id, &txn.Approved, &txn.Time, &txn.Amount,
-			&order_id, &comment, &card, &ip_address, &invoice_id); err != nil {
+		var order_id, card, ip_address sql.NullString
+		var invoice_id int
+		if err = rows.Scan(&txn.Id, &txn.Approved, &txn.Time, &order_id, &card,
+			&ip_address, &invoice_id); err != nil {
 			log.Panic(err)
 		}
 		txn.order_id = order_id.String
-		txn.Comment = comment.String
 		txn.Card = card.String
 		txn.Ip_address = ip_address.String
-		if invoice_id.Valid {
-			txn.Invoice = p.Get_bill(int(invoice_id.Int64))
-		}
+		txn.Invoice = p.Get_bill(invoice_id)
 		p.Transactions = append(p.Transactions, txn)
 	}
 }

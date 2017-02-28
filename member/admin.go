@@ -3,6 +3,7 @@ package member
 import (
 	"database/sql"
 	"log"
+	"github.com/lib/pq"
 )
 
 type Admin struct {
@@ -10,16 +11,16 @@ type Admin struct {
 }
 
 func (m *Member) get_admin() {
-	admin := &Admin{}
+	var privileges pq.StringArray
 	if err := m.QueryRow(
 		"SELECT privileges "+
 			"FROM administrator "+
 			"WHERE member = $1", m.Id).
-		Scan(&admin.privileges); err != nil {
+		Scan(&privileges); err != nil {
 		if err != sql.ErrNoRows {
 			log.Panic(err)
 		}
 		return
 	}
-	m.Admin = admin
+	m.Admin = &Admin{privileges}
 }

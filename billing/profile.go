@@ -52,10 +52,6 @@ func (b *Billing) Get_profile(member_id int) *Profile {
 		}
 		log.Panic(err)
 	}
-	if !profile_id.Valid {
-		p.Error = No_profile
-		return p
-	}
 	p.bs_id = profile_id.String
 	p.Error = Error(invalid.Int64)
 	/////TODO: p.Recurring_bills() if len(Invoices) = 0, get_recurring...etc
