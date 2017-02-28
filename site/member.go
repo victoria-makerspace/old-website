@@ -30,9 +30,9 @@ func storage_handler(p *page) {
 	if !p.must_authenticate() {
 		return
 	}
-	p.Data["wall_storage"] = p.Storage[p.Find_fee("storage", "wall")]
-	p.Data["hall_lockers"] = p.Storage[p.Find_fee("storage", "hall-locker")]
-	p.Data["bathroom_lockers"] = p.Storage[p.Find_fee("storage", "bathroom-locker")]
+	p.Data["wall_storage"] = p.Get_storage(p.Find_fee("storage", "wall"))
+	p.Data["hall_lockers"] = p.Get_storage(p.Find_fee("storage", "hall-locker"))
+	p.Data["bathroom_lockers"] = p.Get_storage(p.Find_fee("storage", "bathroom-locker"))
 }
 
 //preferences

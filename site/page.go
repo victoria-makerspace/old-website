@@ -42,4 +42,5 @@ func (p *page) http_error(code int) {
 	p.Status = code
 	p.Data["error"] = http.StatusText(code)
 	p.redirect = ""
+	p.authenticate()
 }

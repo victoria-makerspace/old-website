@@ -11,7 +11,6 @@ import (
 
 type Billing struct {
 	Fees map[int]*Fee
-	Storage
 	db          *sql.DB
 	config      beanstream.Config
 	gateway     beanstream.Gateway
@@ -35,7 +34,6 @@ func Billing_new(merchant_id, payments_api_key, profiles_api_key, reports_api_ke
 	b.profile_api = b.gateway.Profiles()
 	b.report_api = b.gateway.Reports()
 	b.get_fees()
-	b.get_storage()
 	go b.payment_scheduler()
 	return b
 }
@@ -90,7 +88,7 @@ type Invoice struct {
 	Interval string
 }
 
-func (b *Billing) get_bill(id int) *Invoice {
+func (b *Billing) Get_bill(id int) *Invoice {
 	inv := &Invoice{Id: id}
 	var (
 		end_date    pq.NullTime
@@ -288,6 +286,15 @@ func (p *Profile) Cancel_recurring_bill(i *Invoice) {
 	if _, err := p.db.Exec("UPDATE invoice SET end_date = now() WHERE "+
 		"id = $1 AND (end_date > now() OR end_date IS NULL)", i.Id); err != nil {
 		log.Panic(err)
+	}
+	if i.Fee != nil && i.Fee.Category == "storage" {
+		if _, err := p.db.Exec(
+			"UPDATE storage "+
+			"SET invoice = NULL "+
+			"WHERE invoice = $1", i.Id);
+			err != nil {
+			log.Panic(err)
+		}
 	}
 	*i = Invoice{}
 }

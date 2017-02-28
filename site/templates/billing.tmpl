@@ -74,8 +74,20 @@
   {{else}}
             <p>You have no recent transactions.</p>
   {{end}}
-  {{with .Invoices}}
-            <h5>Monthly payments</h5>
+  {{if .Invoices}}
+            <h5 id="Payments">Monthly payments</h5>
+    {{with .Error}}
+            <p class="alert alert-danger">
+      {{if or (eq . 1) (eq . 2)}}
+              You do not currently have any credit card information on file.
+      {{else if eq . 3}}
+              Your credit card is invalid.
+      {{else if eq . 4}}
+              Your credit card is expired.
+      {{end}}
+              The following payments will fail.  Please update your credit card information.
+            </p>
+    {{end}}
             <form action="/member/billing" method="post" id="monthly">
             <table class="table table-sm">
               <thead>
@@ -87,7 +99,7 @@
                 </tr>
               </thead>
               <tbody>
-    {{range .}}
+    {{range .Invoices}}
                 <tr>  
                   <td>{{.Description}}</td>
                   <td>${{.Amount | printf "%.2f"}}</td>

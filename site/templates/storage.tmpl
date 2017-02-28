@@ -1,5 +1,4 @@
-{{$this_member := .Member}}
-{{$members := .Members}}
+{{$member := .Member}}
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
@@ -20,15 +19,14 @@
 {{range .Data.wall_storage}}
               <tr{{if not .Available}}
                   class="text-muted"
-                {{else if .Invoice}}
-                  {{if eq .Invoice.Member $this_member.Id}}
+                {{else if .Member}}
+                  {{if eq .Member.Id $member.Id}}
                   class="table-success"
                 {{- end}}{{end}}>
                 <th scope="row">{{.Number}}</th>
-  {{- with .Invoice -}}
-    {{$member := $members.Get_member_by_id .Member}}
+  {{- with .Member -}}
                 <td>
-                  <a href="/members/{{$member.Username}}">@{{$member.Username}}</a>
+                  <a href="/members/{{.Username}}">@{{.Username}}</a>
                 </td>
   {{else}}
                 <td>-</td>
@@ -38,10 +36,10 @@
                 <td>
   {{if not .Available}}
                   <small>Unavailable</small>
-  {{else if not .Invoice}}
+  {{else if not .Member}}
                   <button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#storage-available-wall">Available</button>
-  {{else if eq $this_member.Id .Member}}
-                  <button type="button" class="btn btn-sm btn-warning" data-toggle="collapse" data-target="#storage-cancel-wall">Cancel</button>
+  {{else if eq $member.Id .Member.Id}}
+                  <a href="/member/billing#Payments" class="btn btn-sm btn-warning">Cancel</a>
   {{else}}
                   <button type="button" class="btn btn-sm btn-outline-secondary" data-target="#storage-waitlist-wall">Waitlist</button>
   {{end -}}
@@ -66,15 +64,14 @@
                   {{range .Data.hall_lockers}}
                   <tr{{if not .Available}}
                       class="text-muted"
-                    {{else if .Invoice}}
-                      {{if eq .Invoice.Member $this_member.Id}}
+                    {{else if .Member}}
+                      {{if eq .Member.Id $member.Id}}
                       class="table-success"
                     {{- end}}{{end}}>
                     <th scope="row">{{.Number}}</th>
-  {{- with .Invoice -}}
-    {{$member := $members.Get_member_by_id .Member}}
+  {{- with .Member -}}
                     <td>
-                      <a href="/members/{{$member.Username}}">@{{$member.Username}}</a>
+                      <a href="/members/{{.Username}}">@{{.Username}}</a>
                     </td>
   {{else}}
                     <td>-</td>
@@ -82,10 +79,10 @@
                     <td>
                       {{if not .Available}}
                       <small>Unavailable</small>
-                      {{else if not .Invoice}}
+                      {{else if not .Member}}
                       <button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#storage-available-locker">Available</button>
-                      {{else if eq .Member $this_member.Id}}
-                      <button type="button" class="btn btn-sm btn-warning" data-toggle="collapse" data-target="#storage-cancel-hall-locker">Cancel</button>
+                      {{else if eq .Member.Id $member.Id}}
+                      <a href="/member/billing#Payments" class="btn btn-sm btn-warning">Cancel</a>
                       {{else}}
                       <button type="button" class="btn btn-sm btn-outline-secondary" data-target="#storage-waitlist-hall-locker">Waitlist</button>
                       {{end -}}
@@ -111,15 +108,14 @@
                   {{range .Data.bathroom_lockers}}
                   <tr{{if not .Available}}
                       class="text-muted"
-                    {{else if .Invoice}}
-                      {{if eq .Invoice.Member $this_member.Id}}
+                    {{else if .Member}}
+                      {{if eq .Member.Id $member.Id}}
                       class="table-success"
                     {{- end}}{{end}}>
                     <th scope="row">{{.Number}}</th>
-  {{- with .Invoice -}}
-    {{$member := $members.Get_member_by_id .Member}}
+  {{- with .Member -}}
                     <td>
-                      <a href="/members/{{$member.Username}}">@{{$member.Username}}</a>
+                      <a href="/members/{{.Username}}">@{{.Username}}</a>
                     </td>
   {{else}}
                     <td>-</td>
@@ -127,10 +123,10 @@
                     <td>
                       {{if not .Available}}
                       <small>Unavailable</small>
-                      {{else if not .Invoice}}
+                      {{else if not .Member}}
                       <button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#storage-available-bathroom-locker">Available</button>
-                      {{else if eq .Member $this_member.Id}}
-                      <button type="button" class="btn btn-sm btn-warning" data-toggle="collapse" data-target="#storage-cancel-bathroom-locker">Cancel</button>
+                      {{else if eq .Member.Id $member.Id}}
+                      <a href="/member/billing#Payments" class="btn btn-sm btn-warning">Cancel</a>
                       {{else}}
                       <button type="button" class="btn btn-sm btn-outline-secondary" data-target="#storage-waitlist-bathroom-locker">Waitlist</button>
                       {{end -}}

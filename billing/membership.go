@@ -38,7 +38,7 @@ func (p *Profile) Get_membership() *Invoice {
 		}
 		log.Panic(err)
 	}
-	return p.Billing.get_bill(id)
+	return p.Billing.Get_bill(id)
 }
 
 //TODO: set end_date and regular membership invoice to start after
