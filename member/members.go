@@ -38,13 +38,21 @@ func key(password, salt string) string {
 	return hex.EncodeToString(key)
 }
 
-//	username_rexp := regexp.MustCompile("^[\\pL\\pN\\pM\\pP]+$")
-var username_rexp = regexp.MustCompile(``)
+var username_rexp = regexp.MustCompile(`^[\pL\pN_]+$`)
 var name_rexp = regexp.MustCompile(`^(?:[\pL\pN\pM\pP]+ ?)+$`)
 
 func (ms *Members) Check_username_availability(username string) (available bool, err string) {
 	if username == "" {
 		return false, "Username cannot be blank"
+	}
+	if len(username) < 3 {
+		return false, "Username must be at least 3 characters"
+	}
+	if len(username) > 20 {
+		return false, "Username must be no more than 20 characters"
+	}
+	if !username_rexp.MatchString(username) {
+		return false, "Username must only include numbers, letters and underscores"
 	}
 	var count int
 	if err := ms.QueryRow(
@@ -76,24 +84,34 @@ func (ms *Members) Check_email_availability(email string) (available bool, err s
 	return false, "E-mail already in use"
 }
 
-// New creates a new user, but will panic if the username already exists.
-//	Will create members with invalid usernames, so call Check_username() first.
-//	Returns nil if the name is invalid.
-func (ms *Members) New_member(username, name, email, password string) *Member {
-	//TODO: Ideally, all members are created through the join page when the talk
-	//	server is running, as it queries discourse's check_username.json api to
-	//	ensure usernames are compliant with discourse.
-	if !name_rexp.MatchString(name) || len(name) > 100 {
-		return nil
-	}
+// New creates a new user, returns nil and a set of errors on invalid input.
+func (ms *Members) New_member(username, name, email, password string) (m *Member, err map[string]string) {
 	salt := Rand256()
-	m := &Member{
+	m = &Member{
 		Username:      username,
 		Name:          name,
 		Email:         email,
 		password_key:  key(password, salt),
 		password_salt: salt,
 		Members:       ms}
+	if !name_rexp.MatchString(name) {
+		err["name_error"] = "Invalid characters in name"
+		m = nil
+	} else if len(name) > 100 {
+		err["name_error"] = "Name must be no more than 100 characters"
+		m = nil
+	}
+	if available, e := ms.Check_username_availability(username); !available {
+		err["username_error"] = e
+		m = nil
+	}
+	if available, e := ms.Check_email_availability(email); !available {
+		err["email_error"] = e
+		m = nil
+	}
+	if m == nil {
+		return
+	}
 	if err := m.QueryRow(
 		"INSERT INTO member ("+
 			"	username,"+
@@ -104,10 +122,11 @@ func (ms *Members) New_member(username, name, email, password string) *Member {
 			") "+
 			"VALUES ($1, $2, $3, $4, $5) "+
 			"RETURNING id, registered",
-		username, name, m.password_key, salt, email).Scan(&m.Id, &m.Registered); err != nil {
+		username, name, m.password_key, salt, email).Scan(&m.Id, &m.Registered);
+		err != nil {
 		log.Panic(err)
 	}
-	return m
+	return m, nil
 }
 
 func (ms *Members) Get_all_members() []*Member {

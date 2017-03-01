@@ -15,7 +15,7 @@ func (api *Talk_api) Sync(external_id int, username, email, name string) {
 	values.Set("username", username)
 	values.Set("email", email)
 	values.Set("name", name)
-	api.post("/admin/users/sync_sso", values)
+	api.post("/admin/users/sync_sso.json", values)
 }
 
 func (api *Talk_api) Parse_sso_req(q url.Values) (payload url.Values) {
@@ -43,5 +43,5 @@ func (api *Talk_api) Encode_sso_rsp(q url.Values) (payload, sig string) {
 }
 
 func (t *Talk_user) Logout() {
-	t.post("/admin/users/"+fmt.Sprint(t.id)+"/log_out", &url.Values{})
+	t.post("/admin/users/"+fmt.Sprint(t.id)+"/log_out", nil)
 }

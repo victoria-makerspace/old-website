@@ -14,10 +14,15 @@ func (p *Profile) New_membership(is_student bool) *Invoice {
 		fee = p.Find_fee("membership", "regular")
 	}
 	inv := p.New_recurring_bill(fee, p.member_id)
-	prorated := prorate_month(fee.Amount)
-	first_inv := p.New_invoice(p.member_id, prorated, fee.Description+" (prorated)", fee)
-	if txn := p.do_transaction(first_inv); txn == nil || !txn.Approved {
-		//embed error
+	if prorated := prorate_month(fee.Amount); prorated != 0 {
+		description := fee.Description
+		if prorated != fee.Amount {
+			description += " (prorated)"
+		}
+		first_inv := p.New_invoice(p.member_id, prorated, description, fee)
+		if txn := p.do_transaction(first_inv); txn == nil || !txn.Approved {
+			//embed error
+		}
 	}
 	return inv
 }

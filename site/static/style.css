@@ -1,4 +1,3 @@
-@import url('fonts/fonts.css');
 
 body {
     position: relative;
@@ -227,6 +226,10 @@ button.nav-link {
     left: 50%;
     transform: translateX(-50%);
     height: 22rem;
+}
+#shop-features {
+    padding-top: 3.5rem;
+    margin-top: -3.5rem;
 }
 .shop-features {
     padding-bottom: 1rem;
