@@ -1,7 +1,7 @@
 package site
 
 import (
-	//"log"
+	"log"
 )
 
 func init() {
@@ -32,6 +32,5 @@ func join_handler(p *page) {
 		return
 	}
 	//TODO: only sign-in and create talk user once email has been verified
-	m.Sync(m.Id, m.Username, m.Email, m.Name)
-	p.new_session(m, true)
+	log.Println(m.Sync(m.Id, m.Username, m.Email, m.Name))
 }

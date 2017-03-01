@@ -42,18 +42,19 @@ func (api *Talk_api) get_json(path string, query ...string) interface{} {
 	}
 	rsp, err := http.Get(url)
 	if err != nil {
-		log.Printf("Talk access error (%s):\n\t%q\n", path, err)
+		log.Printf("Talk access error (GET %s):\n\t%q\n", path, err)
 		return nil
 	}
 	defer rsp.Body.Close()
 	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
-		log.Printf("Talk JSON decoding error (%s):\n\t%q\n", path, err)
+		log.Printf("Talk JSON decoding error (GET %s):\n\t%q\n", path, err)
 		return nil
 	}
 	return data
 }
 
-func (api *Talk_api) post(path string, form url.Values) {
+func (api *Talk_api) post_json(path string, form url.Values) interface{} {
+	var data interface{}
 	if form == nil {
 		form = url.Values{}
 	}
@@ -63,9 +64,14 @@ func (api *Talk_api) post(path string, form url.Values) {
 	}
 	rsp, err := http.PostForm(api.Url()+path, form)
 	if err != nil {
-		log.Println(err)
-		return
+		log.Printf("Talk error (POST %s):\n\t%q\n", path, err)
+		return nil
 	}
-	rsp.Body.Close()
+	defer rsp.Body.Close()
+	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
+		log.Printf("Talk JSON decoding error (POST %s):\n\t%q\n", path, err)
+		return nil
+	}
+	return data
 }
 

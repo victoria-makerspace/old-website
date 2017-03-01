@@ -119,6 +119,7 @@ func (m *Member) Talk_user() *talk.Talk_user {
 	if m.talk == nil {
 		m.talk = m.Talk_api.Get_user(m.Id)
 	}
+	m.Sync(m.Id, m.Username, m.Email, m.Name)
 	return m.talk
 }
 

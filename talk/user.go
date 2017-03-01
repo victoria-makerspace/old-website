@@ -36,17 +36,21 @@ type Talk_user struct {
 	*Talk_api
 }
 
+func (api *Talk_api) parse_user(external_id int, u map[string]interface{}) *Talk_user {
+	t := &Talk_user{external_id: external_id, Talk_api: api}
+	t.id = int(u["id"].(float64))
+	t.Username = u["username"].(string)
+	t.avatar_url = []byte(u["avatar_template"].(string))
+	t.Card_bg_url = api.Base_url + u["card_background"].(string)
+	t.Profile_bg_url = api.Base_url + u["profile_background"].(string)
+	return t
+}
+
 func (api *Talk_api) Get_user(id int) *Talk_user {
-	t := &Talk_user{external_id: id, Talk_api: api}
-	j := t.get_json("/users/by-external/"+fmt.Sprint(id)+".json", t.admin)
+	j := api.get_json("/users/by-external/"+fmt.Sprint(id)+".json", api.admin)
 	if j, ok := j.(map[string]interface{}); ok {
 		if u, ok := j["user"].(map[string]interface{}); ok {
-			t.id = int(u["id"].(float64))
-			t.Username = u["username"].(string)
-			t.avatar_url = []byte(u["avatar_template"].(string))
-			t.Card_bg_url = api.Base_url + u["card_background"].(string)
-			t.Profile_bg_url = api.Base_url + u["profile_background"].(string)
-			return t
+			return api.parse_user(id, u)
 		}
 	}
 	return nil

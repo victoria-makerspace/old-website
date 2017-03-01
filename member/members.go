@@ -86,6 +86,7 @@ func (ms *Members) Check_email_availability(email string) (available bool, err s
 
 // New creates a new user, returns nil and a set of errors on invalid input.
 func (ms *Members) New_member(username, name, email, password string) (m *Member, err map[string]string) {
+	err = make(map[string]string)
 	salt := Rand256()
 	m = &Member{
 		Username:      username,

@@ -9,13 +9,20 @@ import (
 	"net/url"
 )
 
-func (api *Talk_api) Sync(external_id int, username, email, name string) {
+func (api *Talk_api) Sync(external_id int, username, email, name string) *Talk_user {
 	values := url.Values{}
 	values.Set("external_id", fmt.Sprint(external_id))
 	values.Set("username", username)
 	values.Set("email", email)
 	values.Set("name", name)
-	api.post("/admin/users/sync_sso.json", values)
+	payload, sig := api.Encode_sso_rsp(values)
+	values = url.Values{}
+	values.Set("sso", payload)
+	values.Set("sig", sig)
+	if u, ok := api.post_json("/admin/users/sync_sso", values).(map[string]interface{}); ok {
+		return api.parse_user(external_id, u)
+	}
+	return nil
 }
 
 func (api *Talk_api) Parse_sso_req(q url.Values) (payload url.Values) {
@@ -43,5 +50,5 @@ func (api *Talk_api) Encode_sso_rsp(q url.Values) (payload, sig string) {
 }
 
 func (t *Talk_user) Logout() {
-	t.post("/admin/users/"+fmt.Sprint(t.id)+"/log_out", nil)
+	t.post_json("/admin/users/"+fmt.Sprint(t.id)+"/log_out", nil)
 }
