@@ -15,14 +15,15 @@ type Member struct {
 	Email           string
 	Agreed_to_terms bool
 	Registered      time.Time
-	gratuitous      bool
+	Activated       bool
 	*Admin
 	*Student
+	*Members
+	gratuitous      bool
 	password_key  string
 	password_salt string
 	talk          *talk.Talk_user
 	membership    *billing.Invoice
-	*Members
 	payment *billing.Profile
 }
 
@@ -38,13 +39,15 @@ func (ms *Members) Get_member_by_username(username string) *Member {
 			"	password_key, "+
 			"	password_salt, "+
 			"	email, "+
+			"	activated, "+
 			"	agreed_to_terms, "+
 			"	registered, "+
 			"	gratuitous "+
 			"FROM member "+
 			"WHERE username = $1",
 		username).Scan(&m.Id, &m.Name, &password_key, &password_salt, &m.Email,
-		&m.Agreed_to_terms, &m.Registered, &m.gratuitous); err != nil {
+		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.gratuitous);
+		err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -68,13 +71,15 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"	password_key, "+
 			"	password_salt, "+
 			"	email, "+
+			"	activated, "+
 			"	agreed_to_terms, "+
 			"	registered, "+
 			"	gratuitous "+
 			"FROM member "+
 			"WHERE id = $1",
 		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &m.Email,
-		&m.Agreed_to_terms, &m.Registered, &m.gratuitous); err != nil {
+		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.gratuitous);
+		err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -86,6 +91,18 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 	m.get_admin()
 	m.get_membership()
 	return m
+}
+
+func (m *Member) Delete_member() {
+	
+}
+
+func (m *Member) Activate() {
+	if _, err := m.Exec("UPDATE member SET activated = 'true' WHERE id = $1",
+		m.Id); err != nil {
+		log.Panic(err)
+	}
+	m.Activated = true
 }
 
 func (m *Member) Authenticate(password string) bool {
@@ -119,7 +136,6 @@ func (m *Member) Talk_user() *talk.Talk_user {
 	if m.talk == nil {
 		m.talk = m.Talk_api.Get_user(m.Id)
 	}
-	m.Sync(m.Id, m.Username, m.Email, m.Name)
 	return m.talk
 }
 

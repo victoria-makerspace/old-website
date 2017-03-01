@@ -10,7 +10,7 @@ CREATE TABLE member (
 	password_key character(64),
 	password_salt character(64) UNIQUE,
 	email text NOT NULL UNIQUE,
-	email_validated boolean NOT NULL DEFAULT false,
+	activated boolean NOT NULL DEFAULT false,
 	agreed_to_terms boolean NOT NULL DEFAULT false,
 	registered timestamp(0) NOT NULL DEFAULT now(),
 	gratuitous boolean NOT NULL DEFAULT false

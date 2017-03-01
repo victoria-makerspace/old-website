@@ -54,6 +54,10 @@ func sso_handler(p *page) {
 			return
 		}
 		p.new_session(m, !(p.PostFormValue("save-session") == "on"))
+		if p.Session == nil {
+			p.Data["error_inactive"] = "Please activate your account via the activation e-mail"
+			return
+		}
 	}
 	// Won't reach this point without a successful login
 	if req_payload != nil {

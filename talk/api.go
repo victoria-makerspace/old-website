@@ -69,7 +69,9 @@ func (api *Talk_api) post_json(path string, form url.Values) interface{} {
 	}
 	defer rsp.Body.Close()
 	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
-		log.Printf("Talk JSON decoding error (POST %s):\n\t%q\n", path, err)
+		if err.Error() != "EOF" {
+			log.Printf("Talk JSON decoding error (POST %s):\n\t%q\n", path, err)
+		}
 		return nil
 	}
 	return data

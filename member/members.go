@@ -39,6 +39,7 @@ func key(password, salt string) string {
 }
 
 var username_rexp = regexp.MustCompile(`^[\pL\pN_]+$`)
+var email_rexp = regexp.MustCompile("^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$")
 var name_rexp = regexp.MustCompile(`^(?:[\pL\pN\pM\pP]+ ?)+$`)
 
 func (ms *Members) Check_username_availability(username string) (available bool, err string) {
@@ -70,6 +71,9 @@ func (ms *Members) Check_username_availability(username string) (available bool,
 func (ms *Members) Check_email_availability(email string) (available bool, err string) {
 	if email == "" {
 		return false, "E-mail cannot be blank"
+	}
+	if !email_rexp.MatchString(email) {
+		return false, "Invalid E-mail address"
 	}
 	var count int
 	if err := ms.QueryRow(

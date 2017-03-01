@@ -42,8 +42,14 @@ type Session struct {
 	token string
 }
 
-// new_session
+// new_session fails silently on inactive accounts
 func (p *page) new_session(m *member.Member, expires bool) {
+	if !m.Activated {
+		if !m.Talk_user().Active {
+			return
+		}
+		m.Activate()
+	}
 	token := member.Rand256()
 	query := "INSERT INTO session_http (token, member, expires) VALUES ($1, $2, "
 	// TODO: purge null expiries from database occasionally, since browsers don't

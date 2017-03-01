@@ -14,12 +14,16 @@ func (api *Talk_api) Sync(external_id int, username, email, name string) *Talk_u
 	values.Set("external_id", fmt.Sprint(external_id))
 	values.Set("username", username)
 	values.Set("email", email)
+	values.Set("require_activation", "true")
 	values.Set("name", name)
 	payload, sig := api.Encode_sso_rsp(values)
 	values = url.Values{}
 	values.Set("sso", payload)
 	values.Set("sig", sig)
 	if u, ok := api.post_json("/admin/users/sync_sso", values).(map[string]interface{}); ok {
+		if _, ok := u["failed"]; ok {
+			return nil
+		}
 		return api.parse_user(external_id, u)
 	}
 	return nil
