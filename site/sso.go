@@ -9,6 +9,7 @@ func init() {
 	handlers["/sso"] = sso_handler
 	handlers["/sso/sign-out"] = sso_sign_out_handler
 	handlers["/sso/check-availability.json"] = sso_availability_handler
+	handlers["/sso/reset"] = sso_reset_handler
 }
 
 func (p *page) must_authenticate() bool {
@@ -98,4 +99,28 @@ func sso_availability_handler(p *page) {
 		p.Data["email"] = available
 		p.Data["email_error"] = err
 	}
+}
+
+func sso_reset_handler(p *page) {
+	p.Name = "reset-password"
+	p.Title = "Reset password"
+	p.authenticate()
+	if p.Session != nil {
+		p.http_error(403)
+		return
+	}
+	p.ParseForm()
+	if _, ok := p.PostForm["reset-password"]; !ok {
+		return
+	}
+	m := p.Get_member_by_username(p.PostFormValue("username"))
+	if m == nil {
+		p.Data["username_error"] = "Invalid username"
+		return
+	} else if p.PostFormValue("email") != m.Email {
+		p.Data["email_error"] = "Incorrect E-mail address for " + p.PostFormValue("username")
+		return
+	}
+	m.Send_password_reset()
+	p.redirect = "/"
 }

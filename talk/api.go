@@ -77,3 +77,15 @@ func (api *Talk_api) post_json(path string, form url.Values) interface{} {
 	return data
 }
 
+func (api *Talk_api) Message_member(title, message string, users ...*Talk_user) {
+	values := url.Values{}
+	values.Set("title", title)
+	values.Set("raw", message)
+	values.Set("archetype", "private_message")
+	usernames := users[0].Username
+	for _, u := range users[1:] {
+		usernames += "," + u.Username
+	}
+	values.Set("target_usernames", usernames)
+	api.post_json("/post", values)
+}

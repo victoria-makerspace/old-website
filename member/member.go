@@ -131,6 +131,9 @@ func (m *Member) Change_password(password string) {
 }
 
 //TODO: forgotten password reset by e-mail
+func (m *Member) Send_password_reset() {
+
+}
 
 func (m *Member) Talk_user() *talk.Talk_user {
 	if m.talk == nil {

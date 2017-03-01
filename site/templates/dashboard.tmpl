@@ -1,12 +1,14 @@
-  {{with .Talk_user}}
+{{with .Talk_user}}
+  {{if .Profile_bg_url}}
   <div id="profile-background" style="background-image: url({{.Profile_bg_url}})">
   </div>
   {{end}}
+{{end}}
   <div class="container">
-    {{if not .Member.Agreed_to_terms}}
+{{if not .Member.Agreed_to_terms}}
     <p class="alert alert-info">Please read and agree to the <a href="/terms">Terms and Conditions</a> before registering to become a member.</p>
-    {{else if not .Member.Active}}
+{{else if not .Member.Active}}
     <p class="alert alert-info">Please set up <a href="/member/billing">billing</a> and register to become a member.</p>
-    {{end}}
+{{end}}
 {{template "footer"}}
   </div>

@@ -16,6 +16,7 @@ var templates = [...]string{
 	"error",
 	"index",
 	"sso",
+	"reset-password",
 	"join",
 	"terms",
 	"dashboard",
