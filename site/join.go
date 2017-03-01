@@ -1,6 +1,7 @@
 package site
 
 import (
+	"log"
 )
 
 func init() {
