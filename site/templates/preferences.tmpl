@@ -1,3 +1,29 @@
   <div class="container">
-
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-8 col-xl-7">
+        <h3>Update password</h3>
+        <form action="/member/preferences" method="post">
+          <div class="form-group row">
+            <label for="old-password" class="col-sm-4 col-form-label">Current password:</label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-fingerprint-remove"></span>
+                <input type="password" class="form-control" name="old-password" required>
+              </div>
+              <small class="form-control-feedback"></small>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="new-password" class="col-sm-4 col-form-label">New password:</label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
+                <input type="password" class="form-control" name="new-password" required>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" name="update-password">Update</button>
+        </div>
+      </div>
+    </form>
   </div>

@@ -260,7 +260,7 @@ button.nav-link {
     padding-bottom: 0;
     border: 0;
 }
-body > .container {
+.navbar + .container {
     padding-top: 5rem;
 }
 

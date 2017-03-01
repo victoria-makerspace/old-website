@@ -4,6 +4,7 @@ import ()
 
 func init() {
 	handlers["/member/dashboard"] = member_handler
+	handlers["/member/preferences"] = preferences_handler
 	handlers["/tools"] = tools_handler
 	handlers["/member/storage"] = storage_handler
 }
@@ -11,6 +12,14 @@ func init() {
 func member_handler(p *page) {
 	p.Name = "dashboard"
 	p.Title = "Dashboard"
+	if !p.must_authenticate() {
+		return
+	}
+}
+
+func preferences_handler(p *page) {
+	p.Name = "preferences"
+	p.Title = "Preferences"
 	if !p.must_authenticate() {
 		return
 	}
