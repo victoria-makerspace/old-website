@@ -125,17 +125,6 @@
     </div>
   </nav>
 {{end}}
-{{define "footer"}}
-    <footer class="clearfix">
-      <hr class="mb-2">
-      <p class="float-right">
-        &copy; 2017 Victoria Makerspace &middot;
-        <a class="glyphicons-social glyphicons-social-gmail" href="mailto:admin@makerspace.ca" title="E-mail"></a>
-        <a class="glyphicons-social glyphicons-social-twitter" href="https://twitter.com/VicMakerspace" title="Twitter"></a>
-        <a class="glyphicons-social glyphicons-social-facebook" href="https://facebook.com/VicMakerspace" title="Facebook"></a>
-      </p>
-    </footer>
-{{end}}
 {{if eq .Name "index"}}{{template "index.tmpl" .}}{{end}}
 {{if eq .Name "error"}}{{template "error.tmpl" .}}{{end}}
 {{if eq .Name "sso"}}{{template "sso.tmpl" .}}{{end}}
@@ -143,9 +132,19 @@
 {{if eq .Name "join"}}{{template "join.tmpl" .}}{{end}}
 {{if eq .Name "terms"}}{{template "terms.tmpl" .}}{{end}}
 {{if eq .Name "dashboard"}}{{template "dashboard.tmpl" .}}{{end}}
+{{if eq .Name "preferences"}}{{template "preferences.tmpl" .}}{{end}}
 {{if eq .Name "billing"}}{{template "billing.tmpl" .}}{{end}}
 {{if eq .Name "tools"}}{{template "tools.tmpl" .}}{{end}}
 {{if eq .Name "storage"}}{{template "storage.tmpl" .}}{{end}}
+  <footer class="container">
+    <hr class="mb-2">
+    <p class="float-right">
+      &copy; 2017 Victoria Makerspace &middot;
+      <a class="glyphicons-social glyphicons-social-gmail" href="mailto:admin@makerspace.ca" title="E-mail"></a>
+      <a class="glyphicons-social glyphicons-social-twitter" href="https://twitter.com/VicMakerspace" title="Twitter"></a>
+      <a class="glyphicons-social glyphicons-social-facebook" href="https://facebook.com/VicMakerspace" title="Facebook"></a>
+    </p>
+  </footer>
   <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
