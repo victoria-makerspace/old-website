@@ -24,13 +24,7 @@ type Transaction struct {
 }
 
 func (p *Profile) do_transaction(invoice *Invoice) *Transaction {
-	if invoice.Amount < minimum_txn_amount {
-		log.Printf("Transaction for member %d below minimum amount (%f < %f)",
-			p.member_id, invoice.Amount, minimum_txn_amount)
-		return nil
-	}
 	if p.Error != None {
-		p.do_missed_payment(invoice, nil)
 		return nil
 	}
 	order_id := fmt.Sprintf("%d-%d", rand.Intn(1000000), p.member_id)
@@ -47,7 +41,6 @@ func (p *Profile) do_transaction(invoice *Invoice) *Transaction {
 		Comment:       invoice.Description}
 	rsp, err := p.payment_api.MakePayment(req)
 	if err != nil {
-		p.do_missed_payment(invoice, nil)
 		log.Println(err)
 		return nil
 	}
@@ -68,7 +61,6 @@ func (p *Profile) do_transaction(invoice *Invoice) *Transaction {
 		log.Panic(err)
 	}
 	if !rsp.IsApproved() {
-		p.do_missed_payment(invoice, txn)
 		//TODO: make sure unapproved == invalid card
 		p.set_error(Invalid_card)
 	} else {
@@ -79,8 +71,8 @@ func (p *Profile) do_transaction(invoice *Invoice) *Transaction {
 
 func (p *Profile) do_recurring_txn(i *Invoice, log_id int) *Transaction {
 	t := p.do_transaction(i)
-	if t == nil {
-		mp := p.get_missed_payment(i)
+	if t == nil || !t.Approved {
+		mp := p.do_missed_payment(i, t)
 		p.log_missed_payment(mp, log_id)
 		return nil
 	}

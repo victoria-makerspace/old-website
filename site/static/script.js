@@ -27,9 +27,6 @@ $(document).ready(function() {
     });
 });
 
-$("#sign-in").on("shown.bs.modal", function() {
-    $("#sign-in [name='username']").focus();
-});
 $(this).on("beanstream_payfields_loaded", function() {
     $("#credit-card input[data-beanstream-id]").each(function() {
         $(this).addClass("form-control");

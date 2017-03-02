@@ -248,6 +248,11 @@ func (p *Profile) New_invoice(member_id int, amount float64, description string,
 		}
 		amount = fee.Amount
 	}
+	if amount < minimum_txn_amount {
+		log.Printf("Invoice for member %d below minimum amount ($%0.2f < $%0.2f)",
+			p.member_id, amount, minimum_txn_amount)
+		return nil
+	}
 	if description == "" {
 		if fee != nil {
 			description = fee.Description
@@ -274,6 +279,11 @@ func (p *Profile) New_invoice(member_id int, amount float64, description string,
 //TODO: BUG: not all 'fee' records have non-null 'recurring' fields
 func (p *Profile) New_recurring_bill(fee *Fee, member_id int) *Invoice {
 	if fee == nil {
+		return nil
+	}
+	if fee.Amount < minimum_txn_amount {
+		log.Printf("Invoice for member %d below minimum amount ($%0.2f < $%0.2f)",
+			p.member_id, fee.Amount, minimum_txn_amount)
 		return nil
 	}
 	inv := &Invoice{Member: member_id,

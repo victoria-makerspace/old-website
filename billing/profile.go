@@ -23,6 +23,7 @@ type Profile struct {
 	Transactions []*Transaction
 	Error
 	*Billing
+	Missed_payments []*Missed_payment
 	bs_id      string
 	bs_profile *beanstream.Profile
 	member_id  int
@@ -115,6 +116,7 @@ func (p *Profile) Update_card(token, cardholder string) {
 	// Clear card error
 	p.clear_error()
 	p.bs_profile.Card = *card
+	p.retry_missed_payments()
 }
 
 func (p *Profile) new_bs_profile(token, cardholder string) {

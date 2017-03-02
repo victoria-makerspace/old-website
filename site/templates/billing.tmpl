@@ -102,7 +102,7 @@
     {{range .Invoices}}
                 <tr>  
                   <td>{{.Description}}</td>
-                  <td>${{.Amount | printf "%.2f"}}</td>
+                  <td>{{.Amount | printf "$%.2f"}}</td>
                   <td>{{.Date.Format "2006-01-02"}}</td>
                   <td>
       {{if eq .Fee.Category "membership"}}
@@ -117,25 +117,27 @@
             </table>
             </form>
   {{end}}
-  {{/*with .Get_missed_payments}}
+  {{with .Get_missed_payments}}
             <h5 class="text-danger">Missed payments</h5>
-            <table class="table table-sm table-danger">
+            <table class="table table-warning table-sm">
               <thead>
                 <tr>
                   <th>Date</th>
                   <th>Amount</th>
-                  <th>Name</th>
+                  <th>Description</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>  
-                  <td></td>
-                  <td></td>
-                  <td></td>
+    {{range .}}
+                <tr class="text-danger">
+                  <td>{{.Time.Format "2006-01-02"}}</td>
+                  <td>{{.Invoice.Amount | printf "$%.2f"}}</td>
+                  <td>{{.Invoice.Description}}</td>
                 </tr>
+    {{end}}
               </tbody>
             </table>
-  {{end*/}}
+  {{end}}
           </div>
         </section>
         <hr>
