@@ -23,6 +23,20 @@ func preferences_handler(p *page) {
 	if !p.must_authenticate() {
 		return
 	}
+	p.ParseForm()
+	if _, ok := p.PostForm["update-password"]; ok {
+		if !p.Authenticate(p.PostFormValue("old-password")) {
+			p.Data["old_password_error"] = "Incorrect password"
+			return
+		}
+		if p.PostFormValue("new-password") == "" {
+			p.Data["new_password_error"] = "Password cannot be blank"
+			return
+		}
+		p.Change_password(p.PostFormValue("new-password"))
+		p.Data["update_password_success"] = "Successfully updated password"
+		return
+	}
 }
 
 func tools_handler(p *page) {

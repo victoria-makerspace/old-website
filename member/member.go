@@ -123,8 +123,9 @@ func (m *Member) Active() bool {
 func (m *Member) Change_password(password string) {
 	m.password_salt = Rand256()
 	m.password_key = key(password, m.password_salt)
-	if _, err := m.Exec("UPDATE member (password_key, password_salt) SET "+
-		"password_key = $1, password_salt = $2 WHERE id = $3",
+	if _, err := m.Exec("UPDATE member "+
+		"SET password_key = $1, password_salt = $2 "+
+		"WHERE id = $3",
 		m.password_key, m.password_salt, m.Id); err != nil {
 		log.Panic(err)
 	}

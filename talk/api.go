@@ -34,6 +34,9 @@ func (api *Talk_api) get_json(path string, query ...string) interface{} {
 	//TODO: perhaps parse as url.URL first in case parameters have already been
 	//	added.
 	url := api.Url() + path + "?api_key=" + api.api_key
+	if len(query) == 0 {
+		url += "&api_username=" + api.admin
+	}
 	if len(query) > 0 && query[0] != "" {
 		url += "&api_username=" + query[0]
 		for _, q := range query[1:] {

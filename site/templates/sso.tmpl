@@ -1,22 +1,28 @@
   <div class="container">
     <section class="modal-dialog">
       <h4 class="mb-3">Member sign-in</h4>
+{{with .Data.error_inactive}}
+      <p class="alert alert-info">{{.}}</p>
+{{end}}
       <form action="/sso" method="post">
-        <div class="form-group">
+        <div class="form-group{{if .Data.error_username}} has-danger{{end}}">
           <div class="input-group">
             <span class="input-group-addon">@</span>
             <input type="text" class="form-control" name="username" placeholder="Username" required autofocus>
           </div>
-          <small class="form-control-feedback"></small>
+          <small class="form-control-feedback{{with .Data.error_username}} show">{{.}}{{else}}">{{end}}</small>
         </div>
-        <div class="form-group">
+        <div class="form-group{{if .Data.error_password}} has-danger{{end}}">
           <div class="input-group">
             <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
             <input type="password" class="form-control" name="password" placeholder="Password" required>
           </div>
-          <small class="form-control-feedback"></small>
+          <small class="form-control-feedback{{with .Data.error_password}} show">{{.}}{{else}}">{{end}}</small>
         </div>
         <div class="d-flex flex-row-reverse justify-content-between align-items-start">
+{{with .Data.return_path}}
+          <input type="hidden" name="return_path" value="{{.}}">
+{{end}}
           <button type="submit" name="sign-in" class="btn btn-primary">Sign in</button>
           <div class="d-flex flex-column align-items-end">
             <label class="custom-control custom-checkbox">

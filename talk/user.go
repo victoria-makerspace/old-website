@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"regexp"
 	"fmt"
+	"time"
 )
 
 func (api *Talk_api) Check_username(username string) (available bool, err string) {
@@ -85,6 +86,67 @@ var avatar_size_rexp = regexp.MustCompile("{size}")
 func (t *Talk_user) Avatar_url(size int) string {
 	return t.Base_url + string(avatar_size_rexp.ReplaceAll(t.avatar_url,
 		[]byte(fmt.Sprint(size))))
+}
+
+type Message struct {
+	Url string
+	Title string
+	Read bool
+	Last_post time.Time
+	First_post time.Time
+	Post_count int
+	Poster_avatars map[string]string
+	Last_poster string
+}
+
+func (t *Talk_user) Get_messages(limit int) []*Message {
+	msgs := make([]*Message, 0)
+	usernames := make(map[int]string)
+	avatars := make(map[int]string)
+	j := t.get_json("/topics/private-messages/" + t.Username + ".json")
+	if j, ok := j.(map[string]interface{}); ok {
+		if u, ok := j["users"].([]interface{}); ok {
+			for _, v := range u {
+				user := v.(map[string]interface{})
+				id := int(user["id"].(float64))
+				usernames[id] = user["username"].(string)
+				avatars[id] = user["avatar_template"].(string)
+			}
+		}
+		if tp, ok := j["topic_list"].(map[string]interface{}); ok {
+			if tp, ok := tp["topics"].([]interface{}); ok {
+				var c int
+				for _, v := range tp {
+					msg := &Message{}
+					topic := v.(map[string]interface{})
+					id := int(topic["id"].(float64))
+					slug := topic["slug"].(string)
+					msg.Url = t.Url() + "/t/" + slug + "/" + fmt.Sprint(id)
+					msg.Title = topic["title"].(string)
+					msg.Post_count = int(topic["posts_count"].(float64))
+					msg.First_post, _ = time.ParseInLocation(
+						"2006-01-02T15:04:05.999Z",
+						topic["created_at"].(string), time.Local)
+					msg.Last_post, _ = time.ParseInLocation(
+						"2006-01-02T15:04:05.999Z",
+						topic["last_posted_at"].(string), time.Local)
+					if topic["unread"].(float64) == 0 {
+						msg.Read = true
+					}
+					if l := topic["last_read_post_number"].(float64); l != 0 {
+						url += "/" + fmt.Sprint(int(l))
+					}
+					msg.Last_poster = topic["last_poster_username"].(string)
+					msgs = append(msgs, msg)
+					log.Println(msg)
+					if c++; limit == c {
+						break
+					}
+				}
+			}
+		}
+	}
+	return msgs
 }
 
 /*
