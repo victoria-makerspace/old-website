@@ -1,25 +1,23 @@
 {{$talk_url := .Url -}}
-{{with .Talk_user}}
-  {{with .Profile_bg_url}}
-  <!--div id="profile-background">
-    <img src="{{.}}" alt="Profile background">
-  </div-->
-  {{end}}
-{{end}}
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-md-12 col-lg-10 col-xl-8 rounded px-5 py-3" style="background: rgba(255,255,255,0.8)">
+      <div class="col-md-12 col-lg-10 col-xl-8 px-5 py-3">
 {{if not .Member.Agreed_to_terms}}
         <p class="alert alert-info">Please read and agree to the <a href="/terms">Terms and Conditions</a> before registering to become a member.</p>
 {{else if not .Member.Active}}
         <p class="alert alert-info">Please set up <a href="/member/billing">billing</a> and register to become a member.</p>
 {{end}}
 {{with .Talk_user}}
-        <h4><a href="{{$talk_url}}/users/{{.Username}}/messages" class="glyphicons glyphicons-message-full align-baseline"></a> Messages</h4>
+        <h4>
+          <a href="{{$talk_url}}/users/{{.Username}}/messages">
+            <span class="glyphicons glyphicons-message-full align-baseline"></span>
+            <span class="title-link">Messages</span>
+          </a>
+        </h4>
         <table class="table table-sm table-responsive table-striped" id="dashboard-messages">
           <thead>
             <tr>
-              <th>Title</th>
+              <th><span style="font-size: 80%" class="align-baseline glyphicons glyphicons-message-forward mr-2"></span>Title</th>
               <th>Posters</th>
               <th>Replies</th>
               <th>Last reply</th>
