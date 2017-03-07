@@ -8,7 +8,7 @@
 {{end}}
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-md-10 col-lg-8 col-xl-7 rounded px-5 py-3" style="background: rgba(255,255,255,0.8)">
+      <div class="col-md-12 col-lg-10 col-xl-8 rounded px-5 py-3" style="background: rgba(255,255,255,0.8)">
 {{if not .Member.Agreed_to_terms}}
         <p class="alert alert-info">Please read and agree to the <a href="/terms">Terms and Conditions</a> before registering to become a member.</p>
 {{else if not .Member.Active}}
@@ -16,7 +16,37 @@
 {{end}}
 {{with .Talk_user}}
         <h4><a href="{{$talk_url}}/users/{{.Username}}/messages" class="glyphicons glyphicons-message-full align-baseline"></a> Messages</h4>
-        {{.Get_messages 5}}
+        <table class="table table-sm table-responsive table-striped" id="dashboard-messages">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Posters</th>
+              <th>Replies</th>
+              <th>Last reply</th>
+            </tr>
+          </thead>
+          <tbody>
+  {{range .Get_messages 8}}
+    {{$last_poster := .Last_poster}}
+            <tr{{if not .Read}} class="bg-warning"{{end}}>
+              <td><a href="{{.Url}}">{{.Title}}</a></td>
+              <td class="avatars">
+                <a href="/members/{{$last_poster}}" title="{{$last_poster}}"><img src="{{$last_poster | index .Poster_avatars}}"></a>
+    {{range $u, $a := .Poster_avatars}}
+      {{if not (eq $u $last_poster)}}
+                <a href="/members/{{$u}}" title="{{$u}}"><img src="{{$a}}"></a>
+      {{end}}
+    {{end}}
+              </td>
+              <td>{{.Reply_count}}</td>
+              <td><small>{{.Last_post.Format "2006-01-02"}}</small></td>
+            </tr>
+  {{else}}
+            <tr>You have no messages.</tr>
+  {{end}}
+          </tbody>
+        </table>
+        <hr>
 {{end}}
       </div>
     </div>

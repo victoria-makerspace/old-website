@@ -94,7 +94,7 @@ type Message struct {
 	Read bool
 	Last_post time.Time
 	First_post time.Time
-	Post_count int
+	Reply_count int
 	Poster_avatars map[string]string
 	Last_poster string
 }
@@ -110,35 +110,42 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 				user := v.(map[string]interface{})
 				id := int(user["id"].(float64))
 				usernames[id] = user["username"].(string)
-				avatars[id] = user["avatar_template"].(string)
+				avatars[id] = t.Base_url + string(avatar_size_rexp.ReplaceAll(
+					[]byte(user["avatar_template"].(string)), []byte("120")))
 			}
 		}
 		if tp, ok := j["topic_list"].(map[string]interface{}); ok {
 			if tp, ok := tp["topics"].([]interface{}); ok {
 				var c int
 				for _, v := range tp {
-					msg := &Message{}
+					msg := &Message{Read: true}
 					topic := v.(map[string]interface{})
 					id := int(topic["id"].(float64))
 					slug := topic["slug"].(string)
 					msg.Url = t.Url() + "/t/" + slug + "/" + fmt.Sprint(id)
 					msg.Title = topic["title"].(string)
-					msg.Post_count = int(topic["posts_count"].(float64))
+					msg.Reply_count = int(topic["posts_count"].(float64)) - 1
 					msg.First_post, _ = time.ParseInLocation(
 						"2006-01-02T15:04:05.999Z",
 						topic["created_at"].(string), time.Local)
 					msg.Last_post, _ = time.ParseInLocation(
 						"2006-01-02T15:04:05.999Z",
 						topic["last_posted_at"].(string), time.Local)
-					if topic["unread"].(float64) == 0 {
-						msg.Read = true
-					}
-					if l := topic["last_read_post_number"].(float64); l != 0 {
-						url += "/" + fmt.Sprint(int(l))
+					if topic["unseen"].(bool) == true {
+						msg.Read = false
+					} else if l := topic["highest_post_number"].(float64);
+						l != 0 {
+						msg.Url += "/" + fmt.Sprint(int(l))
 					}
 					msg.Last_poster = topic["last_poster_username"].(string)
+					msg.Poster_avatars = make(map[string]string)
+					for _, p := range topic["posters"].([]interface{}) {
+						if p, ok := p.(map[string]interface{}); ok {
+							i := int(p["user_id"].(float64))
+							msg.Poster_avatars[usernames[i]] = avatars[i]
+						}
+					}
 					msgs = append(msgs, msg)
-					log.Println(msg)
 					if c++; limit == c {
 						break
 					}

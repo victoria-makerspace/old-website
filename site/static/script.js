@@ -1,13 +1,5 @@
 
-$("#member-menu").on("show.bs.collapse", function() {
-    $("#general-menu.show").collapse("hide");
-    $("#member-icon").addClass("active");
-});
-$("#member-menu").on("hide.bs.collapse", function() {
-    $("#member-icon").removeClass("active");
-});
 $("#general-menu").on("show.bs.collapse", function() {
-    $("#member-menu.show").collapse("hide");
     $("#general-toggler").addClass("active");
 });
 $("#general-menu").on("hide.bs.collapse", function() {
