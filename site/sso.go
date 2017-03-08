@@ -55,6 +55,7 @@ func sso_handler(p *page) {
 			p.Data["error_username"] = "Invalid username"
 			return
 		} else if !m.Authenticate(p.PostFormValue("password")) {
+			p.Data["username"] = m.Username
 			p.Data["error_password"] = "Incorrect password"
 			return
 		}

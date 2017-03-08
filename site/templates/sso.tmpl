@@ -8,14 +8,14 @@
         <div class="form-group{{if .Data.error_username}} has-danger{{end}}">
           <div class="input-group">
             <span class="input-group-addon">@</span>
-            <input type="text" class="form-control" name="username" placeholder="Username" required autofocus>
+            <input type="text" class="form-control" name="username" placeholder="Username" {{with .Data.username}}value="{{.}}"{{else}}autofocus{{end}} required>
           </div>
           <small class="form-control-feedback{{with .Data.error_username}} show">{{.}}{{else}}">{{end}}</small>
         </div>
         <div class="form-group{{if .Data.error_password}} has-danger{{end}}">
           <div class="input-group">
             <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
-            <input type="password" class="form-control" name="password" placeholder="Password" required>
+            <input type="password" class="form-control" name="password" placeholder="Password" {{if .Data.username}}autofocus {{end}}required>
           </div>
           <small class="form-control-feedback{{with .Data.error_password}} show">{{.}}{{else}}">{{end}}</small>
         </div>
