@@ -18,6 +18,7 @@ func (p *page) must_authenticate() bool {
 		p.Name = "sso"
 		p.Title = "Sign-in"
 		p.Status = 403
+		p.Data["return_path"] = p.URL.String()
 		return false
 	}
 	return true
@@ -30,6 +31,9 @@ func sso_handler(p *page) {
 	p.Title = "Sign-in"
 	p.authenticate()
 	return_path := "/member/dashboard"
+	if rp, ok := p.Data["return_path"].(string); ok {
+		return_path = rp
+	}
 	if rp := p.PostFormValue("return_path"); rp != "" {
 		return_path = rp
 	}

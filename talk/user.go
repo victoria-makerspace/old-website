@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"fmt"
 	"time"
+	"strings"
 )
 
 func (api *Talk_api) Check_username(username string) (available bool, err string) {
@@ -97,6 +98,7 @@ type Message struct {
 	Reply_count int
 	Poster_avatars map[string]string
 	Last_poster string
+	Original_poster string
 }
 
 func (t *Talk_user) Get_messages(limit int) []*Message {
@@ -143,6 +145,10 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 						if p, ok := p.(map[string]interface{}); ok {
 							i := int(p["user_id"].(float64))
 							msg.Poster_avatars[usernames[i]] = avatars[i]
+							if strings.Contains(p["description"].(string), 
+								"Original Poster") {
+								msg.Original_poster = usernames[i]
+							}
 						}
 					}
 					msgs = append(msgs, msg)

@@ -13,17 +13,18 @@ type Member struct {
 	Username        string
 	Name            string
 	Email           string
+	Telephone		string
 	Agreed_to_terms bool
 	Registered      time.Time
 	Activated       bool
 	*Admin
 	*Student
 	*Members
-	gratuitous      bool
+	Gratuitous      bool
 	password_key  string
 	password_salt string
 	talk          *talk.Talk_user
-	membership    *billing.Invoice
+	Membership    *billing.Invoice
 	payment *billing.Profile
 }
 
@@ -46,7 +47,7 @@ func (ms *Members) Get_member_by_username(username string) *Member {
 			"FROM member "+
 			"WHERE username = $1",
 		username).Scan(&m.Id, &m.Name, &password_key, &password_salt, &m.Email,
-		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.gratuitous);
+		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous);
 		err != nil {
 		if err == sql.ErrNoRows {
 			return nil
@@ -78,7 +79,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"FROM member "+
 			"WHERE id = $1",
 		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &m.Email,
-		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.gratuitous);
+		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous);
 		err != nil {
 		if err == sql.ErrNoRows {
 			return nil
@@ -114,7 +115,7 @@ func (m *Member) Authenticate(password string) bool {
 
 //TODO
 func (m *Member) Active() bool {
-	if m.gratuitous || m.membership != nil {
+	if m.Gratuitous || m.Membership != nil {
 		return true
 	}
 	return false
@@ -154,7 +155,7 @@ func (m *Member) get_membership() {
 	if m.Payment() == nil {
 		return
 	}
-	m.membership = m.payment.Get_membership()
+	m.Membership = m.payment.Get_membership()
 }
 
 func (m *Member) New_membership() {
@@ -162,8 +163,23 @@ func (m *Member) New_membership() {
 		m.payment = m.New_profile(m.Id)
 	}
 	if m.Student != nil {
-		m.membership = m.payment.New_membership(true)
+		m.Membership = m.payment.New_membership(true)
 		return
 	}
-	m.membership = m.payment.New_membership(false)
+	m.Membership = m.payment.New_membership(false)
+}
+
+func (m *Member) Cancel_membership() {
+	if m.Gratuitous {
+		if _, err := m.Exec(
+			"UPDATE member "+
+			"SET gratuitous = 'f' "+
+			"WHERE id = $1", m.Id); err != nil {
+			log.Panic(err)
+		}
+	}
+	m.Gratuitous = false
+	if m.Membership != nil {
+		m.payment.Cancel_membership()
+	}
 }

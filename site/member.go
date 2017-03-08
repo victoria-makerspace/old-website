@@ -4,7 +4,7 @@ import ()
 
 func init() {
 	handlers["/member/dashboard"] = member_handler
-	handlers["/member/preferences"] = preferences_handler
+	handlers["/member/account"] = account_handler
 	handlers["/tools"] = tools_handler
 	handlers["/member/storage"] = storage_handler
 }
@@ -17,9 +17,9 @@ func member_handler(p *page) {
 	}
 }
 
-func preferences_handler(p *page) {
-	p.Name = "preferences"
-	p.Title = "Preferences"
+func account_handler(p *page) {
+	p.Name = "account"
+	p.Title = "Account"
 	if !p.must_authenticate() {
 		return
 	}
@@ -58,4 +58,3 @@ func storage_handler(p *page) {
 	p.Data["bathroom_lockers"] = p.Get_storage(p.Find_fee("storage", "bathroom-locker"))
 }
 
-//preferences

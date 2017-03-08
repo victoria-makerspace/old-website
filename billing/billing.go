@@ -326,6 +326,16 @@ func (p *Profile) Cancel_recurring_bill(i *Invoice) {
 	*i = Invoice{}
 }
 
+func (b *Billing) set_invoice_start_date(i *Invoice, date time.Time) {
+	if _, err := b.db.Exec(
+		"UPDATE invoice "+
+		"SET start_date = $2 "+
+		"WHERE id = $1", i.Id, date); err != nil {
+		log.Panic(err)
+	}
+	i.Date = date
+}
+
 // prorate_month returns the amount multiplied by the fraction of the current
 //	month left.
 func prorate_month(amount float64) float64 {

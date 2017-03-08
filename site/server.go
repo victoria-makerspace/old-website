@@ -20,8 +20,9 @@ var templates = [...]string{
 	"join",
 	"terms",
 	"dashboard",
-	"preferences",
+	"account",
 	"billing",
+	"members",
 	"tools",
 	"storage"}
 

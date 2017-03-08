@@ -34,7 +34,7 @@ func (m *Member) Update_student(institution, email string, grad_date time.Time) 
 	if m.Student != nil {
 		query = "UPDATE student SET institution = $2, student_email = $3, " +
 			"graduation_date = $4 WHERE member = $1"
-	} else if m.membership != nil {
+	} else if m.Membership != nil {
 		m.payment.Change_to_student(grad_date)
 	}
 	if _, err := m.Exec(query, m.Id, institution, email, grad_date); err != nil {

@@ -51,6 +51,15 @@ func billing_handler(p *page) {
 		update_student()
 		p.redirect = "/member/billing"
 		return
+	} else if _, ok := p.PostForm["terminate_membership"]; ok {
+		if !p.Member.Authenticate(p.PostFormValue("password")) {
+			p.Data["password_error"] = "Incorrect password"
+			return
+		}
+		//TODO: reason for cancellation: PostFormValue("cancellation_reason")
+		p.Member.Cancel_membership()
+		p.redirect = "/member/billing"
+		return
 	} else if pay_profile == nil {
 		return
 	} else if _, ok := p.PostForm["register"]; ok {
@@ -68,14 +77,5 @@ func billing_handler(p *page) {
 			pay_profile.Cancel_recurring_bill(bill)
 		}
 		// Redirect not really necessary as double-submission is harmless.
-	} else if _, ok := p.PostForm["terminate_membership"]; ok {
-		if !p.Member.Authenticate(p.PostFormValue("password")) {
-			p.Data["password_error"] = "Incorrect password"
-			return
-		}
-		//TODO: reason for cancellation: PostFormValue("cancellation_reason")
-		pay_profile.Cancel_membership()
-		p.redirect = "/member/billing"
-		return
 	}
 }

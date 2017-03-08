@@ -50,14 +50,18 @@ func (p *Profile) Get_membership() *Invoice {
 //TODO: set end_date and regular membership invoice to start after
 func (p *Profile) Change_to_student(grad_date time.Time) {
 	invoice := p.Get_membership()
+	date := invoice.Date
 	p.Cancel_recurring_bill(invoice)
-	p.New_recurring_bill(p.Find_fee("membership", "student"), p.member_id)
+	invoice = p.New_recurring_bill(p.Find_fee("membership", "student"), p.member_id)
+	p.set_invoice_start_date(invoice, date)
 }
 
 func (p *Profile) Change_from_student() {
 	invoice := p.Get_membership()
+	date := invoice.Date
 	p.Cancel_recurring_bill(invoice)
-	p.New_recurring_bill(p.Find_fee("membership", "regular"), p.member_id)
+	invoice = p.New_recurring_bill(p.Find_fee("membership", "regular"), p.member_id)
+	p.set_invoice_start_date(invoice, date)
 }
 
 //TODO: Cancel storage and other makerspace-related invoices

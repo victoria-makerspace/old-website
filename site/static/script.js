@@ -1,9 +1,9 @@
 
-$("#general-menu").on("show.bs.collapse", function() {
-    $("#general-toggler").addClass("active");
+$("#ms-menu").on("show.bs.collapse", function() {
+    $("#ms-menu-toggler").addClass("active");
 });
-$("#general-menu").on("hide.bs.collapse", function() {
-    $("#general-toggler").removeClass("active");
+$("#ms-menu").on("hide.bs.collapse", function() {
+    $("#ms-menu-toggler").removeClass("active");
 });
 $("#navbar-guest .navbar-collapse").on("shown.bs.collapse", function() {
     $(".navbar-toggler").addClass("active");
@@ -17,6 +17,7 @@ $(document).ready(function() {
     $.ajax(talk_url + "/session/current.json").fail(function() {
         $.ajax(talk_url + "/session/sso");
     });
+    $(".modal:target").modal("show");
 });
 
 $(this).on("beanstream_payfields_loaded", function() {

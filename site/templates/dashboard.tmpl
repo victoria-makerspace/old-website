@@ -26,14 +26,19 @@
           <tbody>
   {{range .Get_messages 8}}
     {{$last_poster := .Last_poster}}
+    {{$orig_poster := .Original_poster}}
+    {{$last_and_orig := (and (eq $orig_poster $last_poster) $last_poster)}}
             <tr{{if not .Read}} class="bg-warning"{{end}}>
               <td><a href="{{.Url}}">{{.Title}}</a></td>
               <td class="avatars">
-                <a href="/members/{{$last_poster}}" title="{{$last_poster}}"><img src="{{$last_poster | index .Poster_avatars}}"></a>
+                <a href="/members/{{$orig_poster}}" title="{{$orig_poster}} - Original poster{{if $last_and_orig}}, Most recent poster{{end}}"{{if $last_and_orig}} style="box-shadow: 0 0 4px 2px #a7d5ec"{{end}}><img src="{{$orig_poster | index .Poster_avatars}}"></a>
     {{range $u, $a := .Poster_avatars}}
-      {{if not (eq $u $last_poster)}}
-                <a href="/members/{{$u}}" title="{{$u}}"><img src="{{$a}}"></a>
+      {{if not (or (eq $u $orig_poster) (eq $u $last_poster))}}
+                <a class="hidden-xs-down" href="/members/{{$u}}" title="{{$u}}"><img src="{{$a}}"></a>
       {{end}}
+    {{end}}
+    {{if not $last_and_orig}}
+                <a class="hidden-xs-down" href="/members/{{$last_poster}}" title="{{$last_poster}} - Most recent poster"><img src="{{$last_poster | index .Poster_avatars}}"></a>
     {{end}}
               </td>
               <td>{{.Reply_count}}</td>
