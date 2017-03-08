@@ -4,7 +4,7 @@
 {{with .Data.error_inactive}}
       <p class="alert alert-info">{{.}}</p>
 {{end}}
-      <form action="/sso" method="post">
+      <form action="/sso{{if and .Data.sso .Data.sig}}?sso={{.Data.sso}}&sig={{.Data.sig}}{{end}}" method="post">
         <div class="form-group{{if .Data.error_username}} has-danger{{end}}">
           <div class="input-group">
             <span class="input-group-addon">@</span>

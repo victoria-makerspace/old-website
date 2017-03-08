@@ -13,10 +13,12 @@ $("#navbar-guest .navbar-collapse").on("hidden.bs.collapse", function() {
 });
 
 $(document).ready(function() {
-    var talk_url = $("#talk-link").attr("href");
-    $.ajax(talk_url + "/session/current.json").fail(function() {
-        $.ajax(talk_url + "/session/sso");
-    });
+    if (!$("html").hasClass("anon")) {
+        var talk_url = $("#talk-link").attr("href");
+        $.ajax(talk_url + "/session/current.json").fail(function() {
+            $.ajax(talk_url + "/session/sso");
+        });
+    }
     $(".modal:target").modal("show");
 });
 

@@ -95,7 +95,10 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 }
 
 func (m *Member) Delete_member() {
-	
+	if _, err := m.Exec("DELETE FROM member WHERE id = $1", m.Id);
+		err != nil {
+		log.Panic(err)
+	}
 }
 
 func (m *Member) Activate() {

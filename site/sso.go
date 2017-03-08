@@ -33,21 +33,18 @@ func sso_handler(p *page) {
 	return_path := "/member/dashboard"
 	if rp, ok := p.Data["return_path"].(string); ok {
 		return_path = rp
-	}
-	if rp := p.PostFormValue("return_path"); rp != "" {
+	} else if rp := p.PostFormValue("return_path"); rp != "" {
 		return_path = rp
-	}
-	req_payload := p.Talk_api.Parse_sso_req(p.URL.Query())
-	if req_payload != nil {
-		if rp := req_payload.Get("return_sso_url"); rp != "" {
-			return_path = rp
-		}
 	}
 	if p.Session == nil {
 		p.ParseForm()
 		// Embeds return_path in the sign-in form
 		p.Data["return_path"] = return_path
 		if _, ok := p.PostForm["sign-in"]; !ok {
+			if p.FormValue("sso") != "" && p.FormValue("sig") != "" {
+				p.Data["sso"] = p.FormValue("sso")
+				p.Data["sig"] = p.FormValue("sig")
+			}
 			return
 		}
 		m := p.Get_member_by_username(p.PostFormValue("username"))
@@ -65,8 +62,13 @@ func sso_handler(p *page) {
 			return
 		}
 	}
-	// Won't reach this point without a successful login
+	// Won't reach this point without a session
+	req_payload := p.Talk_api.Parse_sso_req(p.URL.Query())
 	if req_payload != nil {
+		return_path = req_payload.Get("return_sso_url")
+		if return_path == "" {
+			return_path = p.Talk_api.Url() + "/session/sso_login"
+		}
 		values := url.Values{}
 		values.Set("external_id", fmt.Sprint(p.Member.Id))
 		values.Set("email", p.Member.Email)

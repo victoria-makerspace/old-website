@@ -14,6 +14,7 @@ func (api *Talk_api) Sync(external_id int, username, email, name string) *Talk_u
 	values.Set("external_id", fmt.Sprint(external_id))
 	values.Set("username", username)
 	values.Set("email", email)
+	//TODO: use own e-mail verification
 	values.Set("require_activation", "true")
 	values.Set("name", name)
 	payload, sig := api.Encode_sso_rsp(values)
@@ -21,6 +22,7 @@ func (api *Talk_api) Sync(external_id int, username, email, name string) *Talk_u
 	values.Set("sso", payload)
 	values.Set("sig", sig)
 	if u, ok := api.post_json("/admin/users/sync_sso", values).(map[string]interface{}); ok {
+		fmt.Println(u)
 		if _, ok := u["failed"]; ok {
 			return nil
 		}

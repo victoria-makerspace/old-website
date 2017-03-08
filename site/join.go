@@ -33,21 +33,14 @@ func join_handler(p *page) {
 		}
 		return
 	}
-	talk_user := m.Sync(m.Id, m.Username, m.Email, m.Name)
-	if talk_user == nil {
-		m.Delete_member()
-		log.Println("Talk sync_sso failed on new member: ", m)
-		p.http_error(500)
-		return
-	}
 	log.Printf("New member: (%d) %s\n", m.Id, username)
-	if talk_user.Active {
+	if m.Talk_user().Active {
 		m.Activate()
 		p.new_session(m, true)
 		p.redirect = "/member/dashboard"
 		return
 	}
 	//TODO: implement own e-mail validation
-	talk_user.Send_activation_email()
+	m.Talk_user().Send_activation_email()
 	p.redirect = "/member/join/activate"
 }

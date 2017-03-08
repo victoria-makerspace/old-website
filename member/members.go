@@ -117,7 +117,7 @@ func (ms *Members) New_member(username, name, email, password string) (m *Member
 	if m == nil {
 		return
 	}
-	if err := m.QueryRow(
+	if e := m.QueryRow(
 		"INSERT INTO member ("+
 			"	username,"+
 			"	name,"+
@@ -128,8 +128,13 @@ func (ms *Members) New_member(username, name, email, password string) (m *Member
 			"VALUES ($1, $2, $3, $4, $5) "+
 			"RETURNING id, registered",
 		username, name, m.password_key, salt, email).Scan(&m.Id, &m.Registered);
-		err != nil {
-		log.Panic(err)
+		e != nil {
+		log.Panic(e)
+	}
+	m.talk = ms.Sync(m.Id, m.Username, m.Email, m.Name)
+	if m.talk == nil {
+		m.Delete_member()
+		return nil, err
 	}
 	return m, nil
 }
