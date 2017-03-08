@@ -16,7 +16,8 @@ $(document).ready(function() {
     if (!$("html").hasClass("anon")) {
         var talk_url = $("#talk-link").attr("href");
         $.ajax(talk_url + "/session/current.json").fail(function() {
-            $.ajax(talk_url + "/session/sso");
+            var return_path = talk_url + "/session/current.json"
+            $.ajax(talk_url + "/session/sso?return_path=" + encodeURIComponent(return_path));
         });
     }
     $(".modal:target").modal("show");
