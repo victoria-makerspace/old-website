@@ -123,7 +123,11 @@
             </form>
   {{end}}
   {{with .Get_missed_payments}}
-            <h5 class="text-danger">Missed payments</h5>
+            <form action="/member/billing" method="post">
+              <h5 class="text-danger">Missed payments
+                <button type="submit" name="retry-missed-payments" class="btn btn-sm btn-warning">Retry</button>
+              </h5>
+            </form>
             <table class="table table-warning table-sm">
               <thead>
                 <tr>

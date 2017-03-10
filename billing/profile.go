@@ -31,7 +31,7 @@ type Profile struct {
 
 func (b *Billing) New_profile(member_id int) *Profile {
 	if _, err := b.db.Exec(
-		"INSERT INTO payment_profile (member_id)"+
+		"INSERT INTO payment_profile (member) "+
 			"VALUES ($1)",
 		member_id); err != nil {
 		log.Panic(err)
@@ -116,13 +116,14 @@ func (p *Profile) Update_card(token, cardholder string) {
 	// Clear card error
 	p.clear_error()
 	p.bs_profile.Card = *card
-	p.retry_missed_payments()
+	p.Retry_missed_payments()
 }
 
 func (p *Profile) new_bs_profile(token, cardholder string) {
-	p.bs_profile.Token = beanstream.Token{
-		Token: token,
-		Name:  cardholder}
+	p.bs_profile = &beanstream.Profile{
+		Token: beanstream.Token{
+			Token: token,
+			Name:  cardholder}}
 	p.bs_profile.Custom = beanstream.CustomFields{Ref1: fmt.Sprint(p.member_id)}
 	rsp, err := p.profile_api.CreateProfile(*p.bs_profile)
 	if err != nil {

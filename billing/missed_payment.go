@@ -89,12 +89,10 @@ func (p *Profile) Get_missed_payments() []*Missed_payment {
 	return mps
 }
 
-func (p *Profile) retry_missed_payments() {
-	if p.Error != None {
-		return
-	}
+func (p *Profile) Retry_missed_payments() {
 	for _, mp := range p.Get_missed_payments() {
-		if txn := p.do_transaction(mp.Invoice); txn != nil {
+		p.Error = None
+		if txn := p.do_transaction(mp.Invoice); txn != nil && txn.Approved {
 			p.delete_missed_payment(mp)
 		}
 	}

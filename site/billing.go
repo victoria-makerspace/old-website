@@ -29,6 +29,7 @@ func billing_handler(p *page) {
 		return
 	} else if _, ok := p.PostForm["delete-card"]; ok && pay_profile != nil {
 		pay_profile.Delete_card()
+		return
 	}
 	update_student := func() {
 		if p.PostFormValue("rate") == "student" &&
@@ -61,6 +62,9 @@ func billing_handler(p *page) {
 		p.redirect = "/member/billing"
 		return
 	} else if pay_profile == nil {
+		return
+	} else if _, ok := p.PostForm["retry-missed-payments"]; ok {
+		pay_profile.Retry_missed_payments()
 		return
 	} else if _, ok := p.PostForm["register"]; ok {
 		update_student()

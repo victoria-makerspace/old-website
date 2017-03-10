@@ -4,16 +4,16 @@
       <div class="col-md-10 col-lg-8 col-xl-7">
 {{if .Active}}
         <h3>Membership
-          <a href="/member/billing#terminate_membership" class="btn btn-sm btn-danger align-top">Cancel</a>
+          <a href="/member/billing#terminate_membership" class="btn btn-sm btn-danger">Cancel</a>
         </h3>
         <div class="mb-2 row">
           <span class="col-sm-4 font-weight-bold">Type:</span>
           <div class="col-sm-8">
-            <span class="text-capitalize">
+            <a href="/member/billing#Membership-dues" class="text-capitalize">
   {{if .Member.Gratuitous}}
               Free
   {{else}}{{.Member.Membership.Fee.Identifier}}{{end}}
-            </span>
+            </a>
           </div>
   {{if .Member.Gratuitous}}
           <p class="alert alert-info mt-2 mb-0">

@@ -18,7 +18,7 @@ type Transaction struct {
 	Approved   bool
 	Time       time.Time
 	Card       string // Last 4 digits
-	Ip_address string //TODO
+	Ip_address string //TODO or remove
 	*Invoice
 	order_id   string
 }
@@ -41,7 +41,7 @@ func (p *Profile) do_transaction(invoice *Invoice) *Transaction {
 		Comment:       invoice.Description}
 	rsp, err := p.payment_api.MakePayment(req)
 	if err != nil {
-		log.Println(err)
+		log.Printf("Transaction for member %d failed: %q\n", p.member_id, err)
 		return nil
 	}
 	txn.Id, _ = strconv.Atoi(rsp.ID)
@@ -61,7 +61,7 @@ func (p *Profile) do_transaction(invoice *Invoice) *Transaction {
 		log.Panic(err)
 	}
 	if !rsp.IsApproved() {
-		//TODO: make sure unapproved == invalid card
+		//TODO: find out if unapproved always == invalid card
 		p.set_error(Invalid_card)
 	} else {
 		p.clear_error()

@@ -21,8 +21,8 @@ func (p *Profile) New_membership(is_student bool) *Invoice {
 		}
 		first_inv := p.New_invoice(p.member_id, prorated, description, fee)
 		if txn := p.do_transaction(first_inv); txn == nil || !txn.Approved {
-			//TODO: do_missed_payment
-			//embed error
+			p.do_missed_payment(first_inv, txn)
+			//TODO: embed error
 		}
 	}
 	return inv
