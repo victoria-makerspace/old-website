@@ -92,3 +92,17 @@ func (api *Talk_api) Message_member(title, message string, users ...*Talk_user) 
 	values.Set("target_usernames", usernames)
 	api.post_json("/post", values)
 }
+
+// Discourse groups as groups[name] == id
+func (api *Talk_api) Groups() map[string]int {
+	groups := make(map[string]int)
+	if j, ok := api.get_json("/admin/groups.json").([]interface{}); ok {
+		for _, group := range j {
+			if g, ok := group.(map[string]interface{}); ok {
+				groups[g["name"].(string)] = int(g["id"].(float64))
+			}
+		}
+		return groups
+	}
+	return nil
+}

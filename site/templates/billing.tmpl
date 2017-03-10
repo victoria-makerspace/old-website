@@ -41,11 +41,6 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
-{{if not .Member.Agreed_to_terms}}
-        <p class="alert alert-warning">
-          Please agree to the <a href="/terms">Terms and Conditions</a> before setting up billing information.
-        </p>
-{{end}}
         <p class="alert alert-info">
           All prices and transactions are in Canadian dollars.<br>
           Billing inquiries should be addressed to <a href="mailto:accounting@makerspace.ca">accounting@makerspace.ca</a>.
@@ -216,7 +211,14 @@
               </div>
             </div>
             <script src="https://payform.beanstream.com/payfields/beanstream_payfields.js" data-submitForm="true"></script>
+{{if not .Member.Agreed_to_terms}}
+            <p class="alert alert-warning">
+              Please agree to the <a href="/terms">Terms &amp; Conditions</a> before setting up billing information.
+            </p>
+            <button type="submit" class="btn btn-primary" disabled>
+{{else}}
             <button type="submit" class="btn btn-primary">
+{{end}}
 {{if not .Member.Payment}}
               Register
 {{else if not .Member.Payment.Get_card}}
