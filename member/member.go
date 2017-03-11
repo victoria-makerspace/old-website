@@ -169,7 +169,9 @@ func (m *Member) New_membership() {
 		m.Membership = m.payment.New_membership(true)
 		return
 	}
-	m.Membership = m.payment.New_membership(false)
+	if m.Membership = m.payment.New_membership(false); m.Membership != nil {
+		m.Talk_user().Add_to_group("Members")
+	}
 }
 
 func (m *Member) Cancel_membership() {

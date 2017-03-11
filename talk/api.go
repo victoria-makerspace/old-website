@@ -2,9 +2,11 @@ package talk
 
 import (
 	"log"
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"io/ioutil"
 )
 
 type Talk_api struct {
@@ -55,6 +57,36 @@ func (api *Talk_api) get_json(path string, query ...string) interface{} {
 	}
 	return data
 }
+
+func (api *Talk_api) put_json(path string, j map[string]interface{}) interface{} {
+	u := api.Url() + path + "?" + api.api_key + "&" + api.admin
+	body, err := json.Marshal(j)
+	if err != nil {
+		log.Panic(err)
+	}
+	req, err := http.NewRequest("PUT", u, ioutil.NopCloser(bytes.NewReader(body)))
+	if err != nil {
+		log.Panic(err)
+	}
+	req.Header.Add("Content-Type", "application/json")
+	rsp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("Talk error (PUT %s):\n\t%q\n", path, err)
+		return nil
+	}
+	defer rsp.Body.Close()
+	b, _ := ioutil.ReadAll(rsp.Body)
+	log.Println(string(b))
+	var data interface{}
+	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
+		if err.Error() != "EOF" {
+			log.Printf("Talk JSON decoding error (PUT %s):\n\t%q\n", path, err)
+		}
+		return nil
+	}
+	return data
+}
+
 
 func (api *Talk_api) post_json(path string, form url.Values) interface{} {
 	var data interface{}

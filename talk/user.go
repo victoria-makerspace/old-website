@@ -162,6 +162,17 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 	return msgs
 }
 
+func (t *Talk_user) Add_to_group(group string) {
+	groups := t.Groups()
+	if _, ok := groups[group]; !ok {
+		return
+	}
+	data := make(map[string]interface{})
+	data["usernames"] = t.Username
+	j := t.put_json("/groups/" + fmt.Sprint(groups[group]) + "/members.json", data)
+	log.Println(j)
+}
+
 /*
 func (t *Talk_user) Notifications() []interface{} {
 	if t.notifications != nil {
