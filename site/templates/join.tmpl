@@ -4,7 +4,7 @@
         <h2>Join Makerspace</h2>
         <p>Before you can become a member, you should attend an open-house.  Open-house nights are on the 2nd and 4th Tuesday of each month, from 7 to 9pm.</p>
         <form id="join" method="post" action="/join">
-          <div class="form-group row">
+          <div class="form-group row{{if .Data.username_error}} has-danger{{end}}">
             <label for="username" class="col-sm-2 col-form-label">Username</label>
             <div class="col-10 col-lg-8">
               <div class="input-group">
@@ -14,7 +14,7 @@
               <small class="form-control-feedback{{with .Data.username_error}} show">{{.}}{{else}}">{{end}}</small>
             </div>
           </div>
-          <div class="form-group row">
+          <div class="form-group row{{if .Data.name_error}} has-danger{{end}}">
             <label for="name" class="col-sm-2 col-form-label">Name</label>
             <div class="col-10 col-lg-8">
               <div class="input-group">
@@ -24,7 +24,7 @@
               <small class="form-control-feedback{{with .Data.name_error}} show">{{.}}{{else}}">{{end}}</small>
             </div>
           </div>
-          <div class="form-group row">
+          <div class="form-group row{{if .Data.email_error}} has-danger{{end}}">
             <label for="email" class="col-sm-2 col-form-label">E-mail</label>
             <div class="col-10 col-lg-8">
               <div class="input-group">
@@ -34,14 +34,14 @@
               <small class="form-control-feedback{{with .Data.email_error}} show">{{.}}{{else}}">{{end}}</small>
             </div>
           </div>
-          <div class="form-group row">
+          <div class="form-group row{{if .Data.password_error}} has-danger{{end}}">
             <label for="password" class="col-sm-2 col-form-label">Password</label>
             <div class="col-10 col-lg-8">
               <div class="input-group">
                 <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
                 <input type="password" class="form-control" id="password" name="password" required>
               </div>
-              <small class="form-control-feedback"></small>
+              <small class="form-control-feedback{{with .Data.password_error}} show">{{.}}{{else}}">{{end}}</small>
             </div>
           </div>
           <button type="submit" name="join" class="btn btn-primary">Submit</button>

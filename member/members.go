@@ -38,22 +38,28 @@ func key(password, salt string) string {
 	return hex.EncodeToString(key)
 }
 
-var username_rexp = regexp.MustCompile(`^[\pL\pN_]+$`)
-var email_rexp = regexp.MustCompile("^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$")
-var name_rexp = regexp.MustCompile(`^(?:[\pL\pN\pM\pP]+ ?)+$`)
-
+var username_chars_rexp = regexp.MustCompile(`[^\w.-]`)
+var username_first_char_rexp = regexp.MustCompile(`^[\W]`)
+var username_last_char_rexp = regexp.MustCompile(`[^A-Za-z0-9]$`)
+var username_double_special_rexp = regexp.MustCompile(`[-_.]{2,}`)
+var username_confusing_suffix_rexp = regexp.MustCompile(`\.(js|json|css|htm|html|xml|jpg|jpeg|png|gif|bmp|ico|tif|tiff|woff)$`)
 func (ms *Members) Check_username_availability(username string) (available bool, err string) {
 	if username == "" {
 		return false, "Username cannot be blank"
-	}
-	if len(username) < 3 {
+	} else if len(username) < 3 {
 		return false, "Username must be at least 3 characters"
-	}
-	if len(username) > 20 {
+	} else if len(username) > 20 {
 		return false, "Username must be no more than 20 characters"
-	}
-	if !username_rexp.MatchString(username) {
-		return false, "Username must only include numbers, letters and underscores"
+	} else if username_chars_rexp.MatchString(username) {
+		return false, "Username must only include numbers, letters, underscores, hyphens, and periods"
+	} else if username_first_char_rexp.MatchString(username) {
+		return false, "Username must begin with an underscore or alphanumeric character"
+	} else if username_last_char_rexp.MatchString(username) {
+		return false, "Username must end with an alphanumeric character"
+	} else if username_double_special_rexp.MatchString(username) {
+		return false, "Username cannot contain consecutive special characters (underscore, period, or hyphen)"
+	} else if username_confusing_suffix_rexp.MatchString(username) {
+		return false, "Username must not end in a confusing filetype suffix"
 	}
 	var count int
 	if err := ms.QueryRow(
@@ -63,11 +69,12 @@ func (ms *Members) Check_username_availability(username string) (available bool,
 		log.Panic(err)
 	}
 	if count == 1 {
-		return false, "Username not available"
+		return false, "Username already in use"
 	}
 	return ms.Check_username(username)
 }
 
+var email_rexp = regexp.MustCompile("^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$")
 func (ms *Members) Check_email_availability(email string) (available bool, err string) {
 	if email == "" {
 		return false, "E-mail cannot be blank"
@@ -87,6 +94,8 @@ func (ms *Members) Check_email_availability(email string) (available bool, err s
 	}
 	return false, "E-mail already in use"
 }
+
+var name_rexp = regexp.MustCompile(`^([\pL\pN\pM\pP]+ ?)+$`)
 
 // New creates a new user, returns nil and a set of errors on invalid input.
 func (ms *Members) New_member(username, name, email, password string) (m *Member, err map[string]string) {

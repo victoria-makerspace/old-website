@@ -17,14 +17,14 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 			if available.(bool) {
 				return true, ""
 			}
-			return false, "Username not available"
 		}
 		if errors, ok := j["errors"]; ok {
 			return false, errors.([]interface{})[0].(string)
 		}
+		return false, "Username not available"
 	}
 	log.Panic("Talk server error during Check_username")
-	return false, ""
+	return
 }
 
 type Talk_user struct {
