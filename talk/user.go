@@ -13,17 +13,19 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 	j := api.get_json("/users/check_username.json", api.admin,
 		"username="+url.QueryEscape(username))
 	if j, ok := j.(map[string]interface{}); ok {
-		if available, ok := j["available"]; ok {
-			if available.(bool) {
-				return true, ""
-			}
-		}
 		if errors, ok := j["errors"]; ok {
-			return false, errors.([]interface{})[0].(string)
+			return false, "Username " + errors.([]interface{})[0].(string)
+		// Even if talk gives available = false, (e.g. for staged users), sso
+		//	automatically merges the talk user instance with the newly-created
+		//	local one
+		} else if _, ok := j["available"]; ok {
+			return true, ""
 		}
+		// Unanticipated json response
+		log.Printf("Talk server rejected username '%s': %q\n", username, j)
 		return false, "Username not available"
 	}
-	log.Panic("Talk server error during Check_username")
+	log.Panic("Talk server parsing error during Check_username: j")
 	return
 }
 

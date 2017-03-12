@@ -21,7 +21,7 @@ func root_handler(p *page) {
 }
 
 func static_handler(p *page) {
-	dir := http.Dir(p.config.Static_dir)
+	dir := http.Dir(p.config["dir"].(string) + "/site/static/")
 	file, err := dir.Open(path.Clean(p.URL.Path))
 	if err == nil {
 		if f_info, err := file.Stat(); err == nil && !f_info.IsDir() {

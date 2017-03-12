@@ -11,7 +11,7 @@ type page struct {
 	Data   map[string]interface{} // Data to be passed to templates or JSON
 	Status int
 	*Session
-	*Http_server
+	*http_server
 	http.ResponseWriter
 	*http.Request
 	cookies      map[string]*http.Cookie
@@ -20,14 +20,14 @@ type page struct {
 	redirect     string
 }
 
-func (h *Http_server) new_page(w http.ResponseWriter, r *http.Request) *page {
+func (h *http_server) new_page(w http.ResponseWriter, r *http.Request) *page {
 	//// TODO: remove after testing
 	h.parse_templates()
 	/////
 	p := &page{
 		Data:           make(map[string]interface{}),
 		Status:         http.StatusOK,
-		Http_server:    h,
+		http_server:    h,
 		ResponseWriter: w,
 		Request:        r,
 		cookies:        make(map[string]*http.Cookie),

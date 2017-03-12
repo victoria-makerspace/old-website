@@ -8,7 +8,7 @@ import (
 
 var handlers = make(map[string]func(*page))
 
-func (h *Http_server) set_handlers() {
+func (h *http_server) set_handlers() {
 	for path, handler := range handlers {
 		f := func(hndlr func(*page)) func(w http.ResponseWriter, r *http.Request) {
 			return func(w http.ResponseWriter, r *http.Request) {

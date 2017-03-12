@@ -14,9 +14,8 @@ import (
 )
 
 var config struct {
-	Domain     string
-	Port       int
-	Dir        string
+	Site       map[string]interface{}
+	Members    map[string]interface{}
 	Database   map[string]string
 	Beanstream map[string]string
 	Talk       map[string]string
@@ -46,12 +45,6 @@ func main() {
 	talk := talk.New_talk_api(config.Talk)
 	b := billing.Billing_new(bs["merchant-id"], bs["payments-api-key"],
 		bs["profiles-api-key"], bs["reports-api-key"], db)
-	members := &member.Members{db, talk, b}
-	site.Serve(site.Config{
-		config.Domain,
-		config.Port,
-		config.Dir + "/site/templates/",
-		config.Dir + "/site/static/",
-		config.Dir + "/database/data/"},
-		talk, members, db)
+	members := &member.Members{config.Members, db, talk, b}
+	site.Serve(config.Site, talk, members, db)
 }

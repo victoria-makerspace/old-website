@@ -9,14 +9,14 @@ import (
 	"time"
 )
 
-//TODO: maybe save sessions in a slice in the Http_server object, to persist member data across requests?
+//TODO: maybe save sessions in a slice in the http_server object, to persist member data across requests?
 
 func (p *page) set_session_cookie(value string, expires bool) {
 	cookie := &http.Cookie{
 		Name:   "session",
 		Value:  value,
 		Path:   "/",
-		Domain: p.config.Domain,
+		Domain: p.config["domain"].(string),
 		/* Secure: true, */
 		HttpOnly: true}
 	// If not set to expire, set expiry date for a year from now.
@@ -31,7 +31,7 @@ func (p *page) unset_session_cookie() {
 		Name:     "session",
 		Value:    " ",
 		Path:     "/",
-		Domain:   p.config.Domain,
+		Domain: p.config["domain"].(string),
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HttpOnly: true}

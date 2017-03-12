@@ -12,6 +12,7 @@ import (
 )
 
 type Members struct {
+	Config map[string]interface{}
 	*sql.DB
 	*talk.Talk_api
 	*billing.Billing
@@ -60,6 +61,11 @@ func (ms *Members) Check_username_availability(username string) (available bool,
 		return false, "Username cannot contain consecutive special characters (underscore, period, or hyphen)"
 	} else if username_confusing_suffix_rexp.MatchString(username) {
 		return false, "Username must not end in a confusing filetype suffix"
+	}
+	for _, u := range ms.Config["reserved_usernames"].([]interface{}) {
+		if username == u.(string) {
+			return false, "Username reserved"
+		}
 	}
 	var count int
 	if err := ms.QueryRow(

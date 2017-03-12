@@ -26,42 +26,37 @@ var templates = [...]string{
 	"tools",
 	"storage"}
 
-func (h *Http_server) parse_templates() {
+func (h *http_server) parse_templates() {
 	h.tmpl = template.Must(template.ParseFiles(func() []string {
 		files := make([]string, len(templates))
 		for i := range templates {
-			files[i] = h.config.Templates_dir + templates[i] + ".tmpl"
+			files[i] = h.config["dir"].(string) + "/site/templates/" +
+				templates[i] + ".tmpl"
 		}
 		return files
 	}()...))
 }
 
-type Config struct {
-	Domain                              string
-	Port                                int
-	Templates_dir, Static_dir, Data_dir string
-}
-
-type Http_server struct {
+type http_server struct {
 	http.Server
-	config Config
+	config map[string]interface{}
 	db     *sql.DB
+	tmpl *template.Template
 	*talk.Talk_api
 	*member.Members
-	tmpl *template.Template
 }
 
 //TODO: set h.ErrorLog to a different logger
-func Serve(config Config, talk *talk.Talk_api, members *member.Members, db *sql.DB) *Http_server {
-	h := &Http_server{
+func Serve(config map[string]interface{}, talk *talk.Talk_api, members *member.Members, db *sql.DB) {
+	h := &http_server{
 		config:   config,
 		db:       db,
 		Talk_api: talk,
 		Members:  members}
-	h.Addr = config.Domain + ":" + fmt.Sprint(config.Port)
+	h.Addr = config["domain"].(string) + ":" +
+		fmt.Sprint(int(config["port"].(float64)))
 	h.Handler = http.NewServeMux()
 	h.parse_templates()
 	h.set_handlers()
 	go log.Panic(h.ListenAndServe())
-	return h
 }
