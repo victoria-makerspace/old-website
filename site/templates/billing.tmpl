@@ -49,10 +49,11 @@
         <section>
           <h4>Transactions history</h4>
           <div class="px-2 px-sm-3">
-  {{with .Transactions}}
-            <table class="table table-sm table-striped">
+  {{with .Get_transactions}}
+            <table class="table table-sm table-striped table-responsive text-nowrap">
               <thead>
                 <tr>
+                  <th>#</th>
                   <th>Date</th>
                   <th>Amount</th>
                   <th>Description</th>
@@ -60,12 +61,14 @@
                 </tr>
               </thead>
               <tbody>
-    {{range .}}
-                <tr{{if not .Approved}} title="This transaction was not approved." class="table-danger"{{end}}>
-                  <td>{{.Time.Format "2006-01-02"}}</td>
-                  <td>${{.Invoice.Amount | printf "%.2f"}}</td>
-                  <td>{{.Invoice.Description}}</td>
-                  <td><small class="text-muted">x-{{.Card}}</small></td>
+    {{$count := len .}}
+    {{range $i, $t := .}}
+                <tr{{if gt $i 8}} class="d-none"{{end}}>
+                  <td scope="row" class="font-weight-bold">{{sub $count $i}}</td>
+                  <td>{{$t.Time.Format "2006-01-02"}}</td>
+                  <td class="font-weight-bold">{{$t.Invoice.Amount | printf "$%.2f"}}</td>
+                  <td>{{$t.Invoice.Description}}</td>
+                  <td><small class="text-muted">x-{{$t.Card}}</small></td>
                   </td>
                 </tr>
     {{end}}
@@ -89,7 +92,7 @@
             </p>
     {{end}}
             <form action="/member/billing" method="post" id="monthly">
-            <table class="table table-sm">
+            <table class="table table-sm table-responsive text-nowrap">
               <thead>
                 <tr>
                   <th>Description</th>
@@ -102,7 +105,7 @@
     {{range .Invoices}}
                 <tr>  
                   <td>{{.Description}}</td>
-                  <td>{{.Amount | printf "$%.2f"}}</td>
+                  <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
                   <td>{{.Date.Format "2006-01-02"}}</td>
                   <td>
       {{if eq .Fee.Category "membership"}}
@@ -123,7 +126,7 @@
                 <button type="submit" name="retry-missed-payments" class="btn btn-sm btn-warning">Retry</button>
               </h5>
             </form>
-            <table class="table table-warning table-sm">
+            <table class="table table-warning table-sm table-responsive text-nowrap">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -135,7 +138,7 @@
     {{range .}}
                 <tr class="text-danger">
                   <td>{{.Time.Format "2006-01-02"}}</td>
-                  <td>{{.Invoice.Amount | printf "$%.2f"}}</td>
+                  <td class="font-weight-bold">{{.Invoice.Amount | printf "$%.2f"}}</td>
                   <td>{{.Invoice.Description}}</td>
                 </tr>
     {{end}}

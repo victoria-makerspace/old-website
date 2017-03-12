@@ -27,7 +27,15 @@ var templates = [...]string{
 	"storage"}
 
 func (h *http_server) parse_templates() {
-	h.tmpl = template.Must(template.ParseFiles(func() []string {
+	h.tmpl = template.New("main.tmpl").Funcs(template.FuncMap{
+		"add": func (i, j int) int {
+			return i + j
+		},
+		"sub": func (i, j int) int {
+			return i - j
+		},
+	})
+	template.Must(h.tmpl.ParseFiles(func() []string {
 		files := make([]string, len(templates))
 		for i := range templates {
 			files[i] = h.config["dir"].(string) + "/site/templates/" +

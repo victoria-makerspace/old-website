@@ -10,7 +10,7 @@ import (
 )
 
 func (api *Talk_api) Check_username(username string) (available bool, err string) {
-	j := api.get_json("/users/check_username.json", api.admin,
+	j := api.get_json("/users/check_username.json", false,
 		"username="+url.QueryEscape(username))
 	if j, ok := j.(map[string]interface{}); ok {
 		if errors, ok := j["errors"]; ok {
@@ -60,7 +60,7 @@ func (api *Talk_api) parse_user(external_id int, u map[string]interface{}) *Talk
 
 func (api *Talk_api) Get_user(id int) *Talk_user {
 	t := &Talk_user{external_id: id, Talk_api: api}
-	j := api.get_json("/users/by-external/"+fmt.Sprint(id)+".json", api.admin)
+	j := api.get_json("/users/by-external/"+fmt.Sprint(id)+".json", true, api.admin)
 	if j, ok := j.(map[string]interface{}); ok {
 		if u, ok := j["user"].(map[string]interface{}); ok {
 			t = api.parse_user(id, u)
@@ -69,7 +69,7 @@ func (api *Talk_api) Get_user(id int) *Talk_user {
 	if t == nil {
 		return nil
 	}
-	j = api.get_json("/admin/users/"+fmt.Sprint(t.id)+".json", api.admin)
+	j = api.get_json("/admin/users/"+fmt.Sprint(t.id)+".json", true, api.admin)
 	if j, ok := j.(map[string]interface{}); ok {
 		if a, ok := j["active"].(bool); ok {
 			t.Active = a
@@ -107,7 +107,7 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 	msgs := make([]*Message, 0)
 	usernames := make(map[int]string)
 	avatars := make(map[int]string)
-	j := t.get_json("/topics/private-messages/" + t.Username + ".json")
+	j := t.get_json("/topics/private-messages/" + t.Username + ".json", true)
 	if j, ok := j.(map[string]interface{}); ok {
 		if u, ok := j["users"].([]interface{}); ok {
 			for _, v := range u {
@@ -171,7 +171,7 @@ func (t *Talk_user) Add_to_group(group string) {
 	}
 	data := make(map[string]interface{})
 	data["usernames"] = t.Username
-	j := t.put_json("/groups/" + fmt.Sprint(groups[group]) + "/members.json", data)
+	j := t.put_json("/groups/" + fmt.Sprint(groups[group]) + "/members.json", data, true)
 	log.Println(j)
 }
 
@@ -180,7 +180,7 @@ func (t *Talk_user) Notifications() []interface{} {
 	if t.notifications != nil {
 		return t.notifications
 	}
-	j := t.get_json("/notifications.json", t.Username)
+	j := t.get_json("/notifications.json", true, t.Username)
 	//TODO: check errors and parse further
 	if n, ok := j.(map[string]interface{}); ok {
 		if n, ok := n["notifications"].([]interface{}); ok {

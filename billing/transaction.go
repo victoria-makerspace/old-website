@@ -128,17 +128,18 @@ func (t *Transaction) log_recurring_txn(log_id int) {
 	return txn
 }*/
 
-func (p *Profile) get_transactions() {
+func (p *Profile) Get_transactions() []*Transaction {
 	rows, err := p.db.Query("SELECT id, approved, time, "+
 		"order_id, card, ip_address, invoice FROM transaction WHERE "+
 		"profile = $1 ORDER BY time DESC", p.member_id)
 	defer rows.Close()
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return
+			return nil
 		}
 		log.Panic(err)
 	}
+	txns := make([]*Transaction, 0)
 	for rows.Next() {
 		txn := &Transaction{Profile: p}
 		var order_id, card, ip_address sql.NullString
@@ -151,18 +152,9 @@ func (p *Profile) get_transactions() {
 		txn.Card = card.String
 		txn.Ip_address = ip_address.String
 		txn.Invoice = p.Get_bill(invoice_id)
-		p.Transactions = append(p.Transactions, txn)
+		txns = append(txns, txn)
 	}
-}
-
-//	Get_transaction returns nil when the transaction isn't found.
-func (p *Profile) Get_transaction(id int) *Transaction {
-	for _, i := range p.Transactions {
-		if i.Id == id {
-			return i
-		}
-	}
-	return nil
+	return txns
 }
 
 /*

@@ -31,16 +31,23 @@ func (api *Talk_api) Url() string {
 }
 
 // First argument of query is the api_username
-func (api *Talk_api) get_json(path string, query ...string) interface{} {
+func (api *Talk_api) get_json(path string, use_key bool, query ...string) interface{} {
 	var data interface{}
 	//TODO: perhaps parse as url.URL first in case parameters have already been
 	//	added.
-	url := api.Url() + path + "?api_key=" + api.api_key
-	if len(query) == 0 {
-		url += "&api_username=" + api.admin
-	}
-	if len(query) > 0 && query[0] != "" {
-		url += "&api_username=" + query[0]
+	url := api.Url() + path + "?"
+	if use_key {
+		url += "api_key=" + api.api_key + "&api_username="
+		if len(query) == 0 {
+			url += api.admin
+		} else {
+			url += query[0]
+			for _, q := range query[1:] {
+				url += "&" + q
+			}
+		}
+	} else if len(query) > 0 {
+		url += query[0]
 		for _, q := range query[1:] {
 			url += "&" + q
 		}
@@ -58,17 +65,23 @@ func (api *Talk_api) get_json(path string, query ...string) interface{} {
 	return data
 }
 
-func (api *Talk_api) put_json(path string, j map[string]interface{}) interface{} {
-	u := api.Url() + path + "?" + api.api_key + "&" + api.admin
+func (api *Talk_api) put_json(path string, j map[string]interface{}, use_key bool) interface{} {
+	//TODO: accept net.Url instead of path
+	u := api.Url() + path
+	if use_key {
+		u += "?" + api.api_key + "&" + api.admin
+	}
 	body, err := json.Marshal(j)
 	if err != nil {
 		log.Panic(err)
 	}
-	req, err := http.NewRequest("PUT", u, ioutil.NopCloser(bytes.NewReader(body)))
+	req, err := http.NewRequest("PUT", u,
+		ioutil.NopCloser(bytes.NewReader(body)))
 	if err != nil {
 		log.Panic(err)
 	}
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
 	rsp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Printf("Talk error (PUT %s):\n\t%q\n", path, err)
@@ -128,7 +141,7 @@ func (api *Talk_api) Message_member(title, message string, users ...*Talk_user) 
 // Discourse groups as groups[name] == id
 func (api *Talk_api) Groups() map[string]int {
 	groups := make(map[string]int)
-	if j, ok := api.get_json("/admin/groups.json").([]interface{}); ok {
+	if j, ok := api.get_json("/admin/groups.json", true).([]interface{}); ok {
 		for _, group := range j {
 			if g, ok := group.(map[string]interface{}); ok {
 				groups[g["name"].(string)] = int(g["id"].(float64))

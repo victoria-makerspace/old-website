@@ -20,7 +20,6 @@ const (
 
 type Profile struct {
 	Invoices     []*Invoice
-	Transactions []*Transaction
 	Error
 	*Billing
 	Missed_payments []*Missed_payment
@@ -57,7 +56,6 @@ func (b *Billing) Get_profile(member_id int) *Profile {
 	p.Error = Error(invalid.Int64)
 	/////TODO: p.Recurring_bills() if len(Invoices) = 0, get_recurring...etc
 	p.get_recurring_bills()
-	p.get_transactions()
 	return p
 }
 
