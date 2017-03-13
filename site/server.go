@@ -24,7 +24,8 @@ var templates = [...]string{
 	"billing",
 	"members",
 	"tools",
-	"storage"}
+	"storage",
+	"admin"}
 
 func (h *http_server) parse_templates() {
 	h.tmpl = template.New("main.tmpl").Funcs(template.FuncMap{

@@ -114,9 +114,6 @@
           </div>
         </form>
         <h3>Update password</h3>
-{{with .Data.update_password_success}}
-        <p class="alert alert-success">{{.}}</p>
-{{end}}
         <form action="/member/account" method="post">
           <div class="form-group row{{if .Data.old_password_error}} has-danger{{end}}">
             <label for="old-password" class="col-sm-4 col-form-label">Current password:</label>
@@ -138,8 +135,13 @@
               <small class="form-control-feedback{{with .Data.new_password_error}} show">{{.}}{{else}}">{{end}}</small>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary" name="update-password">Update</button>
+          <div class="d-flex align-items-start">
+            <button type="submit" class="btn btn-primary" name="update-password">Update</button>
+{{with .Data.update_password_success}}
+            <p class="alert alert-success py-2 px-3 ml-3 w-100" style="line-height: 1.25">{{.}}</p>
+{{end}}
         </div>
+        </form>
       </div>
-    </form>
+    </div>
   </div>
