@@ -129,5 +129,5 @@ func sso_reset_handler(p *page) {
 		return
 	}
 	m.Send_password_reset()
-	p.redirect = "/"
+	p.Data["reset_success"] = true
 }
