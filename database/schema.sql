@@ -23,7 +23,7 @@ CREATE TABLE activation_token (
 CREATE TABLE reset_password_token (
 	member integer PRIMARY KEY REFERENCES member,
 	token character(64) NOT NULL,
-	time timestamp(0) NOT NULL DEFAULT now()
+	time timestamp(0) with time zone NOT NULL DEFAULT now()
 );
 CREATE TYPE admin_privilege AS ENUM (
 	'modify-member',

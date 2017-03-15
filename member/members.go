@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/scrypt"
 	"log"
 	"regexp"
+	"time"
 )
 
 type Members struct {
@@ -192,6 +193,33 @@ func (ms *Members) Get_all_members() []*Member {
 		members = append(members, m)
 	}
 	return members
+}
+
+func (ms *Members) Get_member_from_reset_token(token string) *Member {
+	var member_id int
+	var t time.Time
+	if err := ms.QueryRow(
+		"SELECT"+
+			"	member, time "+
+			"FROM reset_password_token "+
+			"WHERE token = $1", token).Scan(&member_id, &t); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		log.Panic(err)
+	}
+	window, err := time.ParseDuration(ms.Config["reset-window"].(string))
+	if err != nil {
+		log.Panic(err)
+	}
+	if time.Now().After(t.Add(window)) {
+		if _, err := ms.Exec("DELETE FROM reset_password_token "+
+			"WHERE token = $1", token); err != nil {
+			log.Panic(err)
+		}
+		return nil
+	}
+	return ms.Get_member_by_id(member_id)
 }
 
 /*

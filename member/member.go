@@ -130,6 +130,10 @@ func (m *Member) Change_password(password string) {
 		m.password_key, m.password_salt, m.Id); err != nil {
 		log.Panic(err)
 	}
+	if _, err := m.Exec("DELETE FROM reset_password_token "+
+		"WHERE member = $1", m.Id); err != nil {
+		log.Panic(err)
+	}
 }
 
 //TODO: forgotten password reset by e-mail

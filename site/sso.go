@@ -117,6 +117,17 @@ func sso_reset_handler(p *page) {
 		return
 	}
 	p.ParseForm()
+	if token := p.FormValue("token"); token != "" {
+		p.Data["token"] = token
+		m := p.Get_member_from_reset_token(token)
+		if m == nil {
+			p.Data["token_error"] = true
+		} else if password := p.PostFormValue("password"); password != "" {
+			m.Change_password(password)
+			p.redirect = "/sso"
+		}
+		return
+	}
 	if _, ok := p.PostForm["reset-password"]; !ok {
 		return
 	}
