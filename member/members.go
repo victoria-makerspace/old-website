@@ -44,6 +44,7 @@ var username_first_char_rexp = regexp.MustCompile(`^[\W]`)
 var username_last_char_rexp = regexp.MustCompile(`[^A-Za-z0-9]$`)
 var username_double_special_rexp = regexp.MustCompile(`[-_.]{2,}`)
 var username_confusing_suffix_rexp = regexp.MustCompile(`\.(js|json|css|htm|html|xml|jpg|jpeg|png|gif|bmp|ico|tif|tiff|woff)$`)
+
 func (ms *Members) Check_username_availability(username string) (available bool, err string) {
 	if username == "" {
 		return false, "Username cannot be blank"
@@ -81,6 +82,7 @@ func (ms *Members) Check_username_availability(username string) (available bool,
 }
 
 var email_rexp = regexp.MustCompile("^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$")
+
 func (ms *Members) Check_email_availability(email string) (available bool, err string) {
 	if email == "" {
 		return false, "E-mail cannot be blank"
@@ -142,8 +144,7 @@ func (ms *Members) New_member(username, name, email, password string) (m *Member
 			") "+
 			"VALUES ($1, $2, $3, $4, $5) "+
 			"RETURNING id, registered",
-		username, name, m.password_key, salt, email).Scan(&m.Id, &m.Registered);
-		e != nil {
+		username, name, m.password_key, salt, email).Scan(&m.Id, &m.Registered); e != nil {
 		log.Panic(e)
 	}
 	m.talk = ms.Sync(m.Id, m.Username, m.Email, m.Name)

@@ -1,8 +1,8 @@
 package member
 
 import (
-	"github.com/vvanpo/makerspace/billing"
 	"database/sql"
+	"github.com/vvanpo/makerspace/billing"
 	"log"
 )
 
@@ -17,7 +17,7 @@ type Storage struct {
 
 func (ms *Members) Get_storage(fee *billing.Fee) []*Storage {
 	storage := make([]*Storage, 0)
-	rows, err := ms.Query("SELECT number, size, invoice, available " +
+	rows, err := ms.Query("SELECT number, size, invoice, available "+
 		"FROM storage WHERE fee = $1 ORDER BY number ASC", fee.Id)
 	if err != nil {
 		log.Panic(err)
@@ -30,15 +30,14 @@ func (ms *Members) Get_storage(fee *billing.Fee) []*Storage {
 			invoice_id sql.NullInt64
 			available  bool
 		)
-		if err = rows.Scan(&number, &size, &invoice_id, &available);
-			err != nil {
+		if err = rows.Scan(&number, &size, &invoice_id, &available); err != nil {
 			log.Panic(err)
 		}
 		s := &Storage{
-			Fee: fee,
-			Number: number,
-			Size: size.Float64,
-			Price: fee.Amount,
+			Fee:       fee,
+			Number:    number,
+			Size:      size.Float64,
+			Price:     fee.Amount,
 			Available: available}
 		if fee.Identifier == "wall" {
 			s.Price *= s.Size

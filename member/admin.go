@@ -2,8 +2,8 @@ package member
 
 import (
 	"database/sql"
-	"log"
 	"github.com/lib/pq"
+	"log"
 )
 
 type Admin struct {

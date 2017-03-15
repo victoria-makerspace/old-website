@@ -13,19 +13,19 @@ type Member struct {
 	Username        string
 	Name            string
 	Email           string
-	Telephone		string
+	Telephone       string
 	Agreed_to_terms bool
 	Registered      time.Time
 	Activated       bool
 	*Admin
 	*Student
 	*Members
-	Gratuitous      bool
+	Gratuitous    bool
 	password_key  string
 	password_salt string
 	talk          *talk.Talk_user
 	Membership    *billing.Invoice
-	payment *billing.Profile
+	payment       *billing.Profile
 }
 
 //TODO: support null password keys, and use e-mail verification for login
@@ -47,8 +47,7 @@ func (ms *Members) Get_member_by_username(username string) *Member {
 			"FROM member "+
 			"WHERE username = $1",
 		username).Scan(&m.Id, &m.Name, &password_key, &password_salt, &m.Email,
-		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous);
-		err != nil {
+		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -79,8 +78,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"FROM member "+
 			"WHERE id = $1",
 		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &m.Email,
-		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous);
-		err != nil {
+		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -95,8 +93,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 }
 
 func (m *Member) Delete_member() {
-	if _, err := m.Exec("DELETE FROM member WHERE id = $1", m.Id);
-		err != nil {
+	if _, err := m.Exec("DELETE FROM member WHERE id = $1", m.Id); err != nil {
 		log.Panic(err)
 	}
 }
@@ -137,7 +134,21 @@ func (m *Member) Change_password(password string) {
 
 //TODO: forgotten password reset by e-mail
 func (m *Member) Send_password_reset() {
-	//m.send_email("admin@makerspace.ca", 
+	token := Rand256()
+	if _, err := m.Exec("INSERT INTO reset_password_token (member, token) "+
+		"VALUES ($1, $2) "+
+		"ON CONFLICT (member) DO UPDATE SET"+
+		"	(token, time) = ($2, now())", m.Id, token); err != nil {
+		log.Panic("Failed password reset: ", err)
+	}
+	msg := message{subject: "Makerspace.ca: password reset"}
+	msg.set_from("Makerspace", "admin@makerspace.ca")
+	msg.add_to(m.Name, m.Email)
+	//TODO use config.json value for domain
+	msg.body = "Hello " + m.Name + ",\n\n" +
+		"Please reset your makerspace password by visiting " +
+		"https://devel.makerspace.ca/sso/reset?token=" + token + "\n\n"
+	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
 func (m *Member) Talk_user() *talk.Talk_user {
@@ -178,8 +189,8 @@ func (m *Member) Cancel_membership() {
 	if m.Gratuitous {
 		if _, err := m.Exec(
 			"UPDATE member "+
-			"SET gratuitous = 'f' "+
-			"WHERE id = $1", m.Id); err != nil {
+				"SET gratuitous = 'f' "+
+				"WHERE id = $1", m.Id); err != nil {
 			log.Panic(err)
 		}
 	}

@@ -15,6 +15,16 @@ CREATE TABLE member (
 	registered timestamp(0) NOT NULL DEFAULT now(),
 	gratuitous boolean NOT NULL DEFAULT false
 );
+CREATE TABLE activation_token (
+	member integer PRIMARY KEY REFERENCES member,
+	token character(64) NOT NULL,
+	time timestamp(0) NOT NULL DEFAULT now()
+);
+CREATE TABLE reset_password_token (
+	member integer PRIMARY KEY REFERENCES member,
+	token character(64) NOT NULL,
+	time timestamp(0) NOT NULL DEFAULT now()
+);
 CREATE TYPE admin_privilege AS ENUM (
 	'modify-member',
 	'revoke-member',
