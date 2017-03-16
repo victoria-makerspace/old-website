@@ -1,0 +1,37 @@
+  <div class="container">
+    <section class="modal-dialog">
+{{if .FormValue "sent"}}
+      <p class="alert alert-success">Verification e-mail sent.  Verification tokens expire after {{index .Members.Config "email-verification-window"}}.</p>
+{{end}}
+{{if .Data.token_error}}
+      <p class="alert alert-danger">Invalid reset token.</p>
+{{end}}
+      <h4 class="mb-3">Re-send Verification E-mail</h4>
+      <form method="post" action="/sso/verify-email">
+{{if not .Session}}
+        <div class="form-group{{if .Data.username_error}} has-danger{{end}}">
+          <div class="input-group">
+            <span class="input-group-addon">@</span>
+            <input type="text" class="form-control" name="username" placeholder="Username" required {{with .Data.username}}value="{{.}}"{{else}}autofocus{{end}}>
+          </div>
+          <small class="form-control-feedback{{with .Data.username_error}} show">{{.}}{{else}}">{{end}}</small>
+        </div>
+{{end}}
+        <div class="form-group{{if .Data.email_error}} has-danger{{end}}">
+          <div class="input-group">
+            <span class="input-group-addon glyphicons glyphicons-envelope"></span>
+            <input type="email" class="form-control" name="email" placeholder="E-mail" required{{if .Data.email}} value="{{.Data.email}}"{{else if or (not .Session) .Data.username}} autofocus{{end}}>
+          </div>
+          <small class="form-control-feedback{{with .Data.email_error}} show">{{.}}{{else}}">{{end}}</small>
+        </div>
+        <div class="form-group">
+          <div class="input-group">
+            <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
+            <input type="password" class="form-control" name="password" required{{if and (or (not .Session) .Data.username) .Data.email}} autofocus{{end}}>
+          </div>
+          <small class="form-control-feedback{{with .Data.password_error}} show">{{.}}{{else}}">{{end}}</small>
+        </div>
+        <button type="submit" name="send-verification-email" class="btn btn-primary">Send e-mail</button>
+      </form>
+    </section>
+  </div>

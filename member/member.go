@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+//TODO: unverified accounts cannot have an associated Talk account
+//TODO: set activated flag from admin page only
 type Member struct {
 	Id              int
 	Username        string
@@ -17,10 +19,10 @@ type Member struct {
 	Agreed_to_terms bool
 	Registered      time.Time
 	Activated       bool
+	Gratuitous      bool
 	*Admin
 	*Student
 	*Members
-	Gratuitous    bool
 	password_key  string
 	password_salt string
 	talk          *talk.Talk_user
@@ -32,7 +34,7 @@ type Member struct {
 //TODO: check corporate account
 func (ms *Members) Get_member_by_username(username string) *Member {
 	m := &Member{Username: username, Members: ms}
-	var password_key, password_salt sql.NullString
+	var email, password_key, password_salt sql.NullString
 	if err := m.QueryRow(
 		"SELECT"+
 			"	id, "+
@@ -46,13 +48,14 @@ func (ms *Members) Get_member_by_username(username string) *Member {
 			"	gratuitous "+
 			"FROM member "+
 			"WHERE username = $1",
-		username).Scan(&m.Id, &m.Name, &password_key, &password_salt, &m.Email,
+		username).Scan(&m.Id, &m.Name, &password_key, &password_salt, &email,
 		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
 		log.Panic(err)
 	}
+	m.Email = email.String
 	m.password_key = password_key.String
 	m.password_salt = password_salt.String
 	m.get_student()
@@ -63,7 +66,7 @@ func (ms *Members) Get_member_by_username(username string) *Member {
 
 func (ms *Members) Get_member_by_id(id int) *Member {
 	m := &Member{Id: id, Members: ms}
-	var password_key, password_salt sql.NullString
+	var email, password_key, password_salt sql.NullString
 	if err := m.QueryRow(
 		"SELECT"+
 			"	username, "+
@@ -77,13 +80,14 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"	gratuitous "+
 			"FROM member "+
 			"WHERE id = $1",
-		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &m.Email,
+		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &email,
 		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
 		log.Panic(err)
 	}
+	m.Email = email.String
 	m.password_key = password_key.String
 	m.password_salt = password_salt.String
 	m.get_student()
@@ -98,12 +102,20 @@ func (m *Member) Delete_member() {
 	}
 }
 
-func (m *Member) Activate() {
+//TODO: move to admin.go
+func (m *Member) activate() {
 	if _, err := m.Exec("UPDATE member SET activated = 'true' WHERE id = $1",
 		m.Id); err != nil {
 		log.Panic(err)
 	}
 	m.Activated = true
+}
+
+func (m *Member) Verified_email() bool {
+	if m.Email != "" {
+		return true
+	}
+	return false
 }
 
 func (m *Member) Authenticate(password string) bool {
@@ -113,12 +125,12 @@ func (m *Member) Authenticate(password string) bool {
 	return false
 }
 
-//TODO
+//TODO: make distinction between has_membership and m.Activated
 func (m *Member) Active() bool {
-	if m.Gratuitous || m.Membership != nil {
-		return true
+	if !m.Verified_email() || (!m.Gratuitous && m.Membership == nil) {
+		return false
 	}
-	return false
+	return true
 }
 
 func (m *Member) Change_password(password string) {
@@ -136,14 +148,16 @@ func (m *Member) Change_password(password string) {
 	}
 }
 
-//TODO: forgotten password reset by e-mail
 func (m *Member) Send_password_reset() {
+	if !m.Verified_email() {
+		return
+	}
 	token := Rand256()
 	if _, err := m.Exec("INSERT INTO reset_password_token (member, token) "+
 		"VALUES ($1, $2) "+
 		"ON CONFLICT (member) DO UPDATE SET"+
 		"	(token, time) = ($2, now())", m.Id, token); err != nil {
-		log.Panic("Failed password reset: ", err)
+		log.Panic("Failed to set password reset token: ", err)
 	}
 	msg := message{subject: "Makerspace.ca: password reset"}
 	msg.set_from("Makerspace", "admin@makerspace.ca")
@@ -155,8 +169,33 @@ func (m *Member) Send_password_reset() {
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
+func (m *Member) Send_email_verification(email string) {
+	token := Rand256()
+	if _, err := m.Exec("INSERT INTO email_verification_token"+
+		"	(member, email, token) "+
+		"VALUES ($1, $2, $3) "+
+		"ON CONFLICT (member) DO UPDATE SET"+
+		"	(email, token, time) = ($2, $3, now())", m.Id, email, token); err != nil {
+		log.Panic("Failed to set email verification token: ", err)
+	}
+	msg := message{subject: "Makerspace.ca: e-mail verification"}
+	msg.set_from("Makerspace", "admin@makerspace.ca")
+	msg.add_to(m.Name, email)
+	//TODO use config.json value for domain
+	msg.body = "Hello " + m.Name + ",\n\n" +
+		"Please verify your e-mail address (" + email + ") by visiting " +
+		"https://devel.makerspace.ca/sso/verify-email?token=" + token + "\n\n"
+	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
+}
+
+func (m *Member) Verify_email(token string) {
+
+}
+
 func (m *Member) Talk_user() *talk.Talk_user {
-	if m.talk == nil {
+	if !m.Verified_email() {
+		return nil
+	} else if m.talk == nil {
 		m.talk = m.Talk_api.Get_user(m.Id)
 	}
 	return m.talk

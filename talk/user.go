@@ -1,12 +1,12 @@
 package talk
 
 import (
+	"fmt"
 	"log"
 	"net/url"
 	"regexp"
-	"fmt"
-	"time"
 	"strings"
+	"time"
 )
 
 func (api *Talk_api) Check_username(username string) (available bool, err string) {
@@ -15,9 +15,9 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 	if j, ok := j.(map[string]interface{}); ok {
 		if errors, ok := j["errors"]; ok {
 			return false, "Username " + errors.([]interface{})[0].(string)
-		// Even if talk gives available = false, (e.g. for staged users), sso
-		//	automatically merges the talk user instance with the newly-created
-		//	local one
+			// Even if talk gives available = false, (e.g. for staged users), sso
+			//	automatically merges the talk user instance with the newly-created
+			//	local one
 		} else if _, ok := j["available"]; ok {
 			return true, ""
 		}
@@ -32,7 +32,7 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 type Talk_user struct {
 	external_id    int
 	id             int
-	Active		   bool
+	Active         bool
 	Username       string
 	avatar_url     []byte
 	Card_bg_url    string
@@ -92,14 +92,14 @@ func (t *Talk_user) Avatar_url(size int) string {
 }
 
 type Message struct {
-	Url string
-	Title string
-	Read bool
-	Last_post time.Time
-	First_post time.Time
-	Reply_count int
-	Poster_avatars map[string]string
-	Last_poster string
+	Url             string
+	Title           string
+	Read            bool
+	Last_post       time.Time
+	First_post      time.Time
+	Reply_count     int
+	Poster_avatars  map[string]string
+	Last_poster     string
 	Original_poster string
 }
 
@@ -107,7 +107,7 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 	msgs := make([]*Message, 0)
 	usernames := make(map[int]string)
 	avatars := make(map[int]string)
-	j := t.get_json("/topics/private-messages/" + t.Username + ".json", true)
+	j := t.get_json("/topics/private-messages/"+t.Username+".json", true)
 	if j, ok := j.(map[string]interface{}); ok {
 		if u, ok := j["users"].([]interface{}); ok {
 			for _, v := range u {
@@ -137,8 +137,7 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 						topic["last_posted_at"].(string), time.Local)
 					if topic["unseen"].(bool) == true {
 						msg.Read = false
-					} else if l := topic["highest_post_number"].(float64);
-						l != 0 {
+					} else if l := topic["highest_post_number"].(float64); l != 0 {
 						msg.Url += "/" + fmt.Sprint(int(l))
 					}
 					msg.Last_poster = topic["last_poster_username"].(string)
@@ -147,7 +146,7 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 						if p, ok := p.(map[string]interface{}); ok {
 							i := int(p["user_id"].(float64))
 							msg.Poster_avatars[usernames[i]] = avatars[i]
-							if strings.Contains(p["description"].(string), 
+							if strings.Contains(p["description"].(string),
 								"Original Poster") {
 								msg.Original_poster = usernames[i]
 							}
@@ -171,7 +170,7 @@ func (t *Talk_user) Add_to_group(group string) {
 	}
 	data := make(map[string]interface{})
 	data["usernames"] = t.Username
-	j := t.put_json("/groups/" + fmt.Sprint(groups[group]) + "/members.json", data, true)
+	j := t.put_json("/groups/"+fmt.Sprint(groups[group])+"/members.json", data, true)
 	log.Println(j)
 }
 

@@ -1,8 +1,8 @@
   <div class="container">
     <section class="modal-dialog">
       <h4 class="mb-3">Member sign-in</h4>
-{{with .Data.error_inactive}}
-      <p class="alert alert-info">{{.}}</p>
+{{if .Data.error_verified}}
+      <p class="alert alert-danger">{{.Data.username}} is an unverified account, please <a href="/sso/verify-email">verify</a> e-mail address.</p>
 {{end}}
       <form action="/sso{{if and .Data.sso .Data.sig}}?sso={{.Data.sso}}&sig={{.Data.sig}}{{end}}" method="post">
         <div class="form-group{{if .Data.error_username}} has-danger{{end}}">

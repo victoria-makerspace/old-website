@@ -107,13 +107,12 @@ func (ms *Members) Check_email_availability(email string) (available bool, err s
 var name_rexp = regexp.MustCompile(`^([\pL\pN\pM\pP]+ ?)+$`)
 
 // New creates a new user, returns nil and a set of errors on invalid input.
-func (ms *Members) New_member(username, name, email, password string) (m *Member, err map[string]string) {
+func (ms *Members) New_member(username, email, name, password string) (m *Member, err map[string]string) {
 	err = make(map[string]string)
 	salt := Rand256()
 	m = &Member{
 		Username:      username,
 		Name:          name,
-		Email:         email,
 		password_key:  key(password, salt),
 		password_salt: salt,
 		Members:       ms}
@@ -140,19 +139,14 @@ func (ms *Members) New_member(username, name, email, password string) (m *Member
 			"	username,"+
 			"	name,"+
 			"	password_key,"+
-			"	password_salt,"+
-			"	email"+
+			"	password_salt"+
 			") "+
-			"VALUES ($1, $2, $3, $4, $5) "+
+			"VALUES ($1, $2, $3, $4) "+
 			"RETURNING id, registered",
-		username, name, m.password_key, salt, email).Scan(&m.Id, &m.Registered); e != nil {
+		username, name, m.password_key, salt).Scan(&m.Id, &m.Registered); e != nil {
 		log.Panic(e)
 	}
-	m.talk = ms.Sync(m.Id, m.Username, m.Email, m.Name)
-	if m.talk == nil {
-		m.Delete_member()
-		return nil, err
-	}
+	m.Send_email_verification(email)
 	return m, nil
 }
 
@@ -181,13 +175,14 @@ func (ms *Members) Get_all_members() []*Member {
 		return members
 	}
 	for rows.Next() {
-		var password_key, password_salt sql.NullString
+		var email, password_key, password_salt sql.NullString
 		m := &Member{Members: ms}
 		if err = rows.Scan(&m.Id, &m.Username, &m.Name, &password_key,
-			&password_salt, &m.Email, &m.Agreed_to_terms, &m.Registered,
+			&password_salt, &email, &m.Agreed_to_terms, &m.Registered,
 			&m.Student, &m.Admin); err != nil {
 			log.Panic(err)
 		}
+		m.Email = email.String
 		m.password_key = password_key.String
 		m.password_salt = password_salt.String
 		members = append(members, m)
@@ -214,6 +209,34 @@ func (ms *Members) Get_member_from_reset_token(token string) *Member {
 	}
 	if time.Now().After(t.Add(window)) {
 		if _, err := ms.Exec("DELETE FROM reset_password_token "+
+			"WHERE token = $1", token); err != nil {
+			log.Panic(err)
+		}
+		return nil
+	}
+	return ms.Get_member_by_id(member_id)
+}
+
+func (ms *Members) Get_member_from_verification_token(token string) *Member {
+	var member_id int
+	var email string
+	var t time.Time
+	if err := ms.QueryRow(
+		"SELECT"+
+			"	member, email, time "+
+			"FROM email_verification_token "+
+			"WHERE token = $1", token).Scan(&member_id, &email, &t); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		log.Panic(err)
+	}
+	window, err := time.ParseDuration(ms.Config["email-verification-window"].(string))
+	if err != nil {
+		log.Panic(err)
+	}
+	if time.Now().After(t.Add(window)) {
+		if _, err := ms.Exec("DELETE FROM email_verification_token "+
 			"WHERE token = $1", token); err != nil {
 			log.Panic(err)
 		}

@@ -2,6 +2,7 @@ package site
 
 import (
 	"log"
+	"net/url"
 )
 
 func init() {
@@ -16,7 +17,6 @@ func join_handler(p *page) {
 		p.http_error(403)
 		return
 	}
-	p.ParseForm()
 	if _, ok := p.PostForm["join"]; !ok {
 		return
 	}
@@ -26,21 +26,18 @@ func join_handler(p *page) {
 	p.Data["username"] = username
 	p.Data["email"] = email
 	p.Data["name"] = name
-	m, err := p.New_member(username, name, email, p.PostFormValue("password"))
+	//TODO: don't create talk user until email has
+	//	been verified, and delete all accounts with pending e-mail verifications
+	//	for the same e-mail when one account verifies that e-mail address.
+	m, err := p.New_member(username, email, name, p.PostFormValue("password"))
+	for k, v := range err {
+		p.Data[k] = v
+	}
 	if m == nil {
-		for k, v := range err {
-			p.Data[k] = v
-		}
+		log.Printf("Failed to create member: %s <%s>\n", username, email)
 		return
 	}
 	log.Printf("New member: (%d) %s\n", m.Id, username)
-	if m.Talk_user().Active {
-		m.Activate()
-		p.new_session(m, true)
-		p.redirect = "/member/dashboard"
-		return
-	}
-	//TODO: implement own e-mail validation
-	m.Talk_user().Send_activation_email()
-	p.redirect = "/member/join/activate"
+	p.redirect = "/sso/verify-email?sent=true&username=" +
+		url.QueryEscape(username) + "&email=" + url.QueryEscape(email)
 }

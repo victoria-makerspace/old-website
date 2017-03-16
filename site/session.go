@@ -31,7 +31,7 @@ func (p *page) unset_session_cookie() {
 		Name:     "session",
 		Value:    " ",
 		Path:     "/",
-		Domain: p.config["domain"].(string),
+		Domain:   p.config["domain"].(string),
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HttpOnly: true}
@@ -42,13 +42,10 @@ type Session struct {
 	token string
 }
 
-// new_session fails silently on inactive accounts
+// new_session fails silently on unverified accounts
 func (p *page) new_session(m *member.Member, expires bool) {
-	if !m.Activated {
-		if !m.Talk_user().Active {
-			return
-		}
-		m.Activate()
+	if !m.Verified_email() {
+		return
 	}
 	token := member.Rand256()
 	query := "INSERT INTO session_http (token, member, expires) VALUES ($1, $2, "
@@ -86,6 +83,9 @@ func (p *page) authenticate() {
 	}
 	p.Session = &Session{Member: p.Get_member_by_id(member_id),
 		token: member.Rand256()}
+	if !p.Session.Member.Verified_email() {
+		log.Panic("Invalid session found from unverified member.")
+	}
 	p.set_session_cookie(p.Session.token, expires.Valid)
 	if _, err := p.db.Exec("UPDATE session_http SET token = $1, last_seen = now(), expires = now() + interval '1 year' WHERE token = $2", p.Session.token, cookie.Value); err != nil {
 		log.Panic(err)

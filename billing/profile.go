@@ -19,13 +19,13 @@ const (
 )
 
 type Profile struct {
-	Invoices     []*Invoice
+	Invoices []*Invoice
 	Error
 	*Billing
 	Missed_payments []*Missed_payment
-	bs_id      string
-	bs_profile *beanstream.Profile
-	member_id  int
+	bs_id           string
+	bs_profile      *beanstream.Profile
+	member_id       int
 }
 
 func (b *Billing) New_profile(member_id int) *Profile {

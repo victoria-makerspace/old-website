@@ -64,12 +64,12 @@ func (b *Billing) log_scheduled(interval string, txn_todo int) int {
 func (b *Billing) log_finished(log_id, txn_attempts, txn_approved int, e string) {
 	if _, err := b.db.Exec(
 		"UPDATE txn_scheduler_log "+
-		"SET "+
-		"	end_time = now(), "+
-		"	txn_attempts = $2, "+
-		"	txn_approved = $3, "+
-		"	error = $4 "+
-		"WHERE id = $1",
+			"SET "+
+			"	end_time = now(), "+
+			"	txn_attempts = $2, "+
+			"	txn_approved = $3, "+
+			"	error = $4 "+
+			"WHERE id = $1",
 		log_id, txn_attempts, txn_approved, e); err != nil {
 		log.Panic(err)
 	}

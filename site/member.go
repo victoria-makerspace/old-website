@@ -23,7 +23,6 @@ func account_handler(p *page) {
 	if !p.must_authenticate() {
 		return
 	}
-	p.ParseForm()
 	if _, ok := p.PostForm["update-password"]; ok {
 		if !p.Authenticate(p.PostFormValue("old-password")) {
 			p.Data["old_password_error"] = "Incorrect password"
@@ -57,4 +56,3 @@ func storage_handler(p *page) {
 	p.Data["hall_lockers"] = p.Get_storage(p.Find_fee("storage", "hall-locker"))
 	p.Data["bathroom_lockers"] = p.Get_storage(p.Find_fee("storage", "bathroom-locker"))
 }
-

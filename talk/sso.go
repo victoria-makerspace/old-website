@@ -14,8 +14,6 @@ func (api *Talk_api) Sync(external_id int, username, email, name string) *Talk_u
 	values.Set("external_id", fmt.Sprint(external_id))
 	values.Set("username", username)
 	values.Set("email", email)
-	//TODO: use own e-mail verification
-	values.Set("require_activation", "true")
 	values.Set("name", name)
 	payload, sig := api.Encode_sso_rsp(values)
 	values = url.Values{}

@@ -10,7 +10,7 @@ import (
 )
 
 type Billing struct {
-	Fees map[int]*Fee
+	Fees        map[int]*Fee
 	db          *sql.DB
 	config      beanstream.Config
 	gateway     beanstream.Gateway
@@ -265,12 +265,11 @@ func (p *Profile) New_invoice(member_id int, amount float64, description string,
 		Fee:         fee}
 	if err := p.db.QueryRow(
 		"INSERT INTO invoice ("+
-		"	member, paid_by, end_date, description, amount, fee"+
-		") "+
-		"VALUES ($1, $2, 'epoch', $3, $4, $5) RETURNING id, date, end_date",
+			"	member, paid_by, end_date, description, amount, fee"+
+			") "+
+			"VALUES ($1, $2, 'epoch', $3, $4, $5) RETURNING id, date, end_date",
 		member_id, p.member_id, inv.Description, amount, fee.Id).Scan(&inv.Id,
-		&inv.Date, &inv.End_date);
-		err != nil {
+		&inv.Date, &inv.End_date); err != nil {
 		log.Panic(err)
 	}
 	return inv
@@ -317,9 +316,8 @@ func (p *Profile) Cancel_recurring_bill(i *Invoice) {
 	if i.Fee != nil && i.Fee.Category == "storage" {
 		if _, err := p.db.Exec(
 			"UPDATE storage "+
-			"SET invoice = NULL "+
-			"WHERE invoice = $1", i.Id);
-			err != nil {
+				"SET invoice = NULL "+
+				"WHERE invoice = $1", i.Id); err != nil {
 			log.Panic(err)
 		}
 	}
@@ -329,8 +327,8 @@ func (p *Profile) Cancel_recurring_bill(i *Invoice) {
 func (b *Billing) set_invoice_start_date(i *Invoice, date time.Time) {
 	if _, err := b.db.Exec(
 		"UPDATE invoice "+
-		"SET start_date = $2 "+
-		"WHERE id = $1", i.Id, date); err != nil {
+			"SET start_date = $2 "+
+			"WHERE id = $1", i.Id, date); err != nil {
 		log.Panic(err)
 	}
 	i.Date = date

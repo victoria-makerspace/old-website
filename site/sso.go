@@ -2,6 +2,7 @@ package site
 
 import (
 	"fmt"
+	"github.com/vvanpo/makerspace/member"
 	"net/url"
 )
 
@@ -10,6 +11,7 @@ func init() {
 	handlers["/sso/sign-out"] = sso_sign_out_handler
 	handlers["/sso/check-availability.json"] = sso_availability_handler
 	handlers["/sso/reset"] = sso_reset_handler
+	handlers["/sso/verify-email"] = sso_verify_email_handler
 }
 
 func (p *page) must_authenticate() bool {
@@ -37,7 +39,6 @@ func sso_handler(p *page) {
 		return_path = rp
 	}
 	if p.Session == nil {
-		p.ParseForm()
 		// Embeds return_path in the sign-in form
 		p.Data["return_path"] = return_path
 		if _, ok := p.PostForm["sign-in"]; !ok {
@@ -55,10 +56,14 @@ func sso_handler(p *page) {
 			p.Data["username"] = m.Username
 			p.Data["error_password"] = "Incorrect password"
 			return
+		} else if !m.Verified_email() {
+			p.Data["username"] = m.Username
+			p.Data["error_verified"] = true
+			return
 		}
 		p.new_session(m, !(p.PostFormValue("save-session") == "on"))
 		if p.Session == nil {
-			p.Data["error_inactive"] = "Please activate your account via the activation e-mail"
+			p.http_error(500)
 			return
 		}
 	}
@@ -116,7 +121,6 @@ func sso_reset_handler(p *page) {
 		p.http_error(403)
 		return
 	}
-	p.ParseForm()
 	if token := p.FormValue("token"); token != "" {
 		p.Data["token"] = token
 		m := p.Get_member_from_reset_token(token)
@@ -140,5 +144,52 @@ func sso_reset_handler(p *page) {
 		return
 	}
 	m.Send_password_reset()
-	p.Data["reset_success"] = true
+	p.Data["reset_send_success"] = true
+}
+
+func sso_verify_email_handler(p *page) {
+	p.Name = "verify-email"
+	p.Title = "Verify e-mail address"
+	p.authenticate()
+	p.Data["username"] = p.FormValue("username")
+	p.Data["email"] = p.FormValue("email")
+	if token := p.FormValue("token"); token != "" {
+		m := p.Get_member_from_verification_token(token)
+		if m == nil {
+			p.Data["token_error"] = true
+			return
+		}
+		m.Verify_email(token)
+		p.redirect = "/sso"
+		return
+	}
+	if _, ok := p.PostForm["send-verification-email"]; !ok {
+		return
+	}
+	var m *member.Member
+	if p.Session == nil {
+		m = p.Get_member_by_username(p.PostFormValue("username"))
+		if m == nil {
+			delete(p.Data, "username")
+			p.Data["username_error"] = "Invalid username"
+			return
+		}
+	} else {
+		m = p.Member
+	}
+	if m.Email == p.PostFormValue("email") {
+		delete(p.Data, "email")
+		p.Data["email_error"] = "E-mail address already verified"
+		return
+	} else if available, err := p.Check_email_availability(p.PostFormValue("email")); !available {
+		delete(p.Data, "email")
+		p.Data["email_error"] = err
+		return
+	} else if !m.Authenticate(p.PostFormValue("password")) {
+		p.Data["password_error"] = "Incorrect password"
+		return
+	}
+	p.Form.Add("sent", "true")
+	m.Send_email_verification(p.PostFormValue("email"))
+	return
 }

@@ -17,6 +17,7 @@ var templates = [...]string{
 	"index",
 	"sso",
 	"reset-password",
+	"verify-email",
 	"join",
 	"terms",
 	"dashboard",
@@ -29,10 +30,10 @@ var templates = [...]string{
 
 func (h *http_server) parse_templates() {
 	h.tmpl = template.New("main.tmpl").Funcs(template.FuncMap{
-		"add": func (i, j int) int {
+		"add": func(i, j int) int {
 			return i + j
 		},
-		"sub": func (i, j int) int {
+		"sub": func(i, j int) int {
 			return i - j
 		},
 	})
@@ -50,7 +51,7 @@ type http_server struct {
 	http.Server
 	config map[string]interface{}
 	db     *sql.DB
-	tmpl *template.Template
+	tmpl   *template.Template
 	*talk.Talk_api
 	*member.Members
 }

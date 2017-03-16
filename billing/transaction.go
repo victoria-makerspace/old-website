@@ -20,7 +20,7 @@ type Transaction struct {
 	Card       string // Last 4 digits
 	Ip_address string //TODO or remove
 	*Invoice
-	order_id   string
+	order_id string
 }
 
 func (p *Profile) do_transaction(invoice *Invoice) *Transaction {
@@ -56,8 +56,7 @@ func (p *Profile) do_transaction(invoice *Invoice) *Transaction {
 		"(id, profile, approved, time, amount, order_id, comment, card, "+
 		"invoice) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
 		txn.Id, p.member_id, txn.Approved, txn.Time, invoice.Amount,
-		txn.order_id, invoice.Description, txn.Card, txn.Invoice.Id);
-		err != nil {
+		txn.order_id, invoice.Description, txn.Card, txn.Invoice.Id); err != nil {
 		log.Panic(err)
 	}
 	if !rsp.IsApproved() {

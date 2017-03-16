@@ -19,7 +19,6 @@ func billing_handler(p *page) {
 		return
 	}
 	pay_profile := p.Payment()
-	p.ParseForm()
 	if token := p.PostFormValue("singleUseToken"); token != "" {
 		if pay_profile == nil {
 			pay_profile = p.New_profile(p.Member.Id)

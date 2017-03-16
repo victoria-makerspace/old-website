@@ -13,6 +13,7 @@ func (h *http_server) set_handlers() {
 		f := func(hndlr func(*page)) func(w http.ResponseWriter, r *http.Request) {
 			return func(w http.ResponseWriter, r *http.Request) {
 				p := h.new_page(w, r)
+				p.ParseForm()
 				//TODO: recover and do http_error(500)
 				hndlr(p)
 				write_rsp(p)

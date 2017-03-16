@@ -1,12 +1,12 @@
 package talk
 
 import (
-	"log"
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
-	"io/ioutil"
 )
 
 type Talk_api struct {
@@ -99,7 +99,6 @@ func (api *Talk_api) put_json(path string, j map[string]interface{}, use_key boo
 	}
 	return data
 }
-
 
 func (api *Talk_api) post_json(path string, form url.Values) interface{} {
 	var data interface{}

@@ -9,16 +9,17 @@ CREATE TABLE member (
 	name text NOT NULL,
 	password_key character(64),
 	password_salt character(64) UNIQUE,
-	email text NOT NULL UNIQUE,
+	email text UNIQUE,
 	activated boolean NOT NULL DEFAULT false,
 	agreed_to_terms boolean NOT NULL DEFAULT false,
 	registered timestamp(0) NOT NULL DEFAULT now(),
 	gratuitous boolean NOT NULL DEFAULT false
 );
-CREATE TABLE activation_token (
+CREATE TABLE email_verification_token (
 	member integer PRIMARY KEY REFERENCES member,
+	email text NOT NULL,
 	token character(64) NOT NULL,
-	time timestamp(0) NOT NULL DEFAULT now()
+	time timestamp(0) with time zone NOT NULL DEFAULT now()
 );
 CREATE TABLE reset_password_token (
 	member integer PRIMARY KEY REFERENCES member,
