@@ -198,14 +198,14 @@ func (m *Member) Send_email_verification(email string) {
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
-func (ms *Member) Verify_email(token string) bool {
+func (ms *Members) Verify_email(token string) bool {
 	m, email := ms.get_member_from_verification_token(token)
 	if m == nil {
 		return false
 	}
 	m.talk = m.Sync(m.Id, m.Username, email, m.Name)
 	if m.talk == nil {
-		log.Panic("Invalid talk user: (%d) %s <%s>\n", m.Id, m.Username,
+		log.Panicf("Invalid talk user: (%d) %s <%s>\n", m.Id, m.Username,
 			email)
 	}
 	if !m.Verified_email() {

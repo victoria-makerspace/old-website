@@ -80,7 +80,7 @@
                 <span class="input-group-addon glyphicons glyphicons-envelope"></span>
                 <input type="email" class="form-control" name="email" value="{{.Member.Email}}">
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary" name="email-submit">Verify</button>
+                  <button type="submit" class="btn btn-sm btn-primary" name="email-submit" formaction="/sso/verify-email">Verify</button>
                 </span>
               </div>
               <small class="form-control-feedback{{with .Data.email_error}} show">{{.}}{{else}}">{{end}}</small>
