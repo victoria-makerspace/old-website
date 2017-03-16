@@ -96,6 +96,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 	return m
 }
 
+//TODO: cascade through all tables
 func (m *Member) Delete_member() {
 	if _, err := m.Exec("DELETE FROM member WHERE id = $1", m.Id); err != nil {
 		log.Panic(err)
@@ -133,7 +134,7 @@ func (m *Member) Active() bool {
 	return true
 }
 
-func (m *Member) Change_password(password string) {
+func (m *Member) Set_password(password string) {
 	m.password_salt = Rand256()
 	m.password_key = key(password, m.password_salt)
 	if _, err := m.Exec("UPDATE member "+
@@ -144,6 +145,15 @@ func (m *Member) Change_password(password string) {
 	}
 	if _, err := m.Exec("DELETE FROM reset_password_token "+
 		"WHERE member = $1", m.Id); err != nil {
+		log.Panic(err)
+	}
+}
+
+func (m *Member) Set_email(email string) {
+	m.Email = email
+	if _, err := m.Exec("UPDATE member "+
+		"SET email = $1 "+
+		"WHERE id = $2", email, m.Id); err != nil {
 		log.Panic(err)
 	}
 }
@@ -188,8 +198,26 @@ func (m *Member) Send_email_verification(email string) {
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
-func (m *Member) Verify_email(token string) {
-
+func (ms *Member) Verify_email(token string) bool {
+	m, email := ms.get_member_from_verification_token(token)
+	if m == nil {
+		return false
+	}
+	m.talk = m.Sync(m.Id, m.Username, email, m.Name)
+	if m.talk == nil {
+		log.Panic("Invalid talk user: (%d) %s <%s>\n", m.Id, m.Username,
+			email)
+	}
+	if !m.Verified_email() {
+		m.talk.Activate()
+	}
+	m.Set_email(email)
+	//TODO: delete unverified members with this pending verification
+	if _, err := m.Exec("DELETE FROM email_verification_token "+
+		"WHERE email = $1", email); err != nil {
+		log.Panic(err)
+	}
+	return true
 }
 
 func (m *Member) Talk_user() *talk.Talk_user {

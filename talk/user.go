@@ -174,6 +174,11 @@ func (t *Talk_user) Add_to_group(group string) {
 	log.Println(j)
 }
 
+func (t *Talk_user) Activate() {
+	t.put_json("/admin/users/" + fmt.Sprint(t.id) + "/activate", nil, true)
+	t.Active = true
+}
+
 /*
 func (t *Talk_user) Notifications() []interface{} {
 	if t.notifications != nil {

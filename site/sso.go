@@ -127,7 +127,7 @@ func sso_reset_handler(p *page) {
 		if m == nil {
 			p.Data["token_error"] = true
 		} else if password := p.PostFormValue("password"); password != "" {
-			m.Change_password(password)
+			m.Set_password(password)
 			p.redirect = "/sso"
 		}
 		return
@@ -154,12 +154,10 @@ func sso_verify_email_handler(p *page) {
 	p.Data["username"] = p.FormValue("username")
 	p.Data["email"] = p.FormValue("email")
 	if token := p.FormValue("token"); token != "" {
-		m := p.Get_member_from_verification_token(token)
-		if m == nil {
+		if !p.Verify_email(token) {
 			p.Data["token_error"] = true
 			return
 		}
-		m.Verify_email(token)
 		p.redirect = "/sso"
 		return
 	}

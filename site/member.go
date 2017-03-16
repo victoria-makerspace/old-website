@@ -32,7 +32,7 @@ func account_handler(p *page) {
 			p.Data["new_password_error"] = "Password cannot be blank"
 			return
 		}
-		p.Change_password(p.PostFormValue("new-password"))
+		p.Set_password(p.PostFormValue("new-password"))
 		p.Data["update_password_success"] = "Successfully updated password"
 		return
 	}

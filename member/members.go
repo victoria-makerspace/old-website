@@ -217,17 +217,15 @@ func (ms *Members) Get_member_from_reset_token(token string) *Member {
 	return ms.Get_member_by_id(member_id)
 }
 
-func (ms *Members) Get_member_from_verification_token(token string) *Member {
+func (ms *Members) get_member_from_verification_token(token string) (m *Member, email string) {
 	var member_id int
-	var email string
 	var t time.Time
 	if err := ms.QueryRow(
-		"SELECT"+
-			"	member, email, time "+
+		"SELECT member, email, time "+
 			"FROM email_verification_token "+
 			"WHERE token = $1", token).Scan(&member_id, &email, &t); err != nil {
 		if err == sql.ErrNoRows {
-			return nil
+			return nil, ""
 		}
 		log.Panic(err)
 	}
@@ -240,9 +238,9 @@ func (ms *Members) Get_member_from_verification_token(token string) *Member {
 			"WHERE token = $1", token); err != nil {
 			log.Panic(err)
 		}
-		return nil
+		return nil, ""
 	}
-	return ms.Get_member_by_id(member_id)
+	return ms.Get_member_by_id(member_id), email
 }
 
 /*
