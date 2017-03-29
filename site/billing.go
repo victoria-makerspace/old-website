@@ -67,11 +67,11 @@ func billing_handler(p *page) {
 		return
 	} else if _, ok := p.PostForm["register"]; ok {
 		update_student()
-		if p.Active() {
+		if p.Member.Membership_invoice != nil {
 			p.http_error(422)
 			return
 		}
-		p.New_membership()
+		p.New_membership_invoice()
 		p.redirect = "/member/billing"
 		return
 	} else if _, ok := p.PostForm["terminate"]; ok {

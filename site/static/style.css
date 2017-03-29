@@ -266,14 +266,14 @@ a:focus .title-link::after {
 input[type=month] {
     width: 12rem;
 }
+.table-responsive th:last-child {
+    width: 1%;
+}
 #credit-card .form-control[data-beanstream-id] {
     background-image: none;
 }
 #credit-card .form-control-warning {
     padding-right: 0.75rem;
-}
-#monthly th:last-child {
-    width: 1%;
 }
 #dashboard-messages a {
     vertical-align: middle;

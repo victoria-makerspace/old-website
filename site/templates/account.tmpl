@@ -2,9 +2,9 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
-{{if .Active}}
+{{if or .Member.Membership_invoice .Member.Gratuitous}}
         <h3>Membership
-          <a href="/member/billing#terminate_membership" class="btn btn-sm btn-danger">Cancel</a>
+          <a href="/member/billing#terminate_membership" class="btn btn-sm btn-danger float-right">Cancel</a>
         </h3>
         <div class="mb-2 row">
           <span class="col-sm-4 font-weight-bold">Type:</span>
@@ -12,9 +12,16 @@
             <a href="/member/billing#Membership-dues" class="text-capitalize">
   {{if .Member.Gratuitous}}
               Free
-  {{else}}{{.Member.Membership.Fee.Identifier}}{{end}}
+  {{else}}
+              {{.Member.Membership_invoice.Fee.Identifier}}
+  {{end}}
             </a>
           </div>
+  {{if not .Member.Approved}}
+          <p class="alert alert-info mt-2 mb-0">
+            Your membership is currently pending approval.
+          </p>
+  {{end}}
   {{if .Member.Gratuitous}}
           <p class="alert alert-info mt-2 mb-0">
             Your account is labelled as "free," either because an administrator has specifically marked it as such, or you are assumed to still be paying membership fees via PayPal.  Contact <a href="mailto:accounting@makerspace.ca">accounting@makerspace.ca</a> for more information.
@@ -27,15 +34,19 @@
   {{if .Member.Gratuitous}}
             $0.00
   {{else}}
-            ${{.Member.Membership.Amount | printf "%.2f"}} CAD
+            ${{.Member.Membership_invoice.Amount | printf "%.2f"}} CAD
   {{end}}
           </div>
         </div>
-  {{if not .Member.Gratuitous}}
+  {{with .Member.Membership_invoice}}
         <div class="mb-3 row">
           <span class="col-sm-4 font-weight-bold">Registered:</span>
           <div class="col-sm-8">
-            {{.Member.Membership.Date.Format "January 2, 2006"}}
+    {{if not .Start_date.IsZero}}
+            {{.Start_date.Format "January 2, 2006"}}
+    {{else}}
+            <span class="text-warning">Pending approval</span>
+    {{end}}
           </div>
         </div>
   {{end}}

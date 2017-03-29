@@ -9,11 +9,16 @@ CREATE TABLE member (
 	name text NOT NULL,
 	password_key character(64),
 	password_salt character(64) UNIQUE,
+	-- NULL indicates unverified e-mail
+	-- TODO: e-mail uniqueness requires case-insensitive check
 	email text UNIQUE,
-	activated boolean NOT NULL DEFAULT false,
 	agreed_to_terms boolean NOT NULL DEFAULT false,
-	registered timestamp(0) NOT NULL DEFAULT now(),
-	gratuitous boolean NOT NULL DEFAULT false
+	registered timestamp(0) with time zone NOT NULL DEFAULT now(),
+	gratuitous boolean NOT NULL DEFAULT false,
+	-- NULL indicates not approved
+	approved_at timestamp(0) with time zone,
+	approved_by integer REFERENCES member,
+	CHECK (CASE WHEN approved_at IS NOT NULL THEN approved_by IS NOT NULL END)
 );
 CREATE TABLE email_verification_token (
 	member integer PRIMARY KEY REFERENCES member,
@@ -27,6 +32,7 @@ CREATE TABLE reset_password_token (
 	time timestamp(0) with time zone NOT NULL DEFAULT now()
 );
 CREATE TYPE admin_privilege AS ENUM (
+	'approve-member',
 	'modify-member',
 	'revoke-member',
 	'do-transactions');
@@ -90,7 +96,8 @@ membership	corporate	Membership (corporate)	\N
 CREATE TABLE invoice (
 	id serial PRIMARY KEY,
 	member integer NOT NULL REFERENCES member,
-	date date NOT NULL DEFAULT now(),
+	-- NULL start_date indicates pending approval
+	start_date date DEFAULT now(),
 	-- Defaults to username when NULL
 	paid_by integer NOT NULL REFERENCES payment_profile,
 	end_date date,

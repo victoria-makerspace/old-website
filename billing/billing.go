@@ -79,9 +79,9 @@ func (b *Billing) Find_fee(category, identifier string) *Fee {
 type Invoice struct {
 	Id          int
 	Member      int
-	Date        time.Time
 	Paid_by     int
-	End_date    *time.Time
+	Start_date  time.Time
+	End_date    time.Time
 	Description string
 	Amount      float64
 	*Fee
@@ -91,26 +91,26 @@ type Invoice struct {
 func (b *Billing) Get_bill(id int) *Invoice {
 	inv := &Invoice{Id: id}
 	var (
-		end_date    pq.NullTime
+		start_date	pq.NullTime
+		end_date	pq.NullTime
 		description sql.NullString
 		interval    sql.NullString
 		fee_id      sql.NullInt64
 	)
-	if err := b.db.QueryRow("SELECT i.member, i.date, i.paid_by, "+
+	if err := b.db.QueryRow("SELECT i.member, i.start_date, i.paid_by, "+
 		"i.end_date, COALESCE(i.description, f.description), "+
 		"COALESCE(i.amount, f.amount), COALESCE(i.recurring, f.recurring), "+
 		"f.id FROM invoice i LEFT JOIN fee f "+
 		"ON i.fee = f.id WHERE i.id = $1", id).Scan(&inv.Member,
-		&inv.Date, &inv.Paid_by, &end_date, &description, &inv.Amount,
+		&start_date, &inv.Paid_by, &end_date, &description, &inv.Amount,
 		&interval, &fee_id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
 		log.Panic(err)
 	}
-	if end_date.Valid {
-		inv.End_date = &end_date.Time
-	}
+	inv.Start_date = start_date.Time
+	inv.End_date = end_date.Time
 	inv.Description = description.String
 	inv.Interval = interval.String
 	if fee_id.Valid {
@@ -123,25 +123,25 @@ func (b *Billing) Get_bill(id int) *Invoice {
 func (b *Billing) get_bill_by_fee(fee *Fee, paid_by int) *Invoice {
 	inv := &Invoice{Fee: fee, Paid_by: paid_by}
 	var (
+		start_date    pq.NullTime
 		end_date    pq.NullTime
 		description sql.NullString
 		interval    sql.NullString
 	)
-	if err := b.db.QueryRow("SELECT i.id, i.member, i.date, "+
+	if err := b.db.QueryRow("SELECT i.id, i.member, i.start_date, "+
 		"i.end_date, COALESCE(i.description, f.description), "+
 		"COALESCE(i.amount, f.amount), COALESCE(i.recurring, f.recurring) "+
 		"FROM invoice i JOIN fee f "+
 		"ON i.fee = $1 WHERE i.paid_by = $2", fee.Id, paid_by).Scan(&inv.Id,
-		&inv.Member, &inv.Date, &end_date, &description, &inv.Amount,
+		&inv.Member, &start_date, &end_date, &description, &inv.Amount,
 		&interval); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
 		log.Panic(err)
 	}
-	if end_date.Valid {
-		inv.End_date = &end_date.Time
-	}
+	inv.Start_date = start_date.Time
+	inv.End_date = end_date.Time
 	inv.Description = description.String
 	inv.Interval = interval.String
 	return inv
@@ -197,10 +197,10 @@ func (b *Billing) get_all_recurring(interval string) []*Invoice {
 ///TODO: allow members to register to pay for another member's fees (like their child)
 
 func (p *Profile) get_recurring_bills() {
-	// Select recurring invoices without expired end-dates
+	// Select recurring invoices not pending approval without expired end-dates
 	rows, err := p.db.Query(
 		"SELECT "+
-			"	i.id, i.member, i.date, i.end_date, "+
+			"	i.id, i.member, i.start_date, i.end_date, "+
 			"	COALESCE(i.description, f.description), "+
 			"	COALESCE(i.amount, f.amount), "+
 			"	COALESCE(i.recurring, f.recurring), "+
@@ -210,9 +210,10 @@ func (p *Profile) get_recurring_bills() {
 			"ON i.fee = f.id "+
 			"WHERE "+
 			"	i.paid_by = $1 "+
+			"	AND start_date IS NOT NULL "+
 			"	AND COALESCE(i.recurring, f.recurring) IS NOT NULL "+
 			"	AND (i.end_date > now() OR i.end_date IS NULL) "+
-			"ORDER BY i.date DESC",
+			"ORDER BY i.start_date DESC",
 		p.member_id)
 	defer rows.Close()
 	if err != nil {
@@ -228,13 +229,11 @@ func (p *Profile) get_recurring_bills() {
 			description sql.NullString
 			fee_id      sql.NullInt64
 		)
-		if err = rows.Scan(&inv.Id, &inv.Member, &inv.Date, &end_date,
+		if err = rows.Scan(&inv.Id, &inv.Member, &inv.Start_date, &end_date,
 			&description, &inv.Amount, &inv.Interval, &fee_id); err != nil {
 			log.Panic(err)
 		}
-		if end_date.Valid {
-			inv.End_date = &end_date.Time
-		}
+		inv.End_date = end_date.Time
 		inv.Description = description.String
 		inv.Fee = p.Fees[int(fee_id.Int64)]
 		p.Invoices = append(p.Invoices, inv)
@@ -253,24 +252,38 @@ func (p *Profile) New_invoice(member_id int, amount float64, description string,
 			p.member_id, amount, minimum_txn_amount)
 		return nil
 	}
-	if description == "" {
-		if fee != nil {
-			description = fee.Description
-		}
+	if description == "" && fee != nil {
+		description = fee.Description
+	} else {
+		log.Panic("Empty description for new invoice")
 	}
 	inv := &Invoice{Member: member_id,
 		Paid_by:     p.member_id,
 		Description: description,
 		Amount:      amount,
 		Fee:         fee}
-	if err := p.db.QueryRow(
-		"INSERT INTO invoice ("+
-			"	member, paid_by, end_date, description, amount, fee"+
-			") "+
-			"VALUES ($1, $2, 'epoch', $3, $4, $5) RETURNING id, date, end_date",
-		member_id, p.member_id, inv.Description, amount, fee.Id).Scan(&inv.Id,
-		&inv.Date, &inv.End_date); err != nil {
-		log.Panic(err)
+	if fee != nil {
+		if err := p.db.QueryRow(
+			"INSERT INTO invoice ("+
+				"	member, paid_by, end_date, description, amount, fee"+
+				") "+
+				"VALUES ($1, $2, 'epoch', $3, $4, $5) "+
+				"RETURNING id, start_date, end_date",
+			member_id, p.member_id, inv.Description, amount,
+			fee.Id).Scan(&inv.Id, &inv.Start_date, &inv.End_date); err != nil {
+			log.Panic(err)
+		}
+	} else {
+		if err := p.db.QueryRow(
+			"INSERT INTO invoice ("+
+				"	member, paid_by, end_date, description, amount"+
+				") "+
+				"VALUES ($1, $2, 'epoch', $3, $4) "+
+				"RETURNING id, start_date, end_date",
+			member_id, p.member_id, inv.Description, amount).Scan(&inv.Id,
+			&inv.Start_date, &inv.End_date); err != nil {
+			log.Panic(err)
+		}
 	}
 	return inv
 }
@@ -278,7 +291,7 @@ func (p *Profile) New_invoice(member_id int, amount float64, description string,
 //TODO: BUG: not all 'fee' records have non-null 'recurring' fields
 func (p *Profile) New_recurring_bill(fee *Fee, member_id int) *Invoice {
 	if fee == nil {
-		return nil
+		log.Panic("Nil fee argument");
 	}
 	if fee.Amount < minimum_txn_amount {
 		log.Printf("Invoice for member %d below minimum amount ($%0.2f < $%0.2f)",
@@ -292,8 +305,8 @@ func (p *Profile) New_recurring_bill(fee *Fee, member_id int) *Invoice {
 		Interval:    fee.Interval,
 		Fee:         fee}
 	if err := p.db.QueryRow("INSERT INTO invoice (member, paid_by, "+
-		"fee) VALUES ($1, $2, $3) RETURNING id, date", member_id,
-		p.member_id, fee.Id).Scan(&inv.Id, &inv.Date); err != nil {
+		"fee) VALUES ($1, $2, $3) RETURNING id, start_date", member_id,
+		p.member_id, fee.Id).Scan(&inv.Id, &inv.Start_date); err != nil {
 		log.Panic(err)
 	}
 	p.Invoices = append(p.Invoices, inv)
@@ -302,15 +315,19 @@ func (p *Profile) New_recurring_bill(fee *Fee, member_id int) *Invoice {
 
 func (p *Profile) Cancel_recurring_bill(i *Invoice) {
 	if i == nil || i.Paid_by != p.member_id {
-		return
+		log.Panic("Invalid invoice")
 	}
 	for n, v := range p.Invoices {
 		if v == i {
 			p.Invoices = append(p.Invoices[:n], p.Invoices[n+1:]...)
 		}
 	}
-	if _, err := p.db.Exec("UPDATE invoice SET end_date = now() WHERE "+
-		"id = $1 AND (end_date > now() OR end_date IS NULL)", i.Id); err != nil {
+	query := "UPDATE invoice SET end_date = now() WHERE "+
+		"id = $1 AND (end_date > now() OR end_date IS NULL)"
+	if i.Start_date.IsZero() {
+		query = "DELETE FROM invoice WHERE id = $1"
+	}
+	if _, err := p.db.Exec(query, i.Id); err != nil {
 		log.Panic(err)
 	}
 	if i.Fee != nil && i.Fee.Category == "storage" {
@@ -325,13 +342,25 @@ func (p *Profile) Cancel_recurring_bill(i *Invoice) {
 }
 
 func (b *Billing) set_invoice_start_date(i *Invoice, date time.Time) {
-	if _, err := b.db.Exec(
-		"UPDATE invoice "+
-			"SET start_date = $2 "+
-			"WHERE id = $1", i.Id, date); err != nil {
-		log.Panic(err)
+	if !i.End_date.IsZero() && date.After(i.End_date) {
+		log.Panic("Invalid start date for invoice ", i.Id)
 	}
-	i.Date = date
+	if date.IsZero() {
+		if _, err := b.db.Exec(
+			"UPDATE invoice "+
+				"SET start_date = NULL "+
+				"WHERE id = $1", i.Id); err != nil {
+			log.Panic(err)
+		}
+	} else {
+		if _, err := b.db.Exec(
+			"UPDATE invoice "+
+				"SET start_date = $2 "+
+				"WHERE id = $1", i.Id, date); err != nil {
+			log.Panic(err)
+		}
+	}
+	i.Start_date = date
 }
 
 // prorate_month returns the amount multiplied by the fraction of the current

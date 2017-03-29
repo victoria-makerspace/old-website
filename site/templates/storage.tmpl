@@ -2,6 +2,9 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
+        <p class="alert alert-warning">
+          The storage waitlist and registration forms are not currently implemented.  Please e-mail <a href="mailto:storage@makerspace.ca">storage@makerspace.ca</a> for information about storage availabilities.
+        </p>
         <form action="/member/storage" method="post">
           <h5 class="mb-0">Wall storage</h5>
           <small class="align-top text-muted">Locations 1 &amp; 2 are reserved by Makerspace</small>
@@ -37,11 +40,11 @@
   {{if not .Available}}
                   <small>Unavailable</small>
   {{else if not .Member}}
-                  <button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#storage-available-wall">Available</button>
+                  <button type="button" class="btn btn-sm btn-outline-info disabled" data-toggle="collapse" data-target="#storage-available-wall">Available</button>
   {{else if eq $member.Id .Member.Id}}
                   <a href="/member/billing#Payments" class="btn btn-sm btn-warning">Cancel</a>
   {{else}}
-                  <button type="button" class="btn btn-sm btn-outline-secondary" data-target="#storage-waitlist-wall">Waitlist</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary disabled" data-target="#storage-waitlist-wall">Waitlist</button>
   {{end -}}
                 </td>
               </tr>
@@ -80,11 +83,11 @@
                       {{if not .Available}}
                       <small>Unavailable</small>
                       {{else if not .Member}}
-                      <button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#storage-available-locker">Available</button>
+                      <button type="button" class="btn btn-sm btn-outline-info disabled" data-toggle="collapse" data-target="#storage-available-locker">Available</button>
                       {{else if eq .Member.Id $member.Id}}
                       <a href="/member/billing#Payments" class="btn btn-sm btn-warning">Cancel</a>
                       {{else}}
-                      <button type="button" class="btn btn-sm btn-outline-secondary" data-target="#storage-waitlist-hall-locker">Waitlist</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary disabled" data-target="#storage-waitlist-hall-locker">Waitlist</button>
                       {{end -}}
                     </td>
                   </tr>
@@ -124,11 +127,11 @@
                       {{if not .Available}}
                       <small>Unavailable</small>
                       {{else if not .Member}}
-                      <button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#storage-available-bathroom-locker">Available</button>
+                      <button type="button" class="btn btn-sm btn-outline-info disabled" data-toggle="collapse" data-target="#storage-available-bathroom-locker">Available</button>
                       {{else if eq .Member.Id $member.Id}}
                       <a href="/member/billing#Payments" class="btn btn-sm btn-warning">Cancel</a>
                       {{else}}
-                      <button type="button" class="btn btn-sm btn-outline-secondary" data-target="#storage-waitlist-bathroom-locker">Waitlist</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary disabled" data-target="#storage-waitlist-bathroom-locker">Waitlist</button>
                       {{end -}}
                     </td>
                   </tr>

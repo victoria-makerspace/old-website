@@ -1,4 +1,5 @@
-{{if .Active}}
+{{$membership := .Member.Membership_invoice}}
+{{if $membership}}
   <div class="modal fade" id="terminate_membership" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -69,7 +70,6 @@
                   <td class="font-weight-bold">{{$t.Invoice.Amount | printf "$%.2f"}}</td>
                   <td>{{$t.Invoice.Description}}</td>
                   <td><small class="text-muted">x-{{$t.Card}}</small></td>
-                  </td>
                 </tr>
     {{end}}
               </tbody>
@@ -102,19 +102,27 @@
                 </tr>
               </thead>
               <tbody>
-    {{range .Invoices}}
+    {{with $membership}}
                 <tr>  
                   <td>{{.Description}}</td>
                   <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
-                  <td>{{.Date.Format "2006-01-02"}}</td>
+                  <td>{{.Start_date.Format "2006-01-02"}}</td>
                   <td>
-      {{if eq .Fee.Category "membership"}}
                     <button type="button" data-toggle="modal" data-target="#terminate_membership" class="btn btn-sm btn-danger">Terminate</button>
-      {{else}}
-                    <button type="submit" name="terminate" value="{{.Id}}" class="btn btn-sm btn-danger">Terminate</button>
-      {{end}}
                   </td>
                 </tr>
+    {{end}}
+    {{range .Invoices}}
+      {{if ne .Category "membership"}}
+                <tr>  
+                  <td>{{.Description}}</td>
+                  <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
+                  <td>{{.Start_date.Format "2006-01-02"}}</td>
+                  <td>
+                    <button type="submit" name="terminate" value="{{.Id}}" class="btn btn-sm btn-danger">Terminate</button>
+                  </td>
+                </tr>
+      {{end}}
     {{end}}
               </tbody>
             </table>
@@ -237,8 +245,8 @@
         <section id="Membership-dues">
             <h4>Membership dues</h4>
             <form id="billing" class="px-2 px-sm-3" method="post" action="/member/billing">
-  {{if not .Member.Active}}
-              <p class="alert alert-info">On initial registration, your membership fee gets prorated for the remainder of the current month, and processed immediately.  Following your first payment, successive membership payments will be processed on the 1st of every month.</p>
+  {{if not $membership}}
+              <p class="alert alert-info">On initial registration, pending approval, your membership fee gets prorated for the remainder of the month (at the time of approval).  Once approved, and following your initial prorated payment, successive membership payments will be processed on the 1st of every month.</p>
   {{end}}
                 <fieldset class="form-group mb-2 mb-sm-3">
                     <label class="custom-control custom-radio">
@@ -284,7 +292,7 @@
               <p class="alert alert-warning">You must register a credit card.</p>
   {{end}}
               <div class="d-inline-flex flex-row-reverse">
-  {{if not .Member.Active}}
+  {{if not $membership}}
               <button type="submit" name="register" class="ml-1 btn btn-primary"{{if not .Member.Payment}} disabled{{else if not .Member.Payment.Get_card}} disabled{{else if not .Member.Agreed_to_terms}} disabled{{end}}>Register</button>
   {{end}}
               <button type="submit" name="update" class="btn btn-secondary">Update</button>

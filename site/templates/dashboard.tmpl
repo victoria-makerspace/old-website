@@ -4,8 +4,10 @@
       <div class="col-md-12 col-lg-10 col-xl-8 px-5 py-3">
 {{if not .Member.Agreed_to_terms}}
         <p class="alert alert-info">Please read and agree to the <a href="/terms">Terms &amp; Conditions</a> before registering to become a member, or making use of Makerspace as a guest.</p>
-{{else if not .Member.Active}}
+{{else if and (not .Member.Gratuitous) (not .Member.Membership_invoice)}}
         <p class="alert alert-info">Please set up <a href="/member/billing">billing</a> and register to become a member.</p>
+{{else if not .Member.Approved}}
+        <p class="alert alert-info">Your membership is pending approval.</p>
 {{end}}
 {{with .Talk_user}}
         <h4>

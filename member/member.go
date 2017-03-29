@@ -4,12 +4,11 @@ import (
 	"database/sql"
 	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/talk"
+	"github.com/lib/pq"
 	"log"
 	"time"
 )
 
-//TODO: unverified accounts cannot have an associated Talk account
-//TODO: set activated flag from admin page only
 type Member struct {
 	Id              int
 	Username        string
@@ -18,15 +17,15 @@ type Member struct {
 	Telephone       string
 	Agreed_to_terms bool
 	Registered      time.Time
-	Activated       bool
 	Gratuitous      bool
+	Approved		bool
 	*Admin
 	*Student
 	*Members
+	Membership_invoice    *billing.Invoice
 	password_key  string
 	password_salt string
 	talk          *talk.Talk_user
-	Membership    *billing.Invoice
 	payment       *billing.Profile
 }
 
@@ -35,6 +34,7 @@ type Member struct {
 func (ms *Members) Get_member_by_username(username string) *Member {
 	m := &Member{Username: username, Members: ms}
 	var email, password_key, password_salt sql.NullString
+	var approved_at pq.NullTime
 	if err := m.QueryRow(
 		"SELECT"+
 			"	id, "+
@@ -42,31 +42,38 @@ func (ms *Members) Get_member_by_username(username string) *Member {
 			"	password_key, "+
 			"	password_salt, "+
 			"	email, "+
-			"	activated, "+
 			"	agreed_to_terms, "+
 			"	registered, "+
-			"	gratuitous "+
+			"	gratuitous, "+
+			"	approved_at "+
 			"FROM member "+
 			"WHERE username = $1",
 		username).Scan(&m.Id, &m.Name, &password_key, &password_salt, &email,
-		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous); err != nil {
+		&m.Agreed_to_terms, &m.Registered, &m.Gratuitous, &approved_at);
+		err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
 		log.Panic(err)
 	}
 	m.Email = email.String
+	if approved_at.Valid {
+		m.Approved = true
+	}
 	m.password_key = password_key.String
 	m.password_salt = password_salt.String
 	m.get_student()
 	m.get_admin()
-	m.get_membership()
+	if m.Payment() != nil {
+		m.Membership_invoice = m.payment.Get_membership()
+	}
 	return m
 }
 
 func (ms *Members) Get_member_by_id(id int) *Member {
 	m := &Member{Id: id, Members: ms}
 	var email, password_key, password_salt sql.NullString
+	var approved_at pq.NullTime
 	if err := m.QueryRow(
 		"SELECT"+
 			"	username, "+
@@ -74,25 +81,31 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"	password_key, "+
 			"	password_salt, "+
 			"	email, "+
-			"	activated, "+
 			"	agreed_to_terms, "+
 			"	registered, "+
-			"	gratuitous "+
+			"	gratuitous, "+
+			"	approved_at "+
 			"FROM member "+
 			"WHERE id = $1",
 		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &email,
-		&m.Activated, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous); err != nil {
+		&m.Agreed_to_terms, &m.Registered, &m.Gratuitous, &approved_at);
+		err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
 		log.Panic(err)
 	}
 	m.Email = email.String
+	if approved_at.Valid {
+		m.Approved = true
+	}
 	m.password_key = password_key.String
 	m.password_salt = password_salt.String
 	m.get_student()
 	m.get_admin()
-	m.get_membership()
+	if m.Payment() != nil {
+		m.Membership_invoice = m.payment.Get_membership()
+	}
 	return m
 }
 
@@ -101,15 +114,6 @@ func (m *Member) Delete_member() {
 	if _, err := m.Exec("DELETE FROM member WHERE id = $1", m.Id); err != nil {
 		log.Panic(err)
 	}
-}
-
-//TODO: move to admin.go
-func (m *Member) activate() {
-	if _, err := m.Exec("UPDATE member SET activated = 'true' WHERE id = $1",
-		m.Id); err != nil {
-		log.Panic(err)
-	}
-	m.Activated = true
 }
 
 func (m *Member) Verified_email() bool {
@@ -124,14 +128,6 @@ func (m *Member) Authenticate(password string) bool {
 		return true
 	}
 	return false
-}
-
-//TODO: make distinction between has_membership and m.Activated
-func (m *Member) Active() bool {
-	if !m.Verified_email() || (!m.Gratuitous && m.Membership == nil) {
-		return false
-	}
-	return true
 }
 
 func (m *Member) Set_password(password string) {
@@ -149,7 +145,7 @@ func (m *Member) Set_password(password string) {
 	}
 }
 
-func (m *Member) Set_email(email string) {
+func (m *Member) set_email(email string) {
 	m.Email = email
 	if _, err := m.Exec("UPDATE member "+
 		"SET email = $1 "+
@@ -211,7 +207,7 @@ func (ms *Members) Verify_email(token string) bool {
 	if !m.Verified_email() {
 		m.talk.Activate()
 	}
-	m.Set_email(email)
+	m.set_email(email)
 	//TODO: delete unverified members with this pending verification
 	if _, err := m.Exec("DELETE FROM email_verification_token "+
 		"WHERE email = $1", email); err != nil {
@@ -236,37 +232,27 @@ func (m *Member) Payment() *billing.Profile {
 	return m.payment
 }
 
-func (m *Member) get_membership() {
-	if m.Payment() == nil {
-		return
-	}
-	m.Membership = m.payment.Get_membership()
-}
-
-func (m *Member) New_membership() {
+func (m *Member) New_membership_invoice() {
 	if m.Payment() == nil {
 		m.payment = m.New_profile(m.Id)
 	}
-	if m.Student != nil {
-		m.Membership = m.payment.New_membership(true)
-		return
-	}
-	if m.Membership = m.payment.New_membership(false); m.Membership != nil {
-		m.Talk_user().Add_to_group("Members")
-	}
+	m.Membership_invoice = m.payment.New_pending_membership(m.Student != nil)
+	m.Talk_user().Add_to_group("Members")
 }
 
 func (m *Member) Cancel_membership() {
-	if m.Gratuitous {
-		if _, err := m.Exec(
-			"UPDATE member "+
-				"SET gratuitous = 'f' "+
-				"WHERE id = $1", m.Id); err != nil {
-			log.Panic(err)
-		}
+	if _, err := m.Exec(
+		"UPDATE member "+
+		"SET"+
+		"	gratuitous = 'f',"+
+		"	approved_at = NULL,"+
+		"	approved_by = NULL "+
+		"WHERE id = $1", m.Id); err != nil {
+		log.Panic(err)
 	}
 	m.Gratuitous = false
-	if m.Membership != nil {
+	m.Approved = false
+	if m.Membership_invoice != nil {
 		m.payment.Cancel_membership()
 	}
 }
