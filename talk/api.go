@@ -88,8 +88,6 @@ func (api *Talk_api) put_json(path string, j map[string]interface{}, use_key boo
 		return nil
 	}
 	defer rsp.Body.Close()
-	b, _ := ioutil.ReadAll(rsp.Body)
-	log.Println(string(b))
 	var data interface{}
 	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
 		if err.Error() != "EOF" {

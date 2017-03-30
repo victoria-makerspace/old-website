@@ -16,11 +16,14 @@ $(document).ready(function() {
     if (!$("html").hasClass("anon")) {
         var talk_url = $("#talk-link").attr("href");
         $.ajax(talk_url + "/session/current.json").fail(function() {
-            var return_path = talk_url + "/session/current.json"
+            var return_path = talk_url + "/session/current.json";
             $.ajax(talk_url + "/session/sso?return_path=" + encodeURIComponent(return_path));
         });
     }
     $(".modal:target").modal("show");
+    $(".modal").on("shown.bs.modal", function() {
+        $(this).find("[autofocus]").focus();
+    });
 });
 
 $(this).on("beanstream_payfields_loaded", function() {
