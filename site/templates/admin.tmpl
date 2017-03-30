@@ -1,2 +1,30 @@
     <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+{{$pending_approvals := .List_pending_approvals}}
+{{if $pending_approvals}}
+          <h4>Pending Membership Approvals</h4>
+          <table class="table table-sm table-striped table-responsive text-nowrap">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Name</th>
+                <th>Membership type</th>
+                <th>Registration date</th>
+              </tr>
+            </thead>
+            <tbody>
+  {{range $pending_approvals}}
+              <tr>
+                <td><a href="/member/by-id/{{.Id}}">@{{.Username}}</a></td>
+                <td>{{.Name}}</td>
+                <td class="text-capitalize">{{.Membership_invoice.Fee.Identifier}}</td>
+                <td>{{.Registered.Format "2006-01-02"}}</td>
+              </tr>
+  {{end}}
+            </tbody>
+          </table>
+{{end}}
+        </div>
+      </div>
     </div>

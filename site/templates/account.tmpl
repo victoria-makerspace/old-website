@@ -6,6 +6,11 @@
         <h3>Membership
           <a href="/member/billing#terminate_membership" class="btn btn-sm btn-danger float-right">Cancel</a>
         </h3>
+  {{if not .Member.Approved}}
+        <p class="alert alert-info mt-2 mb-2">
+          Your membership is currently awaiting approval from an administrator.
+        </p>
+  {{end}}
         <div class="mb-2 row">
           <span class="col-sm-4 font-weight-bold">Type:</span>
           <div class="col-sm-8">
@@ -17,11 +22,6 @@
   {{end}}
             </a>
           </div>
-  {{if not .Member.Approved}}
-          <p class="alert alert-info mt-2 mb-0">
-            Your membership is currently pending approval.
-          </p>
-  {{end}}
   {{if .Member.Gratuitous}}
           <p class="alert alert-info mt-2 mb-0">
             Your account is labelled as "free," either because an administrator has specifically marked it as such, or you are assumed to still be paying membership fees via PayPal.  Contact <a href="mailto:accounting@makerspace.ca">accounting@makerspace.ca</a> for more information.
@@ -45,7 +45,7 @@
     {{if not .Start_date.IsZero}}
             {{.Start_date.Format "January 2, 2006"}}
     {{else}}
-            <span class="text-warning">Pending approval</span>
+            <em class="text-muted">Pending approval</em>
     {{end}}
           </div>
         </div>

@@ -78,6 +78,7 @@ func (t *Talk_user) Avatar_url(size int) string {
 		[]byte(fmt.Sprint(size))))
 }
 
+//TODO: grab external_id from posters
 type Message struct {
 	Url             string
 	Title           string

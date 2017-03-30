@@ -1,5 +1,5 @@
 {{$membership := .Member.Membership_invoice}}
-{{if $membership}}
+{{if or $membership .Member.Gratuitous}}
   <div class="modal fade" id="terminate_membership" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -91,6 +91,11 @@
               The following payments will fail.  Please update your credit card information.
             </p>
     {{end}}
+    {{if $membership.Start_date.IsZero}}
+            <p class="alert alert-info">
+              Your membership is awaiting approval from an administrator.  Billing will commence once approved.
+            </p>
+    {{end}}
             <form action="/member/billing" method="post" id="monthly">
             <table class="table table-sm table-responsive text-nowrap">
               <thead>
@@ -102,11 +107,17 @@
                 </tr>
               </thead>
               <tbody>
-    {{with $membership}}
+    {{if $membership}}
                 <tr>  
-                  <td>{{.Description}}</td>
-                  <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
-                  <td>{{.Start_date.Format "2006-01-02"}}</td>
+                  <td>{{$membership.Description}}</td>
+                  <td class="font-weight-bold">{{$membership.Amount | printf "$%.2f"}}</td>
+                  <td>
+      {{if $membership.Start_date.IsZero}}
+                    <em class="text-muted">Pending approval</em>
+      {{else}}
+                    {{$membership.Start_date.Format "2006-01-02"}}
+      {{end}}
+                  </td>
                   <td>
                     <button type="button" data-toggle="modal" data-target="#terminate_membership" class="btn btn-sm btn-danger">Terminate</button>
                   </td>
