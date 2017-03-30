@@ -237,7 +237,6 @@ func (m *Member) New_membership_invoice() {
 		m.payment = m.New_profile(m.Id)
 	}
 	m.Membership_invoice = m.payment.New_pending_membership(m.Student != nil)
-	m.Talk_user().Add_to_group("Members")
 }
 
 func (m *Member) Cancel_membership() {
@@ -255,4 +254,32 @@ func (m *Member) Cancel_membership() {
 	if m.Membership_invoice != nil {
 		m.payment.Cancel_membership()
 	}
+}
+
+func (m *Member) Approved_on() time.Time {
+	var approved_at time.Time
+	if !m.Approved {
+		return approved_at
+	}
+	if err := m.QueryRow(
+		"SELECT approved_at "+
+		"FROM member "+
+		"WHERE id = $1", m.Id).Scan(&approved_at); err != nil {
+		log.Panic(err)
+	}
+	return approved_at
+}
+
+func (m *Member) Approved_by() *Member {
+	var approved_by int
+	if !m.Approved {
+		return nil
+	}
+	if err := m.QueryRow(
+		"SELECT approved_by "+
+		"FROM member "+
+		"WHERE id = $1", m.Id).Scan(&approved_by); err != nil {
+		log.Panic(err)
+	}
+	return m.Get_member_by_id(approved_by)
 }

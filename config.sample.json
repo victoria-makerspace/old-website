@@ -1,7 +1,19 @@
 {
-    "domain":   "",
-    "port":     1080,
-    "dir":      "/home/makerspace",
+    "site": {
+        "domain":   "",
+        "port":     1080,
+        "dir":      "/home/makerspace/code"
+    },
+    "members": {
+        "reserved_usernames":           ["admin", "moderator", "administrator", "mod", "sys", "system", "community", "info", "you", "name", "username", "user", "nickname", "talk", "support", "director", "makerspace"],
+        "reset-window":                 "15m",
+        "email-verification-window":    "15m",
+        "smtp": {
+            "address":  "",
+            "port":     587,
+            "username": "",
+            "password": ""
+        }},
     "database": {
             "dbname":   "makerspace",
             "host":     "/var/run/postgresql",
@@ -19,11 +31,5 @@
         "admin":        "system",
         "sso-secret":   "",
         "api-key":      ""
-    },
-    "smtp": {
-        "address":  "",
-        "port":     "587",
-        "username": "",
-        "password": ""
     }
 }

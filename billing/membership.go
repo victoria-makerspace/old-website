@@ -15,12 +15,16 @@ func (p *Profile) New_pending_membership(is_student bool) *Invoice {
 		fee = p.Find_fee("membership", "regular")
 	}
 	inv := p.New_recurring_bill(fee, p.member_id)
+	if inv == nil {
+		log.Panic("Invalid membership invoice for member ", p.member_id)
+	}
 	p.set_invoice_start_date(inv, time.Time{})
 	return inv
 }
 
 func (p *Profile) Approve_pending_membership(i *Invoice) {
-	if prorated := prorate_month(i.Fee.Amount); prorated != 0 {
+	if prorated := prorate_month(i.Fee.Amount);
+		prorated > minimum_txn_amount {
 		description := i.Fee.Description
 		if prorated != i.Fee.Amount {
 			description += " (prorated)"

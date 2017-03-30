@@ -25,9 +25,24 @@ func (m *Member) get_admin() {
 	m.Admin = &Admin{privileges}
 }
 
+func (m *Member) set_gratuitous() {
+	m.Gratuitous = true
+	if _, err := m.Exec(
+		"UPDATE member "+
+		"SET gratuitous = 't' "+
+		"WHERE id = $1", m.Id); err != nil {
+		log.Panic(err)
+	}
+}
+
+// Approve_member sets the approval flag on <m> and activates the invoice if
+//	m.Membership_invoice exists, otherwise setting the gratuitous flag.
 func (a *Member) Approve_member(m *Member) {
 	if a.Admin == nil {
 		log.Panicf("%s is not an administrator\n", a.Username)
+	}
+	if m.Approved {
+		log.Panicf("%s is already an approved member\n", m.Username)
 	}
 	if _, err := m.Exec(
 		"UPDATE member "+
@@ -37,6 +52,12 @@ func (a *Member) Approve_member(m *Member) {
 		log.Panic(err);
 	}
 	m.Approved = true
+	m.Talk_user().Add_to_group("Members")
+	if m.Membership_invoice != nil {
+		m.Payment().Approve_pending_membership(m.Membership_invoice)
+	} else {
+		m.set_gratuitous()
+	}
 }
 
 func (ms *Members) List_pending_approvals() []*Member {
@@ -65,3 +86,4 @@ func (ms *Members) List_pending_approvals() []*Member {
 	}
 	return members
 }
+

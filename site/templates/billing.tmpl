@@ -91,10 +91,12 @@
               The following payments will fail.  Please update your credit card information.
             </p>
     {{end}}
-    {{if $membership.Start_date.IsZero}}
+    {{with $membership}}
+      {{if .Start_date.IsZero}}
             <p class="alert alert-info">
               Your membership is awaiting approval from an administrator.  Billing will commence once approved.
             </p>
+      {{end}}
     {{end}}
             <form action="/member/billing" method="post" id="monthly">
             <table class="table table-sm table-responsive text-nowrap">
@@ -107,15 +109,15 @@
                 </tr>
               </thead>
               <tbody>
-    {{if $membership}}
+    {{with $membership}}
                 <tr>  
-                  <td>{{$membership.Description}}</td>
-                  <td class="font-weight-bold">{{$membership.Amount | printf "$%.2f"}}</td>
+                  <td>{{.Description}}</td>
+                  <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
                   <td>
-      {{if $membership.Start_date.IsZero}}
+      {{if .Start_date.IsZero}}
                     <em class="text-muted">Pending approval</em>
       {{else}}
-                    {{$membership.Start_date.Format "2006-01-02"}}
+                    {{.Start_date.Format "2006-01-02"}}
       {{end}}
                   </td>
                   <td>

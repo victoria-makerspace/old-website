@@ -243,7 +243,7 @@ func (p *Profile) get_recurring_bills() {
 func (p *Profile) New_invoice(member_id int, amount float64, description string, fee *Fee) *Invoice {
 	if amount == 0 {
 		if fee == nil || fee.Amount == 0 {
-			return nil
+			log.Panic("Invalid invoice (amount cannot be 0)")
 		}
 		amount = fee.Amount
 	}

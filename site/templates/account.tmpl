@@ -3,9 +3,13 @@
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
 {{if or .Member.Membership_invoice .Member.Gratuitous}}
-        <h3>Membership
-          <a href="/member/billing#terminate_membership" class="btn btn-sm btn-danger float-right">Cancel</a>
-        </h3>
+        <div class="row">
+          <h3 class="col-sm-4">Membership
+          </h3>
+          <div class="col-sm-8 mt-1">
+            <a href="/member/billing#terminate_membership" class="btn btn-sm btn-danger">Cancel</a>
+          </div>
+        </div>
   {{if not .Member.Approved}}
         <p class="alert alert-info mt-2 mb-2">
           Your membership is currently awaiting approval from an administrator.
@@ -38,15 +42,21 @@
   {{end}}
           </div>
         </div>
-  {{with .Member.Membership_invoice}}
-        <div class="mb-3 row">
-          <span class="col-sm-4 font-weight-bold">Registered:</span>
+        <div class="mb-2 row">
+          <span class="col-sm-4 font-weight-bold">Approved on:</span>
           <div class="col-sm-8">
-    {{if not .Start_date.IsZero}}
-            {{.Start_date.Format "January 2, 2006"}}
-    {{else}}
+  {{if .Member.Approved}}
+            {{.Member.Approved_on.Format "January 2, 2006"}}
+  {{else}}
             <em class="text-muted">Pending approval</em>
-    {{end}}
+  {{end}}
+          </div>
+        </div>
+  {{with .Member.Approved_by}}
+        <div class="mb-3 row">
+          <span class="col-sm-4 font-weight-bold">Approved by:</span>
+          <div class="col-sm-8">
+            <a href="/member/by-id/{{.Id}}">@{{.Username}}</a>
           </div>
         </div>
   {{end}}
