@@ -4,8 +4,7 @@
       <div class="col-md-10 col-lg-8 col-xl-7">
 {{if or .Member.Membership_invoice .Member.Gratuitous}}
         <div class="row">
-          <h3 class="col-sm-4">Membership
-          </h3>
+          <h3 id="Membership" class="col-sm-4">Membership</h3>
           <div class="col-sm-8 mt-1">
             <a href="/member/billing#terminate_membership" class="btn btn-sm btn-danger">Cancel</a>
           </div>
@@ -42,24 +41,16 @@
   {{end}}
           </div>
         </div>
-        <div class="mb-2 row">
-          <span class="col-sm-4 font-weight-bold">Approved on:</span>
+        <div class="mb-3 row">
+          <span class="col-sm-4 font-weight-bold">Approved by:</span>
           <div class="col-sm-8">
   {{if .Member.Approved}}
-            {{.Member.Approved_on.Format "January 2, 2006"}}
+            <a href="/member/{{.Id}}">@{{.Member.Approved_by.Username}}</a> on {{.Member.Approved_on.Format "January 2, 2006"}}
   {{else}}
             <em class="text-muted">Pending approval</em>
   {{end}}
           </div>
         </div>
-  {{with .Member.Approved_by}}
-        <div class="mb-3 row">
-          <span class="col-sm-4 font-weight-bold">Approved by:</span>
-          <div class="col-sm-8">
-            <a href="/member/by-id/{{.Id}}">@{{.Username}}</a>
-          </div>
-        </div>
-  {{end}}
 {{else}}
         <h3>Membership</h3>
         <p class="alert alert-warning">You are not currently <a href="/member/billing#Membership-dues">registered</a> as a member.</p>
@@ -71,15 +62,6 @@
             {{.Member.Registered.Format "January 2, 2006"}}
           </div>
         </div>
-{{with .Talk_user}}
-        <div class="mb-3 row align-items-center">
-          <span class="col-sm-4 font-weight-bold">Avatar:</span>
-          <div class="d-flex edit-img col-sm-8">
-            <img src="{{.Avatar_url 120}}" class="rounded-circle">
-            <a href="{{$talk_url}}/users/{{.Username}}/preferences" class="glyphicons glyphicons-pencil"></a>
-          </div>
-        </div>
-{{end}}
         <form action="/member/account" method="post">
           <div class="form-group row{{if .Data.username_error}} has-danger{{end}}">
             <label for="username" class="col-sm-4 col-form-label">Username:</label>
@@ -134,6 +116,24 @@
             </div>
           </div>
         </form>
+{{with .Talk_user}}
+        <div class="mb-1 row align-items-center">
+          <span class="col-sm-4 font-weight-bold">Avatar:</span>
+          <div class="d-flex edit-img col-sm-8">
+            <img src="{{.Avatar_url 120}}" class="rounded-circle">
+            <a href="{{$talk_url}}/u/{{.Username}}/preferences" class="glyphicons glyphicons-pencil"></a>
+          </div>
+        </div>
+        <div class="mb-3 row align-items-end">
+          <span class="col-sm-4 font-weight-bold">Talk forum:</span>
+          <span class="col-sm-8">
+            <a href="{{$talk_url}}/u/{{.Username}}/preferences">
+              Account preferences
+              <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
+            </a>
+          </span>
+        </div>
+{{end}}
         <h3>Update password</h3>
         <form action="/member/account" method="post">
           <div class="form-group row{{if .Data.old_password_error}} has-danger{{end}}">

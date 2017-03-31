@@ -1,42 +1,46 @@
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-10 col-xl-8">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10 col-xl-8">
 {{with .Data.member_approved}}
-        <p class="alert alert-success">
-          <a href="/member/by-id/{{.Id}}">@{{.Username}}</a>'s membership approved.
-        </p>
+      <p class="alert alert-success">
+        <a href="/member/{{.Id}}">@{{.Username}}</a>'s membership approved.
+      </p>
 {{end}}
 {{$pending_approvals := .List_pending_approvals}}
-{{if $pending_approvals}}
-          <h4>Pending Membership Approvals</h4>
-          <form action="/admin" method="post">
-            <table class="table table-sm table-striped table-responsive text-nowrap">
-              <thead>
-                <tr>
-                  <th>Username</th>
-                  <th>Name</th>
-                  <th>Membership type</th>
-                  <th>Registration date</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-    {{range $pending_approvals}}
-                <tr>
-                  <td><a href="/member/by-id/{{.Id}}">@{{.Username}}</a></td>
-                  <td>{{.Name}}</td>
-                  <td class="text-capitalize">{{.Membership_invoice.Fee.Identifier}}</td>
-                  <td>{{.Registered.Format "2006-01-02"}}</td>
-                  <td>
-                    <button type="submit" name="approve_membership" value="{{.Id}}" class="btn btn-sm btn-primary">Approve</button>
-                    <button type="submit" name="decline_membership" value="{{.Id}}" class="btn btn-sm btn-danger">Decline</button>
-                  </td>
-                </tr>
-    {{end}}
-              </tbody>
-            </table>
-          </form>
+        <h4>Pending Membership Approvals</h4>
+        <form action="/admin" method="post">
+          <table class="table table-sm table-striped table-responsive text-nowrap">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Name</th>
+                <th>Membership type</th>
+                <th>Registration date</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+{{range $pending_approvals}}
+              <tr>
+                <td><a href="/member/{{.Id}}">@{{.Username}}</a></td>
+                <td>{{.Name}}</td>
+                <td class="text-capitalize">{{.Membership_invoice.Fee.Identifier}}</td>
+                <td>{{.Registered.Format "2006-01-02"}}</td>
+                <td>
+                  <button type="submit" name="approve_membership" value="{{.Id}}" class="btn btn-sm btn-primary">Approve</button>
+                  <button type="submit" name="decline_membership" value="{{.Id}}" class="btn btn-sm btn-danger">Decline</button>
+                </td>
+              </tr>
+{{else}}
+              <tr>
+                <td colspan="5">
+                  <em class="text-muted">No pending membership approvals.</em>
+                </td>
+              </tr>
 {{end}}
-        </div>
+            </tbody>
+          </table>
+        </form>
       </div>
     </div>
+  </div>

@@ -111,7 +111,11 @@
               <tbody>
     {{with $membership}}
                 <tr>  
-                  <td>{{.Description}}</td>
+                  <td>
+                    <a href="/member/account#Membership">
+                      {{.Description}}<span class="title-link"></span>
+                    </a>
+                  </td>
                   <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
                   <td>
       {{if .Start_date.IsZero}}

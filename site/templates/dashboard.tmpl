@@ -1,11 +1,15 @@
-{{$talk_url := .Url -}}
+{{$talk_url := .Url}}
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-12 col-lg-10 col-xl-8 px-5 py-3">
 {{if not .Member.Agreed_to_terms}}
-        <p class="alert alert-info">Please read and agree to the <a href="/terms">Terms &amp; Conditions</a> before registering to become a member, or making use of Makerspace as a guest.</p>
+        <p class="alert alert-info">
+          Please read and agree to the <a href="/terms">Terms &amp; Conditions</a> before registering to become a member, or making use of Makerspace as a guest.
+        </p>
 {{else if and (not .Member.Gratuitous) (not .Member.Membership_invoice)}}
-        <p class="alert alert-info">Please set up <a href="/member/billing">billing</a> and register to become a member.</p>
+        <p class="alert alert-info">
+          Please set up <a href="/member/billing">billing</a> and register to become a member.
+        </p>
 {{else if not .Member.Approved}}
         <p class="alert alert-info">Your membership is pending approval.</p>
 {{end}}
@@ -33,14 +37,15 @@
             <tr{{if not .Read}} class="bg-warning"{{end}}>
               <td><a href="{{.Url}}">{{.Title}}</a></td>
               <td class="avatars">
-                <a href="/members/{{$orig_poster}}" title="{{$orig_poster}} - Original poster{{if $last_and_orig}}, Most recent poster{{end}}"{{if $last_and_orig}} style="box-shadow: 0 0 4px 2px #a7d5ec"{{end}}><img src="{{$orig_poster | index .Poster_avatars}}"></a>
+                {{/*TODO: changed out $orig_poster for external-id*/}}
+                <a href="/member/{{$orig_poster}}" title="{{$orig_poster}} - Original poster{{if $last_and_orig}}, Most recent poster{{end}}"{{if $last_and_orig}} style="box-shadow: 0 0 4px 2px #a7d5ec"{{end}}><img src="{{$orig_poster | index .Poster_avatars}}"></a>
     {{range $u, $a := .Poster_avatars}}
       {{if not (or (eq $u $orig_poster) (eq $u $last_poster))}}
-                <a class="hidden-xs-down" href="/members/{{$u}}" title="{{$u}}"><img src="{{$a}}"></a>
+                <a class="hidden-xs-down" href="/member/{{$u}}" title="{{$u}}"><img src="{{$a}}"></a>
       {{end}}
     {{end}}
     {{if not $last_and_orig}}
-                <a class="hidden-xs-down" href="/members/{{$last_poster}}" title="{{$last_poster}} - Most recent poster"><img src="{{$last_poster | index .Poster_avatars}}"></a>
+                <a class="hidden-xs-down" href="/member/{{$last_poster}}" title="{{$last_poster}} - Most recent poster"><img src="{{$last_poster | index .Poster_avatars}}"></a>
     {{end}}
               </td>
               <td>{{.Reply_count}}</td>

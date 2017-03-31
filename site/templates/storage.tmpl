@@ -1,4 +1,3 @@
-{{$member := .Member}}
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
@@ -23,13 +22,13 @@
               <tr{{if not .Available}}
                   class="text-muted"
                 {{else if .Member}}
-                  {{if eq .Member.Id $member.Id}}
+                  {{if eq .Member.Id $.Member.Id}}
                   class="table-success"
                 {{- end}}{{end}}>
                 <th scope="row">{{.Number}}</th>
   {{- with .Member -}}
                 <td>
-                  <a href="/members/{{.Id}}">@{{.Username}}</a>
+                  <a href="/member/{{.Id}}">@{{.Username}}</a>
                 </td>
   {{else}}
                 <td>-</td>
@@ -41,7 +40,7 @@
                   <small>Unavailable</small>
   {{else if not .Member}}
                   <button type="button" class="btn btn-sm btn-outline-info disabled" data-toggle="collapse" data-target="#storage-available-wall">Available</button>
-  {{else if eq $member.Id .Member.Id}}
+  {{else if eq $.Member.Id .Member.Id}}
                   <a href="/member/billing#Payments" class="btn btn-sm btn-warning">Cancel</a>
   {{else}}
                   <button type="button" class="btn btn-sm btn-outline-secondary disabled" data-target="#storage-waitlist-wall">Waitlist</button>
@@ -64,34 +63,34 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {{range .Data.hall_lockers}}
+{{range .Data.hall_lockers}}
                   <tr{{if not .Available}}
                       class="text-muted"
                     {{else if .Member}}
-                      {{if eq .Member.Id $member.Id}}
+                      {{if eq .Member.Id $.Member.Id}}
                       class="table-success"
                     {{- end}}{{end}}>
                     <th scope="row">{{.Number}}</th>
   {{- with .Member -}}
                     <td>
-                      <a href="/members/{{.Username}}">@{{.Username}}</a>
+                      <a href="/member/{{.Id}}">@{{.Username}}</a>
                     </td>
   {{else}}
                     <td>-</td>
-                    {{- end}}
+  {{- end}}
                     <td>
-                      {{if not .Available}}
+  {{if not .Available}}
                       <small>Unavailable</small>
-                      {{else if not .Member}}
+  {{else if not .Member}}
                       <button type="button" class="btn btn-sm btn-outline-info disabled" data-toggle="collapse" data-target="#storage-available-locker">Available</button>
-                      {{else if eq .Member.Id $member.Id}}
+  {{else if eq .Member.Id $.Member.Id}}
                       <a href="/member/billing#Payments" class="btn btn-sm btn-warning">Cancel</a>
-                      {{else}}
+  {{else}}
                       <button type="button" class="btn btn-sm btn-outline-secondary disabled" data-target="#storage-waitlist-hall-locker">Waitlist</button>
-                      {{end -}}
+  {{end -}}
                     </td>
                   </tr>
-                  {{end}}
+{{end}}
                 </tbody>
               </table>
             </div>
@@ -112,13 +111,13 @@
                   <tr{{if not .Available}}
                       class="text-muted"
                     {{else if .Member}}
-                      {{if eq .Member.Id $member.Id}}
+                      {{if eq .Member.Id $.Member.Id}}
                       class="table-success"
                     {{- end}}{{end}}>
                     <th scope="row">{{.Number}}</th>
   {{- with .Member -}}
                     <td>
-                      <a href="/members/{{.Username}}">@{{.Username}}</a>
+                      <a href="/member/{{.Id}}">@{{.Username}}</a>
                     </td>
   {{else}}
                     <td>-</td>
@@ -128,7 +127,7 @@
                       <small>Unavailable</small>
                       {{else if not .Member}}
                       <button type="button" class="btn btn-sm btn-outline-info disabled" data-toggle="collapse" data-target="#storage-available-bathroom-locker">Available</button>
-                      {{else if eq .Member.Id $member.Id}}
+                      {{else if eq .Member.Id $.Member.Id}}
                       <a href="/member/billing#Payments" class="btn btn-sm btn-warning">Cancel</a>
                       {{else}}
                       <button type="button" class="btn btn-sm btn-outline-secondary disabled" data-target="#storage-waitlist-bathroom-locker">Waitlist</button>
