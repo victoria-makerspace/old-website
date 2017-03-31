@@ -254,6 +254,7 @@ func (m *Member) Cancel_membership() {
 	if m.Membership_invoice != nil {
 		m.payment.Cancel_membership()
 	}
+	m.Talk_user().Remove_from_group("Members")
 }
 
 func (m *Member) Approved_on() time.Time {

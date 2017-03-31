@@ -44,7 +44,13 @@ func (m *Member) Update_student(institution, email string, grad_date time.Time) 
 }
 
 func (m *Member) Delete_student() {
+	if m.Student == nil {
+		return
+	}
 	m.Student = nil
+	if m.Membership_invoice != nil {
+		m.payment.Change_from_student()
+	}
 	if _, err := m.Exec("DELETE FROM student WHERE member = $1",
 		m.Id); err != nil {
 		log.Panic(err)

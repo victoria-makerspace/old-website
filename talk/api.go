@@ -64,6 +64,33 @@ func (api *Talk_api) get_json(path string, use_key bool, query ...string) interf
 	return data
 }
 
+//TODO: get rid of all the redundancy, just have a do_form and get_json
+func (api *Talk_api) do_form(method, path string, form url.Values) interface{} {
+	form.Set("api_key", api.api_key)
+	form.Set("api_username", api.admin)
+	req, err := http.NewRequest(method, api.Url() + path,
+		strings.NewReader(form.Encode()))
+	if err != nil {
+		log.Panic(err)
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	rsp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("Talk error (%s %s):\n\t%q\n", method, path, err)
+		return nil
+	}
+	defer rsp.Body.Close()
+	var data interface{}
+	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
+		if err.Error() != "EOF" {
+			log.Printf("Talk JSON decoding error (%s %s):\n\t%q\n",
+				method, path, err)
+		}
+		return nil
+	}
+	return data
+}
+
 func (api *Talk_api) put_json(path string, form url.Values) interface{} {
 	form.Set("api_key", api.api_key)
 	form.Set("api_username", api.admin)

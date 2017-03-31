@@ -160,13 +160,33 @@ func (t *Talk_user) Add_to_group(group string) {
 	form.Add("user_ids", fmt.Sprint(t.id))
 	data := t.put_json("/groups/"+fmt.Sprint(t.Groups()[group])+"/members",
 		form)
-	if j, ok := data.(map[string]interface{}); ok {
-		if _, ok := j["errors"]; ok {
-			log.Println(j["errors"])
+	j, ok := data.(map[string]interface{})
+	if ok {
+		if _, ok := j["success"]; ok {
+			return
 		}
-	} else {
-		log.Printf("Talk error on adding %s to group %s\n", t.Username, group)
 	}
+	log.Printf("Talk error on adding %s to group %s: %q\n",
+		t.Username, group, j)
+}
+
+func (t *Talk_user) Remove_from_group(group string) {
+	if _, ok := t.Groups()[group]; !ok {
+		log.Println("'", group, "' is not a valid group.")
+		return
+	}
+	form := url.Values{}
+	form.Set("user_id", fmt.Sprint(t.id))
+	data := t.do_form("DELETE",
+		"/groups/"+fmt.Sprint(t.Groups()[group])+"/members", form)
+	j, ok := data.(map[string]interface{})
+	if ok {
+		if _, ok := j["success"]; ok {
+			return
+		}
+	}
+	log.Printf("Talk error on removing %s from group %s: %q\n",
+		t.Username, group, j)
 }
 
 func (t *Talk_user) Activate() {
