@@ -152,18 +152,25 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 }
 
 func (t *Talk_user) Add_to_group(group string) {
-	groups := t.Groups()
-	if _, ok := groups[group]; !ok {
+	if _, ok := t.Groups()[group]; !ok {
+		log.Println("'", group, "' is not a valid group.")
 		return
 	}
-	data := make(map[string]interface{})
-	data["usernames"] = t.Username
-	j := t.put_json("/groups/"+fmt.Sprint(groups[group])+"/members.json", data, true)
-	log.Println(j)
+	form := url.Values{}
+	form.Add("user_ids", fmt.Sprint(t.id))
+	data := t.put_json("/groups/"+fmt.Sprint(t.Groups()[group])+"/members",
+		form)
+	if j, ok := data.(map[string]interface{}); ok {
+		if _, ok := j["errors"]; ok {
+			log.Println(j["errors"])
+		}
+	} else {
+		log.Printf("Talk error on adding %s to group %s\n", t.Username, group)
+	}
 }
 
 func (t *Talk_user) Activate() {
-	t.put_json("/admin/users/" + fmt.Sprint(t.id) + "/activate", nil, true)
+	t.put_json("/admin/users/" + fmt.Sprint(t.id) + "/activate", url.Values{})
 }
 
 /*

@@ -1,9 +1,8 @@
 package talk
 
 import (
-	"bytes"
+	"strings"
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -65,23 +64,15 @@ func (api *Talk_api) get_json(path string, use_key bool, query ...string) interf
 	return data
 }
 
-func (api *Talk_api) put_json(path string, j map[string]interface{}, use_key bool) interface{} {
-	//TODO: accept net.Url instead of path
-	u := api.Url() + path
-	if use_key {
-		u += "?" + api.api_key + "&" + api.admin
-	}
-	body, err := json.Marshal(j)
+func (api *Talk_api) put_json(path string, form url.Values) interface{} {
+	form.Set("api_key", api.api_key)
+	form.Set("api_username", api.admin)
+	req, err := http.NewRequest("PUT", api.Url() + path,
+		strings.NewReader(form.Encode()))
 	if err != nil {
 		log.Panic(err)
 	}
-	req, err := http.NewRequest("PUT", u,
-		ioutil.NopCloser(bytes.NewReader(body)))
-	if err != nil {
-		log.Panic(err)
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	rsp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Printf("Talk error (PUT %s):\n\t%q\n", path, err)

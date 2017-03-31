@@ -252,10 +252,12 @@ func (p *Profile) New_invoice(member_id int, amount float64, description string,
 			p.member_id, amount, minimum_txn_amount)
 		return nil
 	}
-	if description == "" && fee != nil {
-		description = fee.Description
-	} else {
-		log.Panic("Empty description for new invoice")
+	if description == "" {
+		if fee != nil {
+			description = fee.Description
+		} else {
+			log.Panic("Empty description for new invoice")
+		}
 	}
 	inv := &Invoice{Member: member_id,
 		Paid_by:     p.member_id,

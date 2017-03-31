@@ -25,7 +25,7 @@ func (p *Profile) New_pending_membership(is_student bool) *Invoice {
 func (p *Profile) Approve_pending_membership(i *Invoice) {
 	if prorated := prorate_month(i.Fee.Amount);
 		prorated > minimum_txn_amount {
-		description := i.Fee.Description
+		description := i.Description
 		if prorated != i.Fee.Amount {
 			description += " (prorated)"
 		}
