@@ -4,9 +4,9 @@
       <div class="col-md-10 col-lg-8 col-xl-7">
 {{if or .Member.Membership_invoice .Member.Gratuitous}}
         <div class="row">
-          <h3 id="Membership" class="col-sm-4">Membership</h3>
-          <div class="col-sm-8 mt-1">
-            <a href="/member/billing#terminate_membership" class="btn btn-sm btn-danger">Cancel</a>
+          <h3 id="Membership" class="col col-sm-4">Membership</h3>
+          <div class="col mt-1">
+            <a href="/member/billing#terminate_membership" class="btn btn-sm btn-danger float-right float-sm-none">Cancel</a>
           </div>
         </div>
   {{if not .Member.Approved}}
@@ -15,8 +15,8 @@
         </p>
   {{end}}
         <div class="mb-2 row">
-          <span class="col-sm-4 font-weight-bold">Type:</span>
-          <div class="col-sm-8">
+          <span class="col col-sm-4 font-weight-bold">Type:</span>
+          <div class="col">
             <a href="/member/billing#Membership-dues" class="text-capitalize">
   {{if .Member.Gratuitous}}
               Free
@@ -32,8 +32,8 @@
   {{end}}
         </div>
         <div class="mb-2 row">
-          <div class="col-sm-4"><span class="font-weight-bold">Fee</span> <span class="text-muted">(monthly)</span>:</div>
-          <div class="col-sm-8">
+          <div class="col col-sm-4"><span class="font-weight-bold">Fee</span> <span class="text-muted">(monthly)</span>:</div>
+          <div class="col">
   {{if .Member.Gratuitous}}
             $0.00
   {{else}}
@@ -68,7 +68,7 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <span class="input-group-addon">@</span>
-                <input type="text" class="form-control" name="username" minlength="3" maxlength="20" size="20" style="width: auto" value="{{.Member.Username}}" disabled>
+                <input type="text" class="form-control" name="username" minlength="3" maxlength="20" value="{{.Member.Username}}" disabled>
                 <span class="input-group-btn">
                   <button type="submit" class="btn btn-sm btn-primary" name="username-submit" disabled>Update</button>
                 </span>
@@ -118,8 +118,8 @@
         </form>
 {{with .Talk_user}}
         <div class="mb-1 row align-items-center">
-          <span class="col-sm-4 font-weight-bold">Avatar:</span>
-          <div class="d-flex edit-img col-sm-8">
+          <span class="col-4 font-weight-bold">Avatar:</span>
+          <div class="d-flex edit-img col justify-content-end justify-content-sm-start">
             <img src="{{.Avatar_url 120}}" class="rounded-circle">
             <a href="{{$talk_url}}/u/{{.Username}}/preferences" class="glyphicons glyphicons-pencil"></a>
           </div>
