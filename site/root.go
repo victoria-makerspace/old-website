@@ -7,27 +7,28 @@ import (
 )
 
 func init() {
-	handlers["/"] = root_handler
-	handlers["/terms"] = terms_handler
+	init_handler("/", "index", root_handler)
+	init_handler("/terms", "terms", terms_handler)
 }
 
 func root_handler(p *page) {
 	if p.URL.Path != "/" {
+		p.tmpl = nil
 		static_handler(p)
 		return
 	}
-	p.Name = "index"
+	// See register_handlers(), need to explicitly authenticate here because we
+	//	don't want to authenticate for static requests
 	p.authenticate()
 }
 
 func static_handler(p *page) {
-	dir := http.Dir(p.config["dir"].(string) + "/site/static/")
+	dir := http.Dir(file_path("static"))
 	file, err := dir.Open(path.Clean(p.URL.Path))
 	if err == nil {
 		if f_info, err := file.Stat(); err == nil && !f_info.IsDir() {
 			http.ServeContent(p.ResponseWriter, p.Request, f_info.Name(),
 				f_info.ModTime(), file)
-			p.srv_template = false
 			return
 		}
 	}
@@ -35,10 +36,9 @@ func static_handler(p *page) {
 }
 
 func terms_handler(p *page) {
-	p.Name = "terms"
 	p.Title = "Terms & Conditions"
-	p.authenticate()
 	if p.Session != nil && p.PostFormValue("agree_to_terms") != "" {
+		//TODO: put in member package
 		if _, err := p.db.Exec(
 			"UPDATE member "+
 				"SET agreed_to_terms = true "+

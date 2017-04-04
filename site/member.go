@@ -3,14 +3,12 @@ package site
 import ()
 
 func init() {
-	handlers["/member/dashboard"] = member_handler
-	handlers["/member/account"] = account_handler
-	handlers["/tools"] = tools_handler
-	handlers["/member/storage"] = storage_handler
+	init_handler("/member/dashboard", "dashboard", dashboard_handler)
+	init_handler("/member/account", "account", account_handler)
+	init_handler("/member/storage", "storage", storage_handler)
 }
 
-func member_handler(p *page) {
-	p.Name = "dashboard"
+func dashboard_handler(p *page) {
 	p.Title = "Dashboard"
 	if !p.must_authenticate() {
 		return
@@ -18,13 +16,12 @@ func member_handler(p *page) {
 }
 
 func account_handler(p *page) {
-	p.Name = "account"
 	p.Title = "Account"
 	if !p.must_authenticate() {
 		return
 	}
 	if _, ok := p.PostForm["update-password"]; ok {
-		if !p.Authenticate(p.PostFormValue("old-password")) {
+		if !p.Member.Authenticate(p.PostFormValue("old-password")) {
 			p.Data["old_password_error"] = "Incorrect password"
 			return
 		}
@@ -38,16 +35,7 @@ func account_handler(p *page) {
 	}
 }
 
-func tools_handler(p *page) {
-	p.Name = "tools"
-	p.Title = "Tools"
-	if !p.must_authenticate() {
-		return
-	}
-}
-
 func storage_handler(p *page) {
-	p.Name = "storage"
 	p.Title = "Storage"
 	if !p.must_authenticate() {
 		return

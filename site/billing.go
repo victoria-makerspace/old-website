@@ -6,11 +6,10 @@ import (
 )
 
 func init() {
-	handlers["/member/billing"] = billing_handler
+	init_handler("/member/billing", "billing", billing_handler)
 }
 
 func billing_handler(p *page) {
-	p.Name = "billing"
 	p.Title = "Billing"
 	if !p.must_authenticate() {
 		return

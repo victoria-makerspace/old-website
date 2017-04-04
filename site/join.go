@@ -6,13 +6,11 @@ import (
 )
 
 func init() {
-	handlers["/join"] = join_handler
+	init_handler("/join", "join", join_handler)
 }
 
 func join_handler(p *page) {
-	p.Name = "join"
 	p.Title = "Join"
-	p.authenticate()
 	if p.Session != nil {
 		p.http_error(403)
 		return

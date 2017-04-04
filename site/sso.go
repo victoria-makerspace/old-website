@@ -7,17 +7,17 @@ import (
 )
 
 func init() {
-	handlers["/sso"] = sso_handler
-	handlers["/sso/sign-out"] = sso_sign_out_handler
-	handlers["/sso/check-availability.json"] = sso_availability_handler
-	handlers["/sso/reset"] = sso_reset_handler
-	handlers["/sso/verify-email"] = sso_verify_email_handler
+	init_handler("/sso", "sso", sso_handler)
+	init_handler("/sso/sign-out", "sign-out", sso_sign_out_handler)
+	init_handler("/sso/check-availability.json", "check-availability",
+		sso_availability_handler)
+	init_handler("/sso/reset", "reset-password", sso_reset_handler)
+	init_handler("/sso/verify-email", "verify-email", sso_verify_email_handler)
 }
 
 func (p *page) must_authenticate() bool {
-	p.authenticate()
 	if p.Session == nil {
-		p.Name = "sso"
+		p.tmpl = handlers["sso"].Template
 		p.Title = "Sign-in"
 		p.Status = 403
 		p.Data["return_path"] = p.URL.String()
@@ -29,9 +29,7 @@ func (p *page) must_authenticate() bool {
 // sso_handler handles sign-in requests from the talk server, as well as serving
 //	local sign-in requests/responses
 func sso_handler(p *page) {
-	p.Name = "sso"
 	p.Title = "Sign-in"
-	p.authenticate()
 	return_path := "/member/dashboard"
 	if rp, ok := p.Data["return_path"].(string); ok {
 		return_path = rp
@@ -100,7 +98,6 @@ func sso_sign_out_handler(p *page) {
 }
 
 func sso_availability_handler(p *page) {
-	p.srv_json = true
 	if u := p.FormValue("username"); u != "" {
 		available, err := p.Check_username_availability(u)
 		p.Data["username"] = available
@@ -114,9 +111,7 @@ func sso_availability_handler(p *page) {
 }
 
 func sso_reset_handler(p *page) {
-	p.Name = "reset-password"
 	p.Title = "Reset password"
-	p.authenticate()
 	if p.Session != nil {
 		p.http_error(403)
 		return
@@ -148,9 +143,7 @@ func sso_reset_handler(p *page) {
 }
 
 func sso_verify_email_handler(p *page) {
-	p.Name = "verify-email"
 	p.Title = "Verify e-mail address"
-	p.authenticate()
 	p.Data["username"] = p.FormValue("username")
 	p.Data["email"] = p.FormValue("email")
 	if token := p.FormValue("token"); token != "" {

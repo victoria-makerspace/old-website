@@ -8,65 +8,44 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
-var templates = [...]string{
-	"main",
-	"header",
-	"error",
-	"index",
-	"sso",
-	"reset-password",
-	"verify-email",
-	"join",
-	"terms",
-	"dashboard",
-	"account",
-	"billing",
-	"members",
-	"tools",
-	"storage",
-	"admin"}
-
-func (h *http_server) parse_templates() {
-	h.tmpl = template.New("main.tmpl").Funcs(template.FuncMap{
-		"add": func(i, j int) int {
-			return i + j
-		},
-		"sub": func(i, j int) int {
-			return i - j
-		},
-	})
-	template.Must(h.tmpl.ParseFiles(func() []string {
-		files := make([]string, len(templates))
-		for i := range templates {
-			files[i] = h.config["dir"].(string) + "/site/templates/" +
-				templates[i] + ".tmpl"
-		}
-		return files
-	}()...))
+func file_path(path_elem ...string) string {
+	gopath := os.Getenv("GOPATH")
+	return filepath.Join(gopath, "src", "github.com", "vvanpo", "makerspace",
+		"site", filepath.Join(path_elem...))
 }
 
 type http_server struct {
 	http.Server
-	config map[string]interface{}
-	db     *sql.DB
-	tmpl   *template.Template
+	config      map[string]interface{}
+	db          *sql.DB
+	header_tmpl *template.Template
+	footer_tmpl *template.Template
+	error_tmpl  *template.Template
 	*talk.Talk_api
 	*member.Members
 }
 
 //TODO: set h.ErrorLog to a different logger
-func Serve(config map[string]interface{}, talk *talk.Talk_api, members *member.Members, db *sql.DB) {
-	h := &http_server{
+func Serve(config map[string]interface{}, talk *talk.Talk_api,
+	members *member.Members, db *sql.DB) {
+	hs := &http_server{
 		config:   config,
 		db:       db,
 		Talk_api: talk,
 		Members:  members}
-	h.Addr = config["domain"].(string) + ":" +
+	hs.Addr = config["domain"].(string) + ":" +
 		fmt.Sprint(int(config["port"].(float64)))
-	h.Handler = http.NewServeMux()
-	h.parse_templates()
-	h.set_handlers()
-	go log.Panic(h.ListenAndServe())
+	hs.Handler = http.NewServeMux()
+	hs.header_tmpl = template.Must(template.ParseFiles(file_path("templates",
+		"header.tmpl")))
+	hs.footer_tmpl = template.Must(template.ParseFiles(file_path("templates",
+		"footer.tmpl")))
+	hs.error_tmpl = template.Must(template.ParseFiles(file_path("templates",
+		"error.tmpl")))
+	hs.register_handlers()
+	go log.Panic(hs.ListenAndServe())
 }

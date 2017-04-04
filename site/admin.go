@@ -5,14 +5,13 @@ import (
 )
 
 func init() {
-	handlers["/admin"] = admin_handler
+	init_handler("/admin", "admin", admin_handler)
 }
 
 func (p *page) must_be_admin() bool {
 	if !p.must_authenticate() {
 		return false
-	}
-	if p.Admin == nil {
+	} else if p.Admin == nil {
 		p.http_error(403)
 		return false
 	}
@@ -20,7 +19,6 @@ func (p *page) must_be_admin() bool {
 }
 
 func admin_handler(p *page) {
-	p.Name = "admin"
 	p.Title = "Admin panel"
 	if !p.must_be_admin() {
 		return
@@ -31,8 +29,7 @@ func admin_handler(p *page) {
 			p.http_error(400)
 			return
 		}
-		if member := p.Get_member_by_id(member_id);
-			member != nil && !member.Approved {
+		if member := p.Get_member_by_id(member_id); member != nil && !member.Approved {
 			p.Member.Approve_member(member)
 			p.Data["Member_approved"] = member
 		} else {
