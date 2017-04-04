@@ -2,9 +2,9 @@
     <div class="row justify-content-center">
       <div class="col-lg-10 col-xl-8">
 {{with .Data.member_approved}}
-      <p class="alert alert-success">
-        <a href="/member/{{.Id}}">@{{.Username}}</a>'s membership approved.
-      </p>
+        <p class="alert alert-success">
+          <a href="/member/{{.Id}}">@{{.Username}}</a>'s membership approved.
+        </p>
 {{end}}
 {{$pending_approvals := .List_pending_approvals}}
         <h4>Pending Membership Approvals</h4>

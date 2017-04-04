@@ -96,6 +96,7 @@ membership	corporate	Membership (corporate)	\N
 CREATE TABLE invoice (
 	id serial PRIMARY KEY,
 	member integer NOT NULL REFERENCES member,
+	created timestamp(0) with time zone NOT NULL DEFAULT now(),
 	-- NULL start_date indicates pending approval
 	start_date date DEFAULT now(),
 	-- Defaults to username when NULL

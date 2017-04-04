@@ -150,52 +150,11 @@ func (ms *Members) New_member(username, email, name, password string) (m *Member
 	return m, nil
 }
 
-func (ms *Members) Get_all_members() []*Member {
-	members := make([]*Member, 0)
-	rows, err := ms.Query(
-		"SELECT " +
-			"	m.id, " +
-			"	m.username, " +
-			"	m.name, " +
-			"	m.password_key, " +
-			"	m.password_salt, " +
-			"	m.email, " +
-			"	m.agreed_to_terms, " +
-			"	m.registered, " +
-			"	s.username IS NOT NULL, " +
-			"	a.username IS NOT NULL " +
-			"FROM member m " +
-			"NATURAL LEFT JOIN administrator a " +
-			"NATURAL LEFT JOIN student s")
-	defer rows.Close()
-	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Panic(err)
-		}
-		return members
-	}
-	for rows.Next() {
-		var email, password_key, password_salt sql.NullString
-		m := &Member{Members: ms}
-		if err = rows.Scan(&m.Id, &m.Username, &m.Name, &password_key,
-			&password_salt, &email, &m.Agreed_to_terms, &m.Registered,
-			&m.Student, &m.Admin); err != nil {
-			log.Panic(err)
-		}
-		m.Email = email.String
-		m.password_key = password_key.String
-		m.password_salt = password_salt.String
-		members = append(members, m)
-	}
-	return members
-}
-
 func (ms *Members) Get_member_from_reset_token(token string) *Member {
 	var member_id int
 	var t time.Time
 	if err := ms.QueryRow(
-		"SELECT"+
-			"	member, time "+
+		"SELECT member, time "+
 			"FROM reset_password_token "+
 			"WHERE token = $1", token).Scan(&member_id, &t); err != nil {
 		if err == sql.ErrNoRows {
@@ -243,11 +202,9 @@ func (ms *Members) get_member_from_verification_token(token string) (m *Member, 
 	return ms.Get_member_by_id(member_id), email
 }
 
-/*
-func (ms *Members) Get_all_active_members() []*Member {
+func (ms *Members) get_members(query string) []*Member {
 	members := make([]*Member, 0)
-	//TODO: BUG: should by on f.category = 'membership'
-	rows, err := ms.db.Query("SELECT m.id, m.username, m.name, m.password_key, m.password_salt, m.email, m.agreed_to_terms, m.registered, s.username IS NOT NULL, a.username IS NOT NULL FROM member m NATURAL LEFT JOIN administrator a NATURAL LEFT JOIN student s JOIN (SELECT COALESCE(i.paid_by, i.username) AS paid_by FROM invoice i LEFT JOIN fee f ON (i.fee = f.id) WHERE COALESCE(i.recurring, f.recurring) = '1 month' AND (i.end_date > now() OR i.end_date IS NULL)) inv ON inv.paid_by = m.username")
+	rows, err := ms.Query(query)
 	defer rows.Close()
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -256,10 +213,36 @@ func (ms *Members) Get_all_active_members() []*Member {
 		return members
 	}
 	for rows.Next() {
-		m := &Member{Members: ms}
-		if err = rows.Scan(&m.Id, &m.Username, &m.Name, &m.password_key, &m.password_salt, &m.Email, &m.Agreed_to_terms, &m.Registered, &m.Student, &m.Admin); err != nil {
+		var member_id int
+		if err = rows.Scan(&member_id); err != nil {
 			log.Panic(err)
 		}
+		members = append(members, ms.Get_member_by_id(member_id))
 	}
 	return members
-}*/
+}
+
+func (ms *Members) Get_all_members() []*Member {
+	return ms.get_members("SELECT id FROM member m ORDER BY username ASC")
+}
+
+func (ms *Members) Get_all_approved_members() []*Member {
+	return ms.get_members(
+		"SELECT id "+
+		"FROM member m "+
+		"WHERE approved_at IS NOT NULL "+
+		"ORDER BY username ASC")
+}
+
+func (ms *Members) Get_all_pending_approval_members() []*Member {
+	return ms.get_members(
+		"SELECT i.member "+
+		"FROM invoice i "+
+		"JOIN fee f "+
+		"ON i.fee = f.id "+
+		"WHERE f.category = 'membership'"+
+		"	AND i.start_date IS NULL"+
+		"	AND (i.end_date < now() OR i.end_date IS NULL) "+
+		"ORDER BY i.created DESC")
+}
+

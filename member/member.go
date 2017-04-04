@@ -31,45 +31,6 @@ type Member struct {
 
 //TODO: support null password keys, and use e-mail verification for login
 //TODO: check corporate account
-func (ms *Members) Get_member_by_username(username string) *Member {
-	m := &Member{Username: username, Members: ms}
-	var email, password_key, password_salt sql.NullString
-	var approved_at pq.NullTime
-	if err := m.QueryRow(
-		"SELECT"+
-			"	id, "+
-			"	name, "+
-			"	password_key, "+
-			"	password_salt, "+
-			"	email, "+
-			"	agreed_to_terms, "+
-			"	registered, "+
-			"	gratuitous, "+
-			"	approved_at "+
-			"FROM member "+
-			"WHERE username = $1",
-		username).Scan(&m.Id, &m.Name, &password_key, &password_salt, &email,
-		&m.Agreed_to_terms, &m.Registered, &m.Gratuitous, &approved_at);
-		err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		log.Panic(err)
-	}
-	m.Email = email.String
-	if approved_at.Valid {
-		m.Approved = true
-	}
-	m.password_key = password_key.String
-	m.password_salt = password_salt.String
-	m.get_student()
-	m.get_admin()
-	if m.Payment() != nil {
-		m.Membership_invoice = m.payment.Get_membership()
-	}
-	return m
-}
-
 func (ms *Members) Get_member_by_id(id int) *Member {
 	m := &Member{Id: id, Members: ms}
 	var email, password_key, password_salt sql.NullString
@@ -107,6 +68,22 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 		m.Membership_invoice = m.payment.Get_membership()
 	}
 	return m
+}
+
+func (ms *Members) Get_member_by_username(username string) *Member {
+	var member_id int
+	if err := ms.QueryRow(
+		"SELECT id "+
+			"FROM member "+
+			"WHERE username = $1",
+		username).Scan(&member_id);
+		err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		log.Panic(err)
+	}
+	return ms.Get_member_by_id(member_id)
 }
 
 //TODO: cascade through all tables

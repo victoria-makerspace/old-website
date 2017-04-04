@@ -43,16 +43,13 @@
             <a class="nav-link{{if eq .Name "billing"}} active{{end}}" href="/member/billing"><span class="glyphicons glyphicons-pen"></span>Billing</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link{{if eq .Name "members"}} active{{end}}" href="/member/list"><span class="glyphicons glyphicons-group"></span>Members</a>
+            <a class="nav-link{{if eq .Name "member-list"}} active{{end}}" href="/member/list"><span class="glyphicons glyphicons-group"></span>Members</a>
           </li>
           <li class="nav-item">
             <a class="nav-link{{if eq .Name "tools"}} active{{end}}" href="/tools"><span class="glyphicons glyphicons-claw-hammer"></span>Tools</a>
           </li>
           <li class="nav-item">
             <a class="nav-link{{if eq .Name "storage"}} active{{end}}" href="/member/storage"><span class="glyphicons glyphicons-cargo"></span>Storage</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link{{if eq .Name "profile"}} active{{end}}" href="/member/{{.Member.Id}}"><span class="glyphicons glyphicons-user"></span>Profile</a>
           </li>
           <li class="nav-item">
             <a class="nav-link{{if eq .Name "account"}} active{{end}}" href="/member/account"><span class="glyphicons glyphicons-cogwheel"></span>Account</a>
