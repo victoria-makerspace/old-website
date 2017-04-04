@@ -6,7 +6,7 @@
           <a href="/member/{{.Id}}">@{{.Username}}</a>'s membership approved.
         </p>
 {{end}}
-{{$pending_approvals := .List_pending_approvals}}
+{{$pending_approvals := .Get_all_pending_members}}
         <h4>Pending Membership Approvals</h4>
         <form action="/admin" method="post">
           <table class="table table-sm table-striped table-responsive text-nowrap">

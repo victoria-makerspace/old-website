@@ -42,7 +42,7 @@ func (hs *http_server) new_page(w http.ResponseWriter, r *http.Request) *page {
 // 	Careful to scrub output of extraneous p.Data values, if srv_json is set
 func (p *page) http_error(code int) {
 	p.tmpl = p.http_server.error_tmpl
-	p.Title = "HTTP error: " + fmt.Sprint(code)
+	p.Title = fmt.Sprint(code)
 	p.Status = code
 	p.Data["error"] = http.StatusText(code)
 	p.redirect = "" // Cancel any pending redirect

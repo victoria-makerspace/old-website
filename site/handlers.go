@@ -8,7 +8,7 @@ import (
 )
 
 type handler struct {
-	path        string
+	paths       []string
 	handle_func func(*page)
 	*template.Template
 }
@@ -25,7 +25,7 @@ var tmpl_funcmap = template.FuncMap{
 }
 
 // tmpl_name is the basename (i.e. minus the ".tmpl") of the template file
-func init_handler(path, name string, handle_func func(*page)) {
+func init_handler(name string, handle_func func(*page), paths ...string) {
 	var t *template.Template
 	// Pages serving only JSON or redirects don't require a template
 	tmpl_path := file_path("templates", name+".tmpl")
@@ -33,7 +33,7 @@ func init_handler(path, name string, handle_func func(*page)) {
 		t = template.New(name+".tmpl").Funcs(tmpl_funcmap)
 		template.Must(t.ParseFiles(tmpl_path))
 	}
-	handlers[name] = &handler{path, handle_func, t}
+	handlers[name] = &handler{paths, handle_func, t}
 }
 
 func (hs *http_server) register_handlers() {
@@ -42,7 +42,7 @@ func (hs *http_server) register_handlers() {
 			return func(w http.ResponseWriter, r *http.Request) {
 				p := hs.new_page(w, r)
 				p.Name = name
-				if strings.HasSuffix(h.path, ".json") {
+				if strings.HasSuffix(r.URL.Path, ".json") {
 					p.srv_json = true
 				}
 				p.tmpl = h.Template
@@ -62,6 +62,8 @@ if p.tmpl != nil {
 				p.write_response()
 			}
 		}(name, h)
-		hs.Handler.(*http.ServeMux).HandleFunc(h.path, f)
+		for _, path := range h.paths {
+			hs.Handler.(*http.ServeMux).HandleFunc(path, f)
+		}
 	}
 }

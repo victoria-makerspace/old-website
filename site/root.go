@@ -7,8 +7,8 @@ import (
 )
 
 func init() {
-	init_handler("/", "index", root_handler)
-	init_handler("/terms", "terms", terms_handler)
+	init_handler("index", root_handler, "/")
+	init_handler("terms", terms_handler, "/terms")
 }
 
 func root_handler(p *page) {

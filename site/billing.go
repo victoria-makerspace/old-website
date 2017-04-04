@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-	init_handler("/member/billing", "billing", billing_handler)
+	init_handler("billing", billing_handler, "/member/billing")
 }
 
 func billing_handler(p *page) {

@@ -7,12 +7,12 @@ import (
 )
 
 func init() {
-	init_handler("/sso", "sso", sso_handler)
-	init_handler("/sso/sign-out", "sign-out", sso_sign_out_handler)
-	init_handler("/sso/check-availability.json", "check-availability",
-		sso_availability_handler)
-	init_handler("/sso/reset", "reset-password", sso_reset_handler)
-	init_handler("/sso/verify-email", "verify-email", sso_verify_email_handler)
+	init_handler("sso", sso_handler, "/sso")
+	init_handler("sign-out", sso_sign_out_handler, "/sso/sign-out")
+	init_handler("check-availability", sso_availability_handler,
+		"/sso/check-availability.json")
+	init_handler("reset-password", sso_reset_handler, "/sso/reset")
+	init_handler("verify-email", sso_verify_email_handler, "/sso/verify-email")
 }
 
 func (p *page) must_authenticate() bool {

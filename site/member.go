@@ -3,9 +3,9 @@ package site
 import ()
 
 func init() {
-	init_handler("/member/dashboard", "dashboard", dashboard_handler)
-	init_handler("/member/account", "account", account_handler)
-	init_handler("/member/storage", "storage", storage_handler)
+	init_handler("dashboard", dashboard_handler, "/member/dashboard")
+	init_handler("account", account_handler, "/member/account")
+	init_handler("storage", storage_handler, "/member/storage")
 }
 
 func dashboard_handler(p *page) {

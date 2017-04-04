@@ -71,13 +71,6 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 	if m.Payment() != nil {
 		m.Membership_invoice = m.payment.Get_membership()
 	}
-	if m.Avatar_url == "" {
-		go func() {
-			if t := m.Talk_user(); t != nil {
-				m.set_avatar_url(t.Avatar_url())
-			}
-		}()
-	}
 	return m
 }
 
@@ -185,7 +178,7 @@ func (m *Member) Send_email_verification(email string) {
 	msg.set_from("Makerspace", "admin@makerspace.ca")
 	msg.add_to(m.Name, email)
 	//TODO use config.json value for domain
-	msg.body = "Hello " + m.Name + ",\n\n" +
+	msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
 		"Please verify your e-mail address (" + email + ") by visiting " +
 		"https://devel.makerspace.ca/sso/verify-email?token=" + token + "\n\n"
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
@@ -205,6 +198,7 @@ func (ms *Members) Verify_email(token string) bool {
 		m.talk.Activate()
 	}
 	m.set_email(email)
+	m.set_avatar_url(m.talk.Avatar_url())
 	//TODO: delete unverified members with this pending verification
 	if _, err := m.Exec("DELETE FROM email_verification_token "+
 		"WHERE email = $1", email); err != nil {
@@ -213,11 +207,24 @@ func (ms *Members) Verify_email(token string) bool {
 	return true
 }
 
+func (m *Member) activate_member() {
+	m.talk = m.Sync(m.Id, m.Username, m.Email, m.Name)
+	if m.talk == nil {
+		log.Panicf("Invalid talk user: (%d) %s <%s>\n", m.Id, m.Username,
+			m.Email)
+	}
+	m.talk.Activate()
+	m.set_avatar_url(m.talk.Avatar_url())
+}
+
 func (m *Member) Talk_user() *talk.Talk_user {
 	if !m.Verified_email() {
 		return nil
 	} else if m.talk == nil {
 		m.talk = m.Talk_api.Get_user(m.Id)
+		if m.talk != nil && m.Avatar_url != m.talk.Avatar_url() {
+			m.set_avatar_url(m.talk.Avatar_url())
+		}
 	}
 	return m.talk
 }

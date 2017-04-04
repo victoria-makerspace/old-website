@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	init_handler("/admin", "admin", admin_handler)
+	init_handler("admin", admin_handler, "/admin")
 }
 
 func (p *page) must_be_admin() bool {

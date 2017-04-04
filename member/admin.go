@@ -37,6 +37,7 @@ func (m *Member) set_gratuitous() {
 
 // Approve_member sets the approval flag on <m> and activates the invoice if
 //	m.Membership_invoice exists, otherwise setting the gratuitous flag.
+//BUG: approving a member with unverified e-mail will leave the member out of the "Members" talk group, requiring manual intervention
 func (a *Member) Approve_member(m *Member) {
 	if a.Admin == nil {
 		log.Panicf("%s is not an administrator\n", a.Username)
@@ -52,38 +53,16 @@ func (a *Member) Approve_member(m *Member) {
 		log.Panic(err);
 	}
 	m.Approved = true
-	m.Talk_user().Add_to_group("Members")
+	if m.Verified_email() {
+		if m.Talk_user() == nil {
+			m.activate_member()
+		}
+		m.Talk_user().Add_to_group("Members")
+	}
 	if m.Membership_invoice != nil {
 		m.Payment().Approve_pending_membership(m.Membership_invoice)
 	} else {
 		m.set_gratuitous()
 	}
-}
-
-func (ms *Members) List_pending_approvals() []*Member {
-	members := make([]*Member, 0)
-	rows, err := ms.Query(
-		"SELECT i.member "+
-		"FROM invoice i "+
-		"JOIN fee f "+
-		"ON i.fee = f.id "+
-		"WHERE f.category = 'membership'"+
-		"	AND i.start_date IS NULL"+
-		"	AND (i.end_date < now() OR i.end_date IS NULL)")
-	defer rows.Close()
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return members
-		}
-		log.Panic(err)
-	}
-	for rows.Next() {
-		var member_id int
-		if err = rows.Scan(&member_id); err != nil {
-			log.Panic(err)
-		}
-		members = append(members, ms.Get_member_by_id(member_id))
-	}
-	return members
 }
 

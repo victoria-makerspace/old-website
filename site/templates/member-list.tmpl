@@ -3,15 +3,24 @@
       <div class="col-lg-10 col-xl-8">
         <h4 class="dropdown">
           <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+{{if eq .Name "all"}}
             All
+{{else if eq .Name "active"}}
+            Active
+{{end}}
           </button>
           <div class="dropdown-menu">
-            <a class="dropdown-item" href="/member/list/approved">Approved</a>
+{{if ne .Name "all"}}
+            <a class="dropdown-item" href="/member/list">All</a>
+{{end}}
+{{if ne .Name "active"}}
+            <a class="dropdown-item" href="/member/list/active">Active</a>
+{{end}}
           </div>
           Members
         </h4>
-{{with .Get_all_members}}
-        <span class="text-muted">{{len .}} members</span>
+{{with .Data.member_list}}
+        <span class="text-muted">{{len .}} {{if ne $.Name "all"}}{{$.Name}} {{end}}members</span>
         <table class="table table-hover text-nowrap member-list">
           <thead>
             <tr>
@@ -47,7 +56,9 @@
 {{else}}
         <table class="table">
           <tbody>
-            <tr><td><em class="text-muted">No members.</em></td></tr>
+            <tr><td>
+              <em class="text-muted">No {{if ne .Name "all"}}{{.Name}} {{end}}members.</em>
+            </td></tr>
           </tbody>
         </table>
 {{end}}

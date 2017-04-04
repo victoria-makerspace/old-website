@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-	init_handler("/join", "join", join_handler)
+	init_handler("join", join_handler, "/join")
 }
 
 func join_handler(p *page) {

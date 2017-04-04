@@ -177,6 +177,7 @@ func (ms *Members) Get_member_from_reset_token(token string) *Member {
 }
 
 func (ms *Members) get_member_from_verification_token(token string) (m *Member, email string) {
+	log.Println(token)
 	var member_id int
 	var t time.Time
 	if err := ms.QueryRow(
@@ -222,8 +223,13 @@ func (ms *Members) get_members(query string) []*Member {
 	return members
 }
 
+// Grabs all e-mail-verified members
 func (ms *Members) Get_all_members() []*Member {
-	return ms.get_members("SELECT id FROM member m ORDER BY username ASC")
+	return ms.get_members(
+		"SELECT id "+
+		"FROM member m "+
+		"WHERE email IS NOT NULL "+
+		"ORDER BY username ASC")
 }
 
 func (ms *Members) Get_all_approved_members() []*Member {
@@ -234,7 +240,7 @@ func (ms *Members) Get_all_approved_members() []*Member {
 		"ORDER BY username ASC")
 }
 
-func (ms *Members) Get_all_pending_approval_members() []*Member {
+func (ms *Members) Get_all_pending_members() []*Member {
 	return ms.get_members(
 		"SELECT i.member "+
 		"FROM invoice i "+
