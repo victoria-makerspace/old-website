@@ -12,18 +12,32 @@
         </h4>
 {{with .Get_all_members}}
         <span class="text-muted">{{len .}} members</span>
-        <table class="table table-hover text-nowrap">
+        <table class="table table-hover text-nowrap member-list">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Registered</th>
+            </tr>
+          </thead>
           <tbody>
   {{range .}}
             <tr{{if $.Session}}{{if eq .Id $.Member.Id}} class="table-info"{{end}}{{end}}>
               <td>
-                <a href="/member/{{.Id}}">
-    {{with .Talk_user}}
-                  <img src="{{.Avatar_url 120}}" class="rounded-circle">
-    {{end}}
-                  @{{.Username}}
+                <a href="/member/{{.Id}}" class="member-icon">
+                  {{with .Avatar_url}}
+                  <img src="{{.}}">
+                  {{else}}
+                  <div class="glyphicons glyphicons-user"></div>
+                  {{end}}
                 </a>
-                {{if $.Session}}{{.Name}}{{end}}
+                <div class="flex-column mx-2">
+                  <a href="/member/{{.Id}}" class="d-block">
+                    @{{.Username}}
+                  </a>
+    {{if $.Session}}
+                  <span class="small">{{.Name}}</span>
+    {{end}}
+                </div>
               </td>
               <td>{{.Registered.Format "Jan 02, 2006"}}</td>
             </tr>

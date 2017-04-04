@@ -10,8 +10,11 @@ import (
 )
 
 func (api *Talk_api) Check_username(username string) (available bool, err string) {
-	j := api.get_json("/users/check_username.json", false,
-		"username="+url.QueryEscape(username))
+	j, e := api.get_json("/users/check_username.json?username="+
+		url.QueryEscape(username), false)
+	if e != nil {
+		return false, "Server error"
+	}
 	if j, ok := j.(map[string]interface{}); ok {
 		if errors, ok := j["errors"]; ok {
 			return false, "Username " + errors.([]interface{})[0].(string)
@@ -21,11 +24,11 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 		} else if _, ok := j["available"]; ok {
 			return true, ""
 		}
-		// Unanticipated json response
+		// Unanticipated JSON response
 		log.Printf("Talk server rejected username '%s': %q\n", username, j)
 		return false, "Username not available"
 	}
-	log.Panic("Talk server parsing error during Check_username: j")
+	log.Panicf("Talk server parsing error during Check_username: %s\n", username)
 	return
 }
 
@@ -36,7 +39,6 @@ type Talk_user struct {
 	avatar_url     []byte
 	Card_bg_url    string
 	Profile_bg_url string
-	notifications  []interface{}
 	*Talk_api
 }
 
@@ -55,7 +57,8 @@ func (api *Talk_api) parse_user(external_id int, u map[string]interface{}) *Talk
 }
 
 func (api *Talk_api) Get_user(external_id int) *Talk_user {
-	j := api.get_json("/users/by-external/"+fmt.Sprint(external_id)+".json", true, api.admin)
+	j, _ := api.get_json("/users/by-external/"+fmt.Sprint(external_id)+".json",
+		true)
 	if j, ok := j.(map[string]interface{}); ok {
 		if u, ok := j["user"].(map[string]interface{}); ok {
 			return api.parse_user(external_id, u)
@@ -64,18 +67,10 @@ func (api *Talk_api) Get_user(external_id int) *Talk_user {
 	return nil
 }
 
-/*
-func (t *Talk_user) Send_activation_email() {
-	values := url.Values{}
-	values.Set("username", t.Username)
-	t.post_json("/users/action/send_activation_email", values)
-}*/
-
 var avatar_size_rexp = regexp.MustCompile("{size}")
 
-func (t *Talk_user) Avatar_url(size int) string {
-	return t.Base_url + string(avatar_size_rexp.ReplaceAll(t.avatar_url,
-		[]byte(fmt.Sprint(size))))
+func (t *Talk_user) Avatar_url() string {
+	return string(avatar_size_rexp.ReplaceAll(t.avatar_url, []byte("120")))
 }
 
 //TODO: grab external_id from posters
@@ -95,7 +90,7 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 	msgs := make([]*Message, 0)
 	usernames := make(map[int]string)
 	avatars := make(map[int]string)
-	j := t.get_json("/topics/private-messages/"+t.Username+".json", true)
+	j, _ := t.get_json("/topics/private-messages/"+t.Username+".json", true)
 	if j, ok := j.(map[string]interface{}); ok {
 		if u, ok := j["users"].([]interface{}); ok {
 			for _, v := range u {
@@ -193,17 +188,3 @@ func (t *Talk_user) Activate() {
 	t.put_json("/admin/users/" + fmt.Sprint(t.id) + "/activate", url.Values{})
 }
 
-/*
-func (t *Talk_user) Notifications() []interface{} {
-	if t.notifications != nil {
-		return t.notifications
-	}
-	j := t.get_json("/notifications.json", true, t.Username)
-	//TODO: check errors and parse further
-	if n, ok := j.(map[string]interface{}); ok {
-		if n, ok := n["notifications"].([]interface{}); ok {
-			return n
-		}
-	}
-	return nil
-}*/

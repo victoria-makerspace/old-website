@@ -3,6 +3,7 @@ package talk
 import (
 	"strings"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -30,38 +31,39 @@ func (api *Talk_api) Url() string {
 }
 
 // First argument of query is the api_username
-func (api *Talk_api) get_json(path string, use_key bool, query ...string) interface{} {
-	var data interface{}
-	//TODO: perhaps parse as url.URL first in case parameters have already been
-	//	added.
-	url := api.Url() + path + "?"
+func (api *Talk_api) get_json(path string, use_key bool) (interface{}, error) {
+	rel_path, err := url.Parse(path)
+	if err != nil {
+		log.Panicf("get_json input error: path = '%s'\n", path)
+	}
+	URL := api.Url() + rel_path.EscapedPath()
+	query := rel_path.Query()
 	if use_key {
-		url += "api_key=" + api.api_key + "&api_username="
-		if len(query) == 0 {
-			url += api.admin
-		} else {
-			url += query[0]
-			for _, q := range query[1:] {
-				url += "&" + q
-			}
-		}
-	} else if len(query) > 0 {
-		url += query[0]
-		for _, q := range query[1:] {
-			url += "&" + q
+		query.Set("api_key", api.api_key)
+		if query.Get("api_username") == "" {
+			query.Set("api_username", api.admin)
 		}
 	}
-	rsp, err := http.Get(url)
+	encoded := query.Encode()
+	if encoded != "" {
+		URL += "?" + encoded
+	}
+	rsp, err := http.Get(URL)
 	if err != nil {
-		log.Printf("Talk access error (GET %s):\n\t%q\n", path, err)
-		return nil
+		return nil, fmt.Errorf("Talk HTTP protocol error (GET %s):\n\t%q\n",
+			path, err)
 	}
 	defer rsp.Body.Close()
-	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
-		log.Printf("Talk JSON decoding error (GET %s):\n\t%q\n", path, err)
-		return nil
+	if rsp.StatusCode != 200 {
+		return nil, fmt.Errorf("Talk HTTP %d error (GET %s):\n\t%q\n",
+			rsp.StatusCode, path, err)
 	}
-	return data
+	var data interface{}
+	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
+		return nil, fmt.Errorf("Talk JSON decoding error (GET %s):\n\t%q\n",
+			path, err)
+	}
+	return data, nil
 }
 
 //TODO: get rid of all the redundancy, just have a do_form and get_json
@@ -155,14 +157,16 @@ func (api *Talk_api) Message_member(title, message string, users ...*Talk_user) 
 
 // Discourse groups as groups[name] == id
 func (api *Talk_api) Groups() map[string]int {
-	groups := make(map[string]int)
-	if j, ok := api.get_json("/admin/groups.json", true).([]interface{}); ok {
-		for _, group := range j {
-			if g, ok := group.(map[string]interface{}); ok {
-				groups[g["name"].(string)] = int(g["id"].(float64))
+	if data, err := api.get_json("/admin/groups.json", true); err != nil {
+		if j, ok := data.([]interface{}); ok {
+			groups := make(map[string]int)
+			for _, group := range j {
+				if g, ok := group.(map[string]interface{}); ok {
+					groups[g["name"].(string)] = int(g["id"].(float64))
+				}
 			}
+			return groups
 		}
-		return groups
 	}
 	return nil
 }

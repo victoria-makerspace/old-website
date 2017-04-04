@@ -14,6 +14,7 @@ type Member struct {
 	Username        string
 	Name            string
 	Email           string
+	Avatar_url		string
 	Telephone       string
 	Agreed_to_terms bool
 	Registered      time.Time
@@ -33,39 +34,49 @@ type Member struct {
 //TODO: check corporate account
 func (ms *Members) Get_member_by_id(id int) *Member {
 	m := &Member{Id: id, Members: ms}
-	var email, password_key, password_salt sql.NullString
+	var email, password_key, password_salt, avatar_url sql.NullString
 	var approved_at pq.NullTime
 	if err := m.QueryRow(
 		"SELECT"+
-			"	username, "+
-			"	name, "+
-			"	password_key, "+
-			"	password_salt, "+
-			"	email, "+
-			"	agreed_to_terms, "+
-			"	registered, "+
-			"	gratuitous, "+
+			"	username,"+
+			"	name,"+
+			"	password_key,"+
+			"	password_salt,"+
+			"	email,"+
+			"	avatar_url,"+
+			"	agreed_to_terms,"+
+			"	registered,"+
+			"	gratuitous,"+
 			"	approved_at "+
 			"FROM member "+
 			"WHERE id = $1",
 		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &email,
-		&m.Agreed_to_terms, &m.Registered, &m.Gratuitous, &approved_at);
+		&avatar_url, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous,
+		&approved_at);
 		err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
 		log.Panic(err)
 	}
+	m.password_key = password_key.String
+	m.password_salt = password_salt.String
 	m.Email = email.String
+	m.Avatar_url = avatar_url.String
 	if approved_at.Valid {
 		m.Approved = true
 	}
-	m.password_key = password_key.String
-	m.password_salt = password_salt.String
 	m.get_student()
 	m.get_admin()
 	if m.Payment() != nil {
 		m.Membership_invoice = m.payment.Get_membership()
+	}
+	if m.Avatar_url == "" {
+		go func() {
+			if t := m.Talk_user(); t != nil {
+				m.set_avatar_url(t.Avatar_url())
+			}
+		}()
 	}
 	return m
 }
@@ -127,6 +138,15 @@ func (m *Member) set_email(email string) {
 	if _, err := m.Exec("UPDATE member "+
 		"SET email = $1 "+
 		"WHERE id = $2", email, m.Id); err != nil {
+		log.Panic(err)
+	}
+}
+
+func (m *Member) set_avatar_url(avatar_url string) {
+	m.Avatar_url = avatar_url
+	if _, err := m.Exec("UPDATE member "+
+		"SET avatar_url = $1 "+
+		"WHERE id = $2", avatar_url, m.Id); err != nil {
 		log.Panic(err)
 	}
 }

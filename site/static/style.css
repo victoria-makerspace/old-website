@@ -96,33 +96,43 @@ button.nav-link {
 #ms-menu.collapse.show {
     display: flex !important;
 }
-#member-icon {
+.member-icon {
+    position: relative;
     height: 3rem;
     width: 3rem;
     padding: 0.25rem;
     display: block !important;
+    line-height: 2rem;
+}
+.member-icon img {
+    width: 100%;
+    border-radius: 50%;
+}
+.member-icon .glyphicons {
+    height: 100%;
+    border-radius: 50%;
+    background-color: rgba(0,0,0,0.5);
+    color: #fff;
+    text-align: center;
+    font-size: 2.5rem;
+}
+.member-icon .glyphicons::before {
+    position: absolute;
+    left: 0.2rem;
+    bottom: 2px;
+}
+.member-list td:first-child {
+    display: flex;
+}
+.member-list th:last-child {
+    width: 1%;
+}
+.navbar .member-icon {
     position: absolute;
     top: 0;
     right: 0;
     border: 0;
     border-radius: 0.25rem 0.25rem 0 0;
-}
-#member-icon img {
-    width: 100%;
-    border-radius: 50%;
-}
-#member-icon div {
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    color: #fff;
-    border-radius: 50%;
-    text-align: center;
-    font-size: 2.5rem;
-}
-#member-icon div::before {
-    position: absolute;
-    left: 0.2rem;
-    bottom: 2px;
 }
 #ms-menu {
     position: absolute;
