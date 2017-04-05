@@ -37,14 +37,23 @@ func init() {
 	if err != nil {
 		log.Fatal("Config file error: ", err)
 	}
+	tls := config.Site["tls"].(bool)
+	url := config.Site["domain"].(string)
+	if tls {
+		url = "https://" + url
+	} else {
+		url = "http://" + url
+	}
+	config.Members["url"] = url
+	config.Talk["url"] = url + config.Talk["path"]
 }
 
 func main() {
 	db := Database(config.Database)
 	bs := config.Beanstream
-	talk := talk.New_talk_api(config.Talk)
 	b := billing.Billing_new(bs["merchant-id"], bs["payments-api-key"],
 		bs["profiles-api-key"], bs["reports-api-key"], db)
+	talk := talk.New_talk_api(config.Talk)
 	members := &member.Members{config.Members, db, talk, b}
 	site.Serve(config.Site, talk, members, db)
 }

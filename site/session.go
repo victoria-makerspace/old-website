@@ -17,7 +17,7 @@ func (p *page) set_session_cookie(value string, expires bool) {
 		Value:  value,
 		Path:   "/",
 		Domain: p.config["domain"].(string),
-		/* Secure: true, */
+		Secure: p.config["tls"].(bool),
 		HttpOnly: true}
 	// If not set to expire, set expiry date for a year from now.
 	if !expires {

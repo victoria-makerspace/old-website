@@ -37,8 +37,7 @@ func Serve(config map[string]interface{}, talk *talk.Talk_api,
 		db:       db,
 		Talk_api: talk,
 		Members:  members}
-	hs.Addr = config["domain"].(string) + ":" +
-		fmt.Sprint(int(config["port"].(float64)))
+	hs.Addr = ":" + fmt.Sprint(int(config["port"].(float64)))
 	hs.Handler = http.NewServeMux()
 	hs.header_tmpl = template.Must(template.ParseFiles(file_path("templates",
 		"header.tmpl")))

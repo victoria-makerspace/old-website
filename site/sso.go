@@ -70,7 +70,7 @@ func sso_handler(p *page) {
 	if req_payload != nil {
 		return_path = req_payload.Get("return_sso_url")
 		if return_path == "" {
-			return_path = p.Talk_api.Url() + "/session/sso_login"
+			return_path = p.Talk_api.Path + "/session/sso_login"
 		}
 		values := url.Values{}
 		values.Set("external_id", fmt.Sprint(p.Member.Id))

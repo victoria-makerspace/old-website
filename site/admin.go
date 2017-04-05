@@ -6,6 +6,7 @@ import (
 
 func init() {
 	init_handler("admin", admin_handler, "/admin")
+	init_handler("admin-upload", member_upload_handler, "/admin/upload")
 }
 
 func (p *page) must_be_admin() bool {
@@ -39,4 +40,16 @@ func admin_handler(p *page) {
 	} else if p.PostFormValue("decline_membership") != "" {
 
 	}
+}
+
+func member_upload_handler(p *page) {
+	if p.Request.Method != "POST" {
+		p.http_error(400)
+		return
+	}
+	if !p.must_be_admin() {
+		return
+	}
+	p.redirect = "/admin"
+	println(p.PostFormValue("members"))
 }

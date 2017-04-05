@@ -34,12 +34,18 @@
 {{else}}
               <tr>
                 <td colspan="5">
-                  <em class="text-muted">No pending membership approvals.</em>
+                  <em class="text-muted">No pending memberships.</em>
                 </td>
               </tr>
 {{end}}
             </tbody>
           </table>
+        </form>
+        <h4>Upload Members</h4>
+        <form action="/admin/upload" method="post">
+          <strong>CSV Format:</strong> Username, Name, E-mail <span class="text-muted">{, Registration date}</span>
+          <textarea name="members" class="form-group form-control" rows="5"></textarea>
+          <button type="submit" class="btn btn-primary">Submit</button>
         </form>
       </div>
     </div>

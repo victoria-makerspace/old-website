@@ -18,17 +18,18 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 	if j, ok := j.(map[string]interface{}); ok {
 		if errors, ok := j["errors"]; ok {
 			return false, "Username " + errors.([]interface{})[0].(string)
-			// Even if talk gives available = false, (e.g. for staged users), sso
-			//	automatically merges the talk user instance with the newly-created
-			//	local one
 		} else if _, ok := j["available"]; ok {
+			// Even if talk gives available = false, (e.g. for staged users),
+			//	sso automatically merges the talk user instance with the
+			//	newly-created local one, hence we still return 'true'
 			return true, ""
 		}
 		// Unanticipated JSON response
 		log.Printf("Talk server rejected username '%s': %q\n", username, j)
 		return false, "Username not available"
 	}
-	log.Panicf("Talk server parsing error during Check_username: %s\n", username)
+	log.Panicf("Talk server parsing error during Check_username: %s\n",
+		username)
 	return
 }
 
@@ -48,10 +49,10 @@ func (api *Talk_api) parse_user(external_id int, u map[string]interface{}) *Talk
 	t.Username = u["username"].(string)
 	t.avatar_url = []byte(u["avatar_template"].(string))
 	if card, ok := u["card_background"].(string); ok {
-		t.Card_bg_url = api.Base_url + card
+		t.Card_bg_url = card
 	}
 	if profile, ok := u["profile_background"].(string); ok {
-		t.Profile_bg_url = api.Base_url + profile
+		t.Profile_bg_url = profile
 	}
 	return t
 }
@@ -97,7 +98,7 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 				user := v.(map[string]interface{})
 				id := int(user["id"].(float64))
 				usernames[id] = user["username"].(string)
-				avatars[id] = t.Base_url + string(avatar_size_rexp.ReplaceAll(
+				avatars[id] = string(avatar_size_rexp.ReplaceAll(
 					[]byte(user["avatar_template"].(string)), []byte("120")))
 			}
 		}
@@ -109,7 +110,7 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 					topic := v.(map[string]interface{})
 					id := int(topic["id"].(float64))
 					slug := topic["slug"].(string)
-					msg.Url = t.Url() + "/t/" + slug + "/" + fmt.Sprint(id)
+					msg.Url = t.Path + "/t/" + slug + "/" + fmt.Sprint(id)
 					msg.Title = topic["title"].(string)
 					msg.Reply_count = int(topic["posts_count"].(float64)) - 1
 					msg.First_post, _ = time.ParseInLocation(
@@ -120,7 +121,8 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 						topic["last_posted_at"].(string), time.Local)
 					if topic["unseen"].(bool) == true {
 						msg.Read = false
-					} else if l := topic["highest_post_number"].(float64); l != 0 {
+					} else if l := topic["highest_post_number"].(float64);
+						l != 0 {
 						msg.Url += "/" + fmt.Sprint(int(l))
 					}
 					msg.Last_poster = topic["last_poster_username"].(string)
@@ -185,6 +187,5 @@ func (t *Talk_user) Remove_from_group(group string) {
 }
 
 func (t *Talk_user) Activate() {
-	t.put_json("/admin/users/" + fmt.Sprint(t.id) + "/activate", url.Values{})
+	t.put_json("/admin/users/"+fmt.Sprint(t.id)+"/activate", url.Values{})
 }
-

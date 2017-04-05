@@ -1,17 +1,17 @@
 package talk
 
 import (
-	"strings"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type Talk_api struct {
-	Base_url   string
 	Path       string
+	Url        string
 	admin      string
 	api_key    string
 	sso_secret string
@@ -19,15 +19,11 @@ type Talk_api struct {
 
 func New_talk_api(config map[string]string) *Talk_api {
 	return &Talk_api{
-		Base_url:   config["base-url"],
 		Path:       config["path"],
+		Url:        config["url"],
 		admin:      config["admin"],
 		api_key:    config["api-key"],
 		sso_secret: config["sso-secret"]}
-}
-
-func (api *Talk_api) Url() string {
-	return api.Base_url + api.Path
 }
 
 // First argument of query is the api_username
@@ -36,7 +32,7 @@ func (api *Talk_api) get_json(path string, use_key bool) (interface{}, error) {
 	if err != nil {
 		log.Panicf("get_json input error: path = '%s'\n", path)
 	}
-	URL := api.Url() + rel_path.EscapedPath()
+	URL := api.Url + rel_path.EscapedPath()
 	query := rel_path.Query()
 	if use_key {
 		query.Set("api_key", api.api_key)
@@ -70,7 +66,7 @@ func (api *Talk_api) get_json(path string, use_key bool) (interface{}, error) {
 func (api *Talk_api) do_form(method, path string, form url.Values) interface{} {
 	form.Set("api_key", api.api_key)
 	form.Set("api_username", api.admin)
-	req, err := http.NewRequest(method, api.Url() + path,
+	req, err := http.NewRequest(method, api.Url+path,
 		strings.NewReader(form.Encode()))
 	if err != nil {
 		log.Panic(err)
@@ -96,7 +92,7 @@ func (api *Talk_api) do_form(method, path string, form url.Values) interface{} {
 func (api *Talk_api) put_json(path string, form url.Values) interface{} {
 	form.Set("api_key", api.api_key)
 	form.Set("api_username", api.admin)
-	req, err := http.NewRequest("PUT", api.Url() + path,
+	req, err := http.NewRequest("PUT", api.Url+path,
 		strings.NewReader(form.Encode()))
 	if err != nil {
 		log.Panic(err)
@@ -127,7 +123,7 @@ func (api *Talk_api) post_json(path string, form url.Values) interface{} {
 	if _, ok := form["api_username"]; !ok {
 		form.Set("api_username", api.admin)
 	}
-	rsp, err := http.PostForm(api.Url()+path, form)
+	rsp, err := http.PostForm(api.Url+path, form)
 	if err != nil {
 		log.Printf("Talk error (POST %s):\n\t%q\n", path, err)
 		return nil

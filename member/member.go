@@ -159,9 +159,11 @@ func (m *Member) Send_password_reset() {
 	msg.set_from("Makerspace", "admin@makerspace.ca")
 	msg.add_to(m.Name, m.Email)
 	//TODO use config.json value for domain
-	msg.body = "Hello " + m.Name + ",\n\n" +
-		"Please reset your makerspace password by visiting " +
-		"https://devel.makerspace.ca/sso/reset?token=" + token + "\n\n"
+	msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
+		"A password reset has been requested for your account.  " +
+		"If you did not initiate this request, please ignore this e-mail.\n\n" +
+		"Reset your makerspace password by visiting " +
+		m.Config["url"].(string) + "/sso/reset?token=" + token + "\n\n"
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
@@ -180,7 +182,7 @@ func (m *Member) Send_email_verification(email string) {
 	//TODO use config.json value for domain
 	msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
 		"Please verify your e-mail address (" + email + ") by visiting " +
-		"https://devel.makerspace.ca/sso/verify-email?token=" + token + "\n\n"
+		m.Config["url"].(string) + "/sso/verify-email?token=" + token + "\n\n"
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
