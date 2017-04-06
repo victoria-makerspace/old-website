@@ -58,5 +58,8 @@ func (api *Talk_api) Encode_sso_rsp(q url.Values) (payload, sig string) {
 }
 
 func (t *Talk_user) Logout() {
-	t.post_json("/admin/users/"+fmt.Sprint(t.id)+"/log_out", nil)
+	if _, err := t.do_form("POST", "/admin/users/"+fmt.Sprint(t.id)+"/log_out",
+		nil); err != nil {
+		//TODO: propagate errors
+	}
 }

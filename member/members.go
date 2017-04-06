@@ -238,6 +238,14 @@ func (ms *Members) Get_all_approved_members() []*Member {
 		"ORDER BY username ASC")
 }
 
+func (ms *Members) Get_all_unapproved_members() []*Member {
+	return ms.get_members(
+		"SELECT id "+
+		"FROM member m "+
+		"WHERE approved_at IS NULL "+
+		"ORDER BY username ASC")
+}
+
 func (ms *Members) Get_all_pending_members() []*Member {
 	return ms.get_members(
 		"SELECT i.member "+
@@ -250,3 +258,10 @@ func (ms *Members) Get_all_pending_members() []*Member {
 		"ORDER BY i.created DESC")
 }
 
+func (ms *Members) Get_all_unverified_members() []*Member {
+	return ms.get_members(
+		"SELECT id "+
+		"FROM member m "+
+		"WHERE email IS NULL "+
+		"ORDER BY username ASC")
+}

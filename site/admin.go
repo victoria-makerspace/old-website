@@ -2,10 +2,10 @@ package site
 
 import (
 	"fmt"
+	"github.com/vvanpo/makerspace/member"
 	"strconv"
 	"strings"
 	"time"
-	"github.com/vvanpo/makerspace/member"
 )
 
 func init() {
@@ -33,15 +33,32 @@ func admin_handler(p *page) {
 			p.http_error(400)
 			return
 		}
-		if member := p.Get_member_by_id(member_id); member != nil && !member.Approved {
+		if member := p.Get_member_by_id(member_id); member == nil {
+			p.http_error(400)
+		} else if !member.Approved {
 			p.Member.Approve_member(member)
 			p.Data["Member_approved"] = member
 		} else {
+			p.http_error(500)
+		}
+		return
+	} else if p.PostFormValue("decline-membership") != "" {
+		member_id, err := strconv.Atoi(p.PostFormValue("decline-membership"))
+		if err != nil {
 			p.http_error(400)
 			return
 		}
-	} else if p.PostFormValue("decline-membership") != "" {
-
+		member := p.Get_member_by_id(member_id)
+		if member == nil {
+			p.http_error(400)
+			return
+		}
+		if member.Talk_user() != nil {
+			p.Message_member("Your membership was declined",
+				"Your membership request was declined by @"+p.Member.Username+
+				".", member.Talk_user(), p.Member.Talk_user())
+		}
+		member.Cancel_membership()
 	} else if p.PostFormValue("member-upload") != "" {
 		member_upload_handler(p)
 	}
@@ -52,12 +69,12 @@ func member_upload_handler(p *page) {
 		p.http_error(400)
 		return
 	}
-	type new_member struct{
-		line int
+	type new_member struct {
+		line                  int
 		username, name, email string
-		date time.Time
-		free bool
-		verified bool
+		date                  time.Time
+		free                  bool
+		verified              bool
 	}
 	new_members := make([]new_member, 0)
 	lines := strings.Split(p.PostFormValue("member-upload"), "\n")
@@ -74,10 +91,10 @@ func member_upload_handler(p *page) {
 			continue
 		}
 		nm := new_member{
-			line: i,
+			line:     i,
 			username: strings.TrimSpace(fields[0]),
-			name: strings.TrimSpace(fields[1]),
-			email: strings.TrimSpace(fields[2])}
+			name:     strings.TrimSpace(fields[1]),
+			email:    strings.TrimSpace(fields[2])}
 		for j, field := range fields[3:] {
 			field := strings.TrimSpace(field)
 			if field == "free" {
@@ -101,7 +118,7 @@ func member_upload_handler(p *page) {
 			for _, v := range err {
 				line_error[nm.line] = append(line_error[nm.line], v)
 			}
-			continue;
+			continue
 		}
 		if !nm.date.IsZero() {
 			m.Set_registration_date(nm.date)

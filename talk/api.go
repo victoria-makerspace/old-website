@@ -123,30 +123,6 @@ func (api *Talk_api) put_json(path string, form url.Values) interface{} {
 	return data
 }
 
-func (api *Talk_api) post_json(path string, form url.Values) interface{} {
-	var data interface{}
-	if form == nil {
-		form = url.Values{}
-	}
-	form.Set("api_key", api.api_key)
-	if _, ok := form["api_username"]; !ok {
-		form.Set("api_username", api.admin)
-	}
-	rsp, err := http.PostForm(api.Url+path, form)
-	if err != nil {
-		log.Printf("Talk error (POST %s):\n\t%q\n", path, err)
-		return nil
-	}
-	defer rsp.Body.Close()
-	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
-		if err.Error() != "EOF" {
-			log.Printf("Talk JSON decoding error (POST %s):\n\t%q\n", path, err)
-		}
-		return nil
-	}
-	return data
-}
-
 func (api *Talk_api) Message_member(title, message string, users ...*Talk_user) {
 	values := url.Values{}
 	values.Set("title", title)
@@ -157,7 +133,9 @@ func (api *Talk_api) Message_member(title, message string, users ...*Talk_user) 
 		usernames += "," + u.Username
 	}
 	values.Set("target_usernames", usernames)
-	api.post_json("/post", values)
+	if _, err := api.do_form("POST", "/posts.json", values); err != nil {
+		//TODO: propagate errors
+	}
 }
 
 // Discourse groups as groups[name] == id

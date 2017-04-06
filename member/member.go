@@ -148,6 +148,15 @@ func (m *Member) set_email(email string) {
 	}
 }
 
+func (m *Member) set_gratuitous(free bool) {
+	m.Gratuitous = free
+	if _, err := m.Exec("UPDATE member "+
+		"SET gratuitous = $1 "+
+		"WHERE id = $2", free, m.Id); err != nil {
+		log.Panic(err)
+	}
+}
+
 func (m *Member) set_avatar_url(avatar_url string) {
 	m.Avatar_url = avatar_url
 	if _, err := m.Exec("UPDATE member "+
@@ -256,6 +265,11 @@ func (m *Member) New_membership_invoice() {
 		m.payment = m.New_profile(m.Id)
 	}
 	m.Membership_invoice = m.payment.New_pending_membership(m.Student != nil)
+	//TODO: propagate errors
+	if m.Membership_invoice != nil && m.Approved {
+		m.payment.Approve_pending_membership(m.Membership_invoice)
+		m.set_gratuitous(false)
+	}
 }
 
 func (m *Member) Cancel_membership() {

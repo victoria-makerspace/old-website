@@ -1,15 +1,15 @@
 package site
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"html/template"
 	"log"
 	"net/http"
-	"html/template"
 )
 
 type page struct {
-	Name string
+	Name  string
 	Title string
 	Data  map[string]interface{} // Data to be passed to templates or JSON
 	// HTTP status code
@@ -42,6 +42,7 @@ func (hs *http_server) new_page(w http.ResponseWriter, r *http.Request) *page {
 // 	Careful to scrub output of extraneous p.Data values, if srv_json is set
 func (p *page) http_error(code int) {
 	p.tmpl = p.http_server.error_tmpl
+	p.Name = "error"
 	p.Title = fmt.Sprint(code)
 	p.Status = code
 	p.Data["error"] = http.StatusText(code)

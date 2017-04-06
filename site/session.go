@@ -13,11 +13,11 @@ import (
 
 func (p *page) set_session_cookie(value string, expires bool) {
 	cookie := &http.Cookie{
-		Name:   "session",
-		Value:  value,
-		Path:   "/",
-		Domain: p.config["domain"].(string),
-		Secure: p.config["tls"].(bool),
+		Name:     "session",
+		Value:    value,
+		Path:     "/",
+		Domain:   p.config["domain"].(string),
+		Secure:   p.config["tls"].(bool),
 		HttpOnly: true}
 	// If not set to expire, set expiry date for a year from now.
 	if !expires {

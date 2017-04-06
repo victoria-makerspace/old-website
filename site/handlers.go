@@ -3,8 +3,8 @@ package site
 import (
 	"html/template"
 	"net/http"
-	"strings"
 	"os"
+	"strings"
 )
 
 type handler struct {
@@ -30,7 +30,7 @@ func init_handler(name string, handle_func func(*page), paths ...string) {
 	// Pages serving only JSON or redirects don't require a template
 	tmpl_path := file_path("templates", name+".tmpl")
 	if fi, _ := os.Stat(tmpl_path); fi != nil && fi.Mode().IsRegular() {
-		t = template.New(name+".tmpl").Funcs(tmpl_funcmap)
+		t = template.New(name + ".tmpl").Funcs(tmpl_funcmap)
 		template.Must(t.ParseFiles(tmpl_path))
 	}
 	handlers[name] = &handler{paths, handle_func, t}
@@ -46,12 +46,12 @@ func (hs *http_server) register_handlers() {
 					p.srv_json = true
 				}
 				p.tmpl = h.Template
-///TODO: remove after testing ////////////////////////
-if p.tmpl != nil {
-	p.tmpl = template.New(name+".tmpl").Funcs(tmpl_funcmap)
-	template.Must(p.tmpl.ParseFiles(file_path("templates", name+".tmpl")))
-}
-/////////////////////////////////////////////////////
+				///TODO: remove after testing ////////////////////////
+				if p.tmpl != nil {
+					p.tmpl = template.New(name + ".tmpl").Funcs(tmpl_funcmap)
+					template.Must(p.tmpl.ParseFiles(file_path("templates", name+".tmpl")))
+				}
+				/////////////////////////////////////////////////////
 				p.ParseForm()
 				// Don't authenticate on static requests
 				if name != "index" {

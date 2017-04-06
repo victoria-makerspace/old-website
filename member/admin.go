@@ -25,16 +25,6 @@ func (m *Member) get_admin() {
 	m.Admin = &Admin{privileges}
 }
 
-func (m *Member) set_gratuitous() {
-	m.Gratuitous = true
-	if _, err := m.Exec(
-		"UPDATE member "+
-		"SET gratuitous = 't' "+
-		"WHERE id = $1", m.Id); err != nil {
-		log.Panic(err)
-	}
-}
-
 // Approve_member sets the approval flag on <m> and activates the invoice if
 //	m.Membership_invoice exists, otherwise setting the gratuitous flag.
 //BUG: approving a member with unverified e-mail will leave the member out of the "Members" talk group, requiring manual intervention
@@ -59,7 +49,7 @@ func (a *Member) Approve_member(m *Member) {
 	if m.Membership_invoice != nil {
 		m.Payment().Approve_pending_membership(m.Membership_invoice)
 	} else {
-		m.set_gratuitous()
+		m.set_gratuitous(true)
 	}
 }
 

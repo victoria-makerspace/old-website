@@ -3,8 +3,8 @@ package site
 import (
 	"fmt"
 	"github.com/vvanpo/makerspace/member"
-	"net/url"
 	"log"
+	"net/url"
 )
 
 func init() {
@@ -186,8 +186,7 @@ func sso_verify_email_handler(p *page) {
 		delete(p.Data, "email")
 		p.Data["email_error"] = "E-mail address already verified"
 		return
-	} else if available, err := p.Check_email_availability(p.PostFormValue("email"));
-		!available {
+	} else if available, err := p.Check_email_availability(p.PostFormValue("email")); !available {
 		delete(p.Data, "email")
 		p.Data["email_error"] = err
 		return

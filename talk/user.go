@@ -54,10 +54,10 @@ func (api *Talk_api) parse_user(external_id int, u map[string]interface{}) *Talk
 	t.id = int(u["id"].(float64))
 	t.Username = u["username"].(string)
 	t.Admin = u["admin"].(bool)
-	t.Title = u["title"].(string)
-	t.Website_url = u["website"].(string)
-	t.Website_name = u["website_name"].(string)
-	t.Location = u["location"].(string)
+	t.Title, _ = u["title"].(string)
+	t.Website_url, _ = u["website"].(string)
+	t.Website_name, _ = u["website_name"].(string)
+	t.Location, _ = u["location"].(string)
 	t.avatar_url = []byte(u["avatar_template"].(string))
 	if card, ok := u["card_background"].(string); ok {
 		t.Card_bg_url = card
@@ -132,8 +132,7 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 						topic["last_posted_at"].(string), time.Local)
 					if topic["unseen"].(bool) == true {
 						msg.Read = false
-					} else if l := topic["highest_post_number"].(float64);
-						l != 0 {
+					} else if l := topic["highest_post_number"].(float64); l != 0 {
 						msg.Url += "/" + fmt.Sprint(int(l))
 					}
 					msg.Last_poster = topic["last_poster_username"].(string)
@@ -166,16 +165,19 @@ func (t *Talk_user) Add_to_group(group string) {
 	}
 	form := url.Values{}
 	form.Add("user_ids", fmt.Sprint(t.id))
-	data := t.put_json("/groups/"+fmt.Sprint(t.Groups()[group])+"/members",
-		form)
+	data, err := t.do_form("PUT", "/groups/"+fmt.Sprint(t.Groups()[group])+
+		"/members", form)
+	if err != nil {
+		//TODO: propagate errors
+	}
 	j, ok := data.(map[string]interface{})
 	if ok {
 		if _, ok := j["success"]; ok {
 			return
 		}
 	}
-	log.Printf("Talk error on adding %s to group %s: %q\n", t.Username, group,
-		j)
+	log.Printf("Talk error on adding %s to group %s: %q\n", t.Username,
+		group, j)
 }
 
 func (t *Talk_user) Remove_from_group(group string) {

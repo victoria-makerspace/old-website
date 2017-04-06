@@ -7,27 +7,48 @@ import (
 
 func init() {
 	init_handler("member-list", member_list_handler, "/member/list",
-		"/member/list/active")
+		"/member/list/")
 	init_handler("profile", profile_handler, "/member/")
 }
 
 func member_list_handler(p *page) {
 	switch p.URL.Path {
-	default: p.http_error(404)
-	case "/member/list/active": {
-		p.Title = "Active members"
-		p.Data["member_group"] = "active"
-		p.Data["member_list"] = p.Get_all_approved_members()
-	}
-	case "/member/list": {
+	default:
+		p.http_error(404)
+	case "/member/list":
 		p.Title = "All members"
 		p.Data["member_group"] = "all"
 		p.Data["member_list"] = p.Get_all_members()
-	}
+	case "/member/list/active":
+		p.Title = "Active members"
+		p.Data["member_group"] = "active"
+		p.Data["member_list"] = p.Get_all_approved_members()
+	case "/member/list/unapproved":
+		if !p.must_be_admin() {
+			return
+		}
+		p.Title = "Unapproved members"
+		p.Data["member_group"] = "unapproved"
+		p.Data["member_list"] = p.Get_all_unapproved_members()
+	case "/member/list/pending":
+		if !p.must_be_admin() {
+			return
+		}
+		p.Title = "Pending-approval members"
+		p.Data["member_group"] = "pending"
+		p.Data["member_list"] = p.Get_all_pending_members()
+	case "/member/list/unverified":
+		if !p.must_be_admin() {
+			return
+		}
+		p.Title = "Unverified members"
+		p.Data["member_group"] = "unverified"
+		p.Data["member_list"] = p.Get_all_unverified_members()
 	}
 }
 
 var profile_path_rexp = regexp.MustCompile(`^/member/[0-9]+$`)
+
 func profile_handler(p *page) {
 	if !profile_path_rexp.MatchString(p.URL.Path) {
 		p.http_error(404)

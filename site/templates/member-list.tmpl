@@ -3,24 +3,35 @@
       <div class="col-lg-10 col-xl-8">
         <h4 class="dropdown">
           <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-{{if eq .Data.member_group "all"}}
+{{with .Data.member_group}}
+  {{if eq . "all"}}
             All
-{{else if eq .Data.member_group "active"}}
+  {{else if eq . "active"}}
             Active
-{{end}}
+  {{else if eq . "unapproved"}}
+            Unapproved
+  {{else if eq . "pending"}}
+            Pending
+  {{else if eq . "unverified"}}
+            Unverified
+  {{end}}
           </button>
           <div class="dropdown-menu">
-{{if ne .Data.member_group "all"}}
-            <a class="dropdown-item" href="/member/list">All</a>
-{{end}}
-{{if ne .Data.member_group "active"}}
-            <a class="dropdown-item" href="/member/list/active">Active</a>
+            <a class="dropdown-item{{if eq . "all"}} active{{end}}" href="/member/list">All</a>
+            <a class="dropdown-item{{if eq . "active"}} active{{end}}" href="/member/list/active">Active</a>
+  {{if $.Session}}
+    {{if $.Member.Admin}}
+            <a class="dropdown-item{{if eq . "unapproved"}} active{{end}}" href="/member/list/unapproved">Unapproved</a>
+            <a class="dropdown-item{{if eq . "pending"}} active{{end}}" href="/member/list/pending">Pending</a>
+            <a class="dropdown-item{{if eq . "unverified"}} active{{end}}" href="/member/list/unverified">Unverified</a>
+    {{end}}
+  {{end}}
 {{end}}
           </div>
           Members
         </h4>
+        <span class="text-muted">{{len .Data.member_list}} {{if ne .Data.member_group "all"}}{{.Data.member_group}} {{end}}members</span>
 {{with .Data.member_list}}
-        <span class="text-muted">{{len .}} {{if ne $.Data.member_group "all"}}{{$.Data.member_group}} {{end}}members</span>
         <table class="table table-hover text-nowrap member-list">
           <thead>
             <tr>
@@ -51,14 +62,6 @@
               <td>{{.Registered.Format "Jan 02, 2006"}}</td>
             </tr>
   {{end}}
-          </tbody>
-        </table>
-{{else}}
-        <table class="table">
-          <tbody>
-            <tr><td>
-              <em class="text-muted">No {{if ne .Data.member_group "all"}}{{.Data.member_group}} {{end}}members.</em>
-            </td></tr>
           </tbody>
         </table>
 {{end}}
