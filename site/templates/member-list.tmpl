@@ -44,7 +44,7 @@
             <tr{{if $.Session}}{{if eq .Id $.Member.Id}} class="table-info"{{end}}{{end}}>
               <td>
                 <a href="/member/{{.Id}}" class="member-icon">
-                  {{with .Avatar_url}}
+                  {{with .Avatar_url 48}}
                   <img src="{{.}}">
                   {{else}}
                   <div class="glyphicons glyphicons-user"></div>

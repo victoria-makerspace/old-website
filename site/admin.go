@@ -6,10 +6,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"regexp"
 )
 
 func init() {
 	init_handler("admin", admin_handler, "/admin")
+	init_handler("admin-manage", manage_account_handler, "/admin/account/")
 }
 
 func (p *page) must_be_admin() bool {
@@ -26,6 +28,13 @@ func admin_handler(p *page) {
 	p.Title = "Admin panel"
 	if !p.must_be_admin() {
 		return
+	}
+	if p.URL.Path != "/admin" {
+		if !account_path_rexp.MatchString(p.URL.Path) {
+			p.http_error(404)
+			return
+		}
+		manage_account_handler(p)
 	}
 	if p.PostFormValue("approve-membership") != "" {
 		member_id, err := strconv.Atoi(p.PostFormValue("approve-membership"))
@@ -139,4 +148,24 @@ func member_upload_handler(p *page) {
 	p.Data["lines"] = lines
 	p.Data["line_error"] = line_error
 	p.Data["line_success"] = line_success
+}
+
+var account_path_rexp = regexp.MustCompile(`^/admin/account/[0-9]+$`)
+
+func manage_account_handler(p *page) {
+	if !p.must_be_admin() {
+		return
+	}
+	if !account_path_rexp.MatchString(p.URL.Path) {
+		p.http_error(404)
+		return
+	}
+	member_id, _ := strconv.Atoi(p.URL.Path[len("/admin/account/"):])
+	m := p.Get_member_by_id(member_id)
+	if m == nil {
+		p.http_error(404)
+		return
+	}
+	p.Title = "Admin panel - @" + m.Username
+	p.Data["member"] = m
 }

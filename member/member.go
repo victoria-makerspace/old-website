@@ -8,6 +8,7 @@ import (
 	"github.com/lib/pq"
 	"net/url"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -16,7 +17,7 @@ type Member struct {
 	Username        string
 	Name            string
 	Email           string
-	Avatar_url		string
+	Avatar_tmpl     string
 	Telephone       string
 	Agreed_to_terms bool
 	Registered      time.Time
@@ -35,7 +36,7 @@ type Member struct {
 //TODO: check corporate account
 func (ms *Members) Get_member_by_id(id int) *Member {
 	m := &Member{Id: id, Members: ms}
-	var email, password_key, password_salt, avatar_url sql.NullString
+	var email, password_key, password_salt, avatar_tmpl sql.NullString
 	var approved_at pq.NullTime
 	if err := m.QueryRow(
 		"SELECT"+
@@ -44,7 +45,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"	password_key,"+
 			"	password_salt,"+
 			"	email,"+
-			"	avatar_url,"+
+			"	avatar_tmpl,"+
 			"	agreed_to_terms,"+
 			"	registered,"+
 			"	gratuitous,"+
@@ -52,7 +53,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"FROM member "+
 			"WHERE id = $1",
 		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &email,
-		&avatar_url, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous,
+		&avatar_tmpl, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous,
 		&approved_at);
 		err != nil {
 		if err == sql.ErrNoRows {
@@ -63,7 +64,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 	m.password_key = password_key.String
 	m.password_salt = password_salt.String
 	m.Email = email.String
-	m.Avatar_url = avatar_url.String
+	m.Avatar_tmpl = avatar_tmpl.String
 	if approved_at.Valid {
 		m.Approved = true
 	}
@@ -157,13 +158,17 @@ func (m *Member) set_gratuitous(free bool) {
 	}
 }
 
-func (m *Member) set_avatar_url(avatar_url string) {
-	m.Avatar_url = avatar_url
+func (m *Member) set_avatar_tmpl(avatar_tmpl string) {
+	m.Avatar_tmpl = avatar_tmpl
 	if _, err := m.Exec("UPDATE member "+
-		"SET avatar_url = $1 "+
-		"WHERE id = $2", avatar_url, m.Id); err != nil {
+		"SET avatar_tmpl = $1 "+
+		"WHERE id = $2", avatar_tmpl, m.Id); err != nil {
 		log.Panic(err)
 	}
+}
+
+func (m *Member) Avatar_url(size int) string {
+	return strings.Replace(m.Avatar_tmpl, "{size}", fmt.Sprint(size), 1)
 }
 
 func (m *Member) Send_password_reset() {
@@ -228,7 +233,7 @@ func (m *Member) Verify_email(email string) error {
 		return fmt.Errorf("Failed to sync talk user: (%d) %s <%s>\n", m.Id,
 			m.Username, email)
 	} else {
-		m.set_avatar_url(m.talk.Avatar_url())
+		m.set_avatar_tmpl(m.talk.Avatar_tmpl)
 	}
 	m.set_email(email)
 	//TODO: delete unverified members with this pending verification
@@ -246,8 +251,8 @@ func (m *Member) Talk_user() *talk.Talk_user {
 		return nil
 	} else if m.talk == nil {
 		m.talk = m.Talk_api.Get_user(m.Id)
-		if m.talk != nil && m.Avatar_url != m.talk.Avatar_url() {
-			m.set_avatar_url(m.talk.Avatar_url())
+		if m.talk != nil && m.Avatar_tmpl != m.talk.Avatar_tmpl {
+			m.set_avatar_tmpl(m.talk.Avatar_tmpl)
 		}
 	}
 	return m.talk

@@ -120,14 +120,14 @@
         <div class="mb-1 row align-items-center">
           <span class="col-4 font-weight-bold">Avatar:</span>
           <div class="d-flex edit-img col justify-content-end justify-content-sm-start">
-            <img src="{{.Avatar_url}}" class="rounded-circle">
-            <a href="{{$talk_url}}/u/{{.Username}}/preferences" class="glyphicons glyphicons-pencil"></a>
+            <img src="{{$.Member.Avatar_url 48}}" class="rounded-circle">
+            <a href="{{$talk_url}}/u/{{urlquery .Username}}/preferences" class="glyphicons glyphicons-pencil"></a>
           </div>
         </div>
         <div class="mb-3 row align-items-end">
           <span class="col-sm-4 font-weight-bold">Talk forum:</span>
           <span class="col-sm-8">
-            <a href="{{$talk_url}}/u/{{.Username}}/preferences">
+            <a href="{{$talk_url}}/u/{{urlquery .Username}}/preferences">
               Account preferences
               <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
             </a>

@@ -7,28 +7,62 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-lg-10 col-xl-8">
-        <div class="d-flex">
+        <div class="d-sm-flex">
+  {{with .Avatar_url 240}}
+          <img class="member-icon-large" src="{{.}}">
+  {{else}}
           <div class="member-icon member-icon-large">
-            {{with .Avatar_url}}
-            <img src="{{.}}">
-            {{else}}
             <div class="glyphicons glyphicons-user"></div>
-            {{end}}
           </div>
-          <div class="p-3">
+  {{end}}
+          <div class="pl-3 pt-3 d-flex flex-column">
   {{if $.Session}}
-            <h4>{{.Name}}{{if eq $.Session.Member.Id .Id}}<a href="/member/account" class="d-inline-flex pb-1 mx-2 glyphicons glyphicons-cogwheel"></a>{{end}}</h4>
+            <h4>
+              {{.Name}}
+    {{if eq $.Session.Member.Id .Id}}
+              <a href="/member/account" class="d-inline-flex pb-1 glyphicons glyphicons-cogwheel"></a>
+    {{end}}
+    {{if $.Admin}}
+              <a href="/admin/account/{{.Id}}" class="d-inline-flex pb-1 glyphicons glyphicons-wrench"></a>
+    {{end}}
+            </h4>
   {{end}}
   {{if .Talk_user}}
-            <a href="{{$.Talk_api.Path}}/u/{{urlquery .Talk_user.Username}}" class="profile-username d-flex h5 text-muted">
+            <a href="{{$.Talk_api.Path}}/u/{{urlquery .Talk_user.Username}}" class="profile-username d-flex h5 mb-1 text-muted">
               @{{.Username}}
+    {{if $.Session}}
               <div class="glyphicons glyphicons-envelope mx-2"></div>
+    {{end}}
             </a>
+    {{with .Talk_user.Title}}
+            <span class="ml-1">{{.}}</span>
+    {{end}}
   {{else}}
             <h5 class="h5 text-muted">@{{.Username}}</h5>
   {{end}}
+            <div class="mt-auto">
+              <span class="text-nowrap">
+                <span class="text-muted">Joined</span>
+                {{.Registered.Format "Jan 2, 2006"}}
+              </span>
+  {{with .Talk_user}}
+    {{with .Location}}
+              <span class="text-nowrap">
+                <span class="ml-2 glyphicons glyphicons-map-marker"></span>
+                {{.}}
+              </span>
+    {{end}}
+    {{if .Website_url}}
+              <span class="text-nowrap">
+                <span class="ml-2 glyphicons glyphicons-globe"></span>
+                <a href="{{.Website_url}}">{{.Website_name}}</a>
+              </span>
+    {{end}}
+  {{end}}
+            </div>
           </div>
         </div>
+        <hr class="m-0">
       </div>
     </div>
   </div>

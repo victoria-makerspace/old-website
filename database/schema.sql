@@ -12,7 +12,7 @@ CREATE TABLE member (
 	-- NULL indicates unverified e-mail
 	-- TODO: e-mail uniqueness requires case-insensitive check
 	email text UNIQUE,
-	avatar_url text,
+	avatar_tmpl text,
 	telephone text,
 	agreed_to_terms boolean NOT NULL DEFAULT false,
 	registered timestamp(0) with time zone NOT NULL DEFAULT now(),

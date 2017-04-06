@@ -1,0 +1,13 @@
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10 col-xl-8">
+{{with .Data.member_approved}}
+        <p class="alert alert-success">Membership approved.</p>
+{{end}}
+{{with .Data.member}}
+        <h4><a href="/member/{{.Id}}">@{{.Username}}</a> profile</a></h4>
+{{end}}
+        
+      </div>
+    </div>
+  </div>

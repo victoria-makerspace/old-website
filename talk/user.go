@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -37,9 +36,9 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 type Talk_user struct {
 	external_id    int
 	id             int
-	avatar_url     []byte
 	Username       string
 	Admin          bool
+	Avatar_tmpl    string
 	Title          string
 	Website_url    string
 	Website_name   string
@@ -58,7 +57,7 @@ func (api *Talk_api) parse_user(external_id int, u map[string]interface{}) *Talk
 	t.Website_url, _ = u["website"].(string)
 	t.Website_name, _ = u["website_name"].(string)
 	t.Location, _ = u["location"].(string)
-	t.avatar_url = []byte(u["avatar_template"].(string))
+	t.Avatar_tmpl = u["avatar_template"].(string)
 	if card, ok := u["card_background"].(string); ok {
 		t.Card_bg_url = card
 	}
@@ -77,12 +76,6 @@ func (api *Talk_api) Get_user(external_id int) *Talk_user {
 		}
 	}
 	return nil
-}
-
-var avatar_size_rexp = regexp.MustCompile("{size}")
-
-func (t *Talk_user) Avatar_url() string {
-	return string(avatar_size_rexp.ReplaceAll(t.avatar_url, []byte("120")))
 }
 
 //TODO: grab external_id from posters
@@ -109,8 +102,8 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 				user := v.(map[string]interface{})
 				id := int(user["id"].(float64))
 				usernames[id] = user["username"].(string)
-				avatars[id] = string(avatar_size_rexp.ReplaceAll(
-					[]byte(user["avatar_template"].(string)), []byte("120")))
+				avatars[id] = strings.Replace(user["avatar_template"].(string),
+					"{size}", "120", 1)
 			}
 		}
 		if tp, ok := j["topic_list"].(map[string]interface{}); ok {
