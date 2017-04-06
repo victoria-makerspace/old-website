@@ -99,50 +99,50 @@
       {{end}}
     {{end}}
             <form action="/member/billing" method="post" id="monthly">
-            <table class="table table-sm table-responsive text-nowrap">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th>Amount</th>
-                  <th>Start date</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
+              <table class="table table-sm table-responsive text-nowrap">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Start date</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
     {{with $membership}}
-                <tr>  
-                  <td>
-                    <a href="/member/account#Membership">
-                      {{.Description}}<span class="title-link"></span>
-                    </a>
-                  </td>
-                  <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
-                  <td>
+                  <tr>  
+                    <td>
+                      <a href="/member/account#Membership">
+                        {{.Description}}<span class="title-link"></span>
+                      </a>
+                    </td>
+                    <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
+                    <td>
       {{if .Start_date.IsZero}}
-                    <em class="text-muted">Pending approval</em>
+                      <em class="text-muted">Pending approval</em>
       {{else}}
-                    {{.Start_date.Format "2006-01-02"}}
+                      {{.Start_date.Format "2006-01-02"}}
       {{end}}
-                  </td>
-                  <td>
-                    <button type="button" data-toggle="modal" data-target="#terminate_membership" class="btn btn-sm btn-danger">Terminate</button>
-                  </td>
-                </tr>
+                    </td>
+                    <td>
+                      <button type="button" data-toggle="modal" data-target="#terminate_membership" class="btn btn-sm btn-danger">Terminate</button>
+                    </td>
+                  </tr>
     {{end}}
     {{range .Invoices}}
       {{if ne .Category "membership"}}
-                <tr>  
-                  <td>{{.Description}}</td>
-                  <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
-                  <td>{{.Start_date.Format "2006-01-02"}}</td>
-                  <td>
-                    <button type="submit" name="terminate" value="{{.Id}}" class="btn btn-sm btn-danger">Terminate</button>
-                  </td>
-                </tr>
+                  <tr>  
+                    <td>{{.Description}}</td>
+                    <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
+                    <td>{{.Start_date.Format "2006-01-02"}}</td>
+                    <td>
+                      <button type="submit" name="terminate" value="{{.Id}}" class="btn btn-sm btn-danger">Terminate</button>
+                    </td>
+                  </tr>
       {{end}}
     {{end}}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
             </form>
   {{end}}
   {{with .Get_missed_payments}}

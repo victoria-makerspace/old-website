@@ -68,8 +68,63 @@ func admin_handler(p *page) {
 				".", member.Talk_user(), p.Member.Talk_user())
 		}
 		member.Cancel_membership()
-	} else if p.PostFormValue("member-upload") != "" {
+	}
+	if p.PostFormValue("member-upload") != "" {
 		member_upload_handler(p)
+	}
+}
+
+var account_path_rexp = regexp.MustCompile(`^/admin/account/[0-9]+$`)
+
+func manage_account_handler(p *page) {
+	if !p.must_be_admin() {
+		return
+	}
+	if !account_path_rexp.MatchString(p.URL.Path) {
+		p.http_error(404)
+		return
+	}
+	member_id, _ := strconv.Atoi(p.URL.Path[len("/admin/account/"):])
+	m := p.Get_member_by_id(member_id)
+	if m == nil {
+		p.http_error(404)
+		return
+	}
+	p.Title = "Admin panel - @" + m.Username
+	p.Data["member"] = m
+	if p.PostFormValue("approve-membership") != "" {
+		member_id, err := strconv.Atoi(p.PostFormValue("approve-membership"))
+		if err != nil || member_id != m.Id {
+			p.http_error(400)
+		} else if !m.Approved {
+			p.Member.Approve_member(m)
+		} else {
+			p.http_error(500)
+		}
+	} else if p.PostFormValue("decline-membership") != "" {
+		member_id, err := strconv.Atoi(p.PostFormValue("decline-membership"))
+		if err != nil || member_id != m.Id {
+			p.http_error(400)
+			return
+		}
+		if m.Talk_user() != nil {
+			p.Message_member("Your membership was declined",
+				"Your membership request was declined by @"+p.Member.Username+
+				".", m.Talk_user(), p.Member.Talk_user())
+		}
+		m.Cancel_membership()
+	} else if _, ok := p.PostForm["terminate_membership"]; ok {
+		if m.Talk_user() != nil {
+			p.Message_member("Your membership has been cancelled",
+				"Your membership request was cancelled by @"+p.Member.Username+
+				".", m.Talk_user(), p.Member.Talk_user())
+		}
+		m.Cancel_membership()
+	} else if _, ok := p.PostForm["terminate"]; ok && m.Payment() != nil {
+		id, _ := strconv.Atoi(p.PostFormValue("terminate"))
+		if invoice := m.Payment().Get_bill(id); invoice != nil {
+			m.Payment().Cancel_recurring_bill(invoice)
+		}
 	}
 }
 
@@ -148,24 +203,4 @@ func member_upload_handler(p *page) {
 	p.Data["lines"] = lines
 	p.Data["line_error"] = line_error
 	p.Data["line_success"] = line_success
-}
-
-var account_path_rexp = regexp.MustCompile(`^/admin/account/[0-9]+$`)
-
-func manage_account_handler(p *page) {
-	if !p.must_be_admin() {
-		return
-	}
-	if !account_path_rexp.MatchString(p.URL.Path) {
-		p.http_error(404)
-		return
-	}
-	member_id, _ := strconv.Atoi(p.URL.Path[len("/admin/account/"):])
-	m := p.Get_member_by_id(member_id)
-	if m == nil {
-		p.http_error(404)
-		return
-	}
-	p.Title = "Admin panel - @" + m.Username
-	p.Data["member"] = m
 }

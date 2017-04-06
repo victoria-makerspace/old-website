@@ -163,14 +163,13 @@ func (t *Talk_user) Add_to_group(group string) {
 	if err != nil {
 		//TODO: propagate errors
 	}
-	j, ok := data.(map[string]interface{})
-	if ok {
+	if j, ok := data.(map[string]interface{}); ok {
 		if _, ok := j["success"]; ok {
 			return
 		}
 	}
 	log.Printf("Talk error on adding %s to group %s: %q\n", t.Username,
-		group, j)
+		group, data, err)
 }
 
 func (t *Talk_user) Remove_from_group(group string) {
