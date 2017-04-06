@@ -1,0 +1,36 @@
+{{with .Data.member}}
+  {{with .Talk_user}}
+    {{with .Profile_bg_url}}
+  <img class="profile-background" src="{{.}}">
+    {{end}}
+  {{end}}
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10 col-xl-8">
+        <div class="d-flex">
+          <div class="member-icon member-icon-large">
+            {{with .Avatar_url}}
+            <img src="{{.}}">
+            {{else}}
+            <div class="glyphicons glyphicons-user"></div>
+            {{end}}
+          </div>
+          <div class="p-3">
+  {{if $.Session}}
+            <h4>{{.Name}}{{if eq $.Session.Member.Id .Id}}<a href="/member/account" class="d-inline-flex pb-1 mx-2 glyphicons glyphicons-cogwheel"></a>{{end}}</h4>
+  {{end}}
+  {{if .Talk_user}}
+            <a href="{{$.Talk_api.Path}}/u/{{urlquery .Talk_user.Username}}" class="h5 text-muted">@{{.Username}} <span class="glyphicons glyphicons-envelope"></span></a>
+            <a href="{{$.Talk_api.Path}}/u/{{urlquery .Talk_user.Username}}" class="profile-username d-flex h5 text-muted">
+              @{{.Username}}
+              <div class="glyphicons glyphicons-envelope mx-2"></div>
+            </a>
+  {{else}}
+            <h5 class="h5 text-muted">@{{.Username}}</h5>
+  {{end}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{{end}}

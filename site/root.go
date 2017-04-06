@@ -32,6 +32,7 @@ func static_handler(p *page) {
 			return
 		}
 	}
+	p.authenticate()
 	p.http_error(404)
 }
 

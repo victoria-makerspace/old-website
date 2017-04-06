@@ -39,4 +39,5 @@ func profile_handler(p *page) {
 		return
 	}
 	p.Title = "@" + m.Username
+	p.Data["member"] = m
 }

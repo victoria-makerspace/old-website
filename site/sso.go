@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/vvanpo/makerspace/member"
 	"net/url"
+	"log"
 )
 
 func init() {
@@ -157,7 +158,13 @@ func sso_verify_email_handler(p *page) {
 			p.Data["token_error"] = true
 			return
 		}
-		m.Verify_email(email)
+		if err := m.Verify_email(email); err != nil {
+			//TODO: determine whether the server failed or discourse rejected
+			//	e-mail address
+			p.Data["server_error"] = true
+			log.Println(err)
+			return
+		}
 		p.redirect = "/sso"
 		return
 	}

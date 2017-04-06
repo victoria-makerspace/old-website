@@ -52,6 +52,9 @@
             <a class="nav-link{{if eq .Name "storage"}} active{{end}}" href="/member/storage"><span class="glyphicons glyphicons-cargo"></span>Storage</a>
           </li>
           <li class="nav-item">
+            <a class="nav-link{{if eq .Name "profile"}}{{if eq .Data.member.Id .Member.Id}} active{{end}}{{end}}" href="/member/{{.Member.Id}}"><span class="glyphicons glyphicons-user"></span>Profile</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link{{if eq .Name "account"}} active{{end}}" href="/member/account"><span class="glyphicons glyphicons-cogwheel"></span>Account</a>
           </li>
           <li class="nav-item" id="sign-out">

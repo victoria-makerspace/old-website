@@ -107,7 +107,9 @@ func member_upload_handler(p *page) {
 			m.Set_registration_date(nm.date)
 		}
 		if nm.verified {
-			m.Verify_email(nm.email)
+			if err := m.Verify_email(nm.email); err != nil {
+				line_error[nm.line] = []string{"E-mail verification failed"}
+			}
 		} else {
 			m.Send_email_verification(nm.email)
 		}

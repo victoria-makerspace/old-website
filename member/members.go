@@ -79,7 +79,7 @@ func (ms *Members) Check_username_availability(username string) (available bool,
 	if count == 1 {
 		return false, "Username already in use"
 	}
-	return ms.Check_username(username)
+	return true, ""
 }
 
 var email_rexp = regexp.MustCompile("^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$")

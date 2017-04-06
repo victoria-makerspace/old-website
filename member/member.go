@@ -1,6 +1,7 @@
 package member
 
 import (
+	"fmt"
 	"database/sql"
 	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/talk"
@@ -215,20 +216,23 @@ func (m *Member) Send_email_verification(email string) {
 }
 
 //TODO: BUG: still possible for e-mail uniqueness to be violated here
-func (m *Member) Verify_email(email string) {
+func (m *Member) Verify_email(email string) error {
 	m.talk = m.Sync(m.Id, m.Username, email, m.Name)
 	if m.talk == nil {
-		log.Printf("Failed to sync talk user: (%d) %s <%s>\n", m.Id, m.Username,
-			email)
+		return fmt.Errorf("Failed to sync talk user: (%d) %s <%s>\n", m.Id,
+			m.Username, email)
 	} else {
 		m.set_avatar_url(m.talk.Avatar_url())
 	}
 	m.set_email(email)
 	//TODO: delete unverified members with this pending verification
-	if _, err := m.Exec("DELETE FROM email_verification_token "+
-		"WHERE email = $1", email); err != nil {
+	if _, err := m.Exec(
+		"DELETE FROM email_verification_token "+
+		"WHERE email = $1 "+
+		"	OR member = $2", email, m.Id); err != nil {
 		log.Panic(err)
 	}
+	return nil
 }
 
 func (m *Member) Talk_user() *talk.Talk_user {

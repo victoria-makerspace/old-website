@@ -19,7 +19,12 @@ func (api *Talk_api) Sync(external_id int, username, email, name string) *Talk_u
 	values = url.Values{}
 	values.Set("sso", payload)
 	values.Set("sig", sig)
-	if u, ok := api.post_json("/admin/users/sync_sso", values).(map[string]interface{}); ok {
+	data, err := api.do_form("POST", "/admin/users/sync_sso", values)
+	//TODO: propagate errors
+	if err != nil {
+		return nil
+	}
+	if u, ok := data.(map[string]interface{}); ok {
 		if _, ok := u["failed"]; ok {
 			return nil
 		}
