@@ -270,5 +270,5 @@ func (ms *Members) Get_all_unverified_members() []*Member {
 		"SELECT id "+
 		"FROM member m "+
 		"WHERE email IS NULL "+
-		"ORDER BY username ASC")
+		"ORDER BY registered DESC")
 }

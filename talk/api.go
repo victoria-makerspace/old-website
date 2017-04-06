@@ -153,3 +153,27 @@ func (api *Talk_api) Groups() map[string]int {
 	}
 	return nil
 }
+
+func (api *Talk_api) Add_to_group(group string, users ...*Talk_user) error {
+	gid, ok := api.Groups()[group]
+	if !ok {
+		return fmt.Errorf("'%s' is not a valid group", group)
+	}
+	usernames := make([]string, len(users))
+	for i, t := range users {
+		usernames[i] = url.QueryEscape(t.Username)
+	}
+	form := url.Values{}
+	form.Add("usernames", strings.Join(usernames, ","))
+	data, err := api.do_form("PUT", "groups/"+fmt.Sprint(gid)+"/members.json",
+		form)
+	if err != nil {
+		return fmt.Errorf("Error adding to Talk group '%s': %q\n", group, err)
+	}
+	if j, ok := data.(map[string]interface{}); ok {
+		if _, ok := j["success"]; ok {
+			return nil
+		}
+	}
+	return fmt.Errorf("Error adding to Talk group '%s': %q\n", group, data)
+}

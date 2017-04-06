@@ -152,6 +152,7 @@ func member_upload_handler(p *page) {
 		date                  time.Time
 		free                  bool
 		verified              bool
+		key_card			  string
 	}
 	new_members := make([]new_member, 0)
 	lines := strings.Split(p.PostFormValue("member-upload"), "\n")
@@ -174,16 +175,20 @@ func member_upload_handler(p *page) {
 			email:    strings.TrimSpace(fields[2])}
 		for j, field := range fields[3:] {
 			field := strings.TrimSpace(field)
-			if field == "free" {
+			if field == "" {
+				continue
+			} else if field == "free" {
 				nm.free = true
 			} else if field == "verified" {
 				nm.verified = true
+			} else if member.Key_card_rexp.MatchString(field) {
+				nm.key_card = field
 			} else if t, err := time.ParseInLocation("2006-01-02", field,
 				time.Local); err == nil {
 				nm.date = t
 			} else {
-				line_error[i] = []string{"Field " + fmt.Sprint(j) +
-					" invalid: " + field}
+				line_error[i] = []string{"Field " + fmt.Sprint(j + 4) +
+					" invalid: '" + field + "'"}
 				break
 			}
 		}
@@ -211,8 +216,18 @@ func member_upload_handler(p *page) {
 		if nm.free {
 			p.Approve_member(m)
 		}
+		if nm.key_card != "" {
+			if err := m.Set_key_card(nm.key_card); err != nil {
+				e := []string{err.Error()}
+				if line_error[nm.line] == nil {
+					line_error[nm.line] = e
+				} else {
+					line_error[nm.line] = append(line_error[nm.line], e...)
+				}
+			}
+		}
 		line_success[nm.line] = m
-		lines = append(lines[:nm.line], lines[nm.line+1:]...)
+		lines[nm.line] = ""
 	}
 	p.Data["lines"] = lines
 	p.Data["line_error"] = line_error

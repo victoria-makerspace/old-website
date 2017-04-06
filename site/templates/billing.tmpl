@@ -239,14 +239,7 @@
               </div>
             </div>
             <script src="https://payform.beanstream.com/payfields/beanstream_payfields.js" data-submitForm="true"></script>
-{{if not .Member.Agreed_to_terms}}
-            <p class="alert alert-warning">
-              Please agree to the <a href="/terms">Terms &amp; Conditions</a> before setting up billing information.
-            </p>
-            <button type="submit" class="btn btn-primary" disabled>
-{{else}}
             <button type="submit" class="btn btn-primary">
-{{end}}
 {{if not .Member.Payment}}
               Register
 {{else if not .Member.Payment.Get_card}}

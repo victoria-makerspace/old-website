@@ -58,7 +58,7 @@
           </p>
           <textarea name="member-upload" class="form-group form-control" rows="5">
 {{- range .Data.lines}}
-{{.}}
+{{if .}}{{.}}{{end -}}
 {{end -}}
           </textarea>
           <button type="submit" class="btn btn-primary mb-2">Submit</button>

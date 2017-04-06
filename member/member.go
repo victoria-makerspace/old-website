@@ -162,10 +162,10 @@ func (m *Member) Set_registration_date(date time.Time) {
 	}
 }
 
-var key_card_rexp = regexp.MustCompile(`^[0-9]{2}:[0-9]{5}$`)
+var Key_card_rexp = regexp.MustCompile(`^[0-9]{2}:[0-9]{5}$`)
 
 func (m *Member) Set_key_card(key_card string) error {
-	if !key_card_rexp.MatchString(key_card) {
+	if !Key_card_rexp.MatchString(key_card) {
 		return fmt.Errorf("Invalid key-card format")
 	}
 	var n int

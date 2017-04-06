@@ -14,9 +14,6 @@ func billing_handler(p *page) {
 	if !p.must_authenticate() {
 		return
 	}
-	if !p.Agreed_to_terms {
-		return
-	}
 	pay_profile := p.Payment()
 	if token := p.PostFormValue("singleUseToken"); token != "" {
 		if pay_profile == nil {
@@ -49,7 +46,6 @@ func billing_handler(p *page) {
 	if _, ok := p.PostForm["update"]; ok {
 		update_student()
 		p.redirect = "/member/billing"
-		return
 	} else if _, ok := p.PostForm["terminate_membership"]; ok {
 		if !p.Member.Authenticate(p.PostFormValue("password")) {
 			p.Data["password_error"] = "Incorrect password"
@@ -58,7 +54,7 @@ func billing_handler(p *page) {
 		//TODO: reason for cancellation: PostFormValue("cancellation_reason")
 		p.Member.Cancel_membership()
 		p.redirect = "/member/billing"
-	} else if pay_profile == nil {
+	} else if pay_profile == nil || !p.Agreed_to_terms {
 		return
 	} else if _, ok := p.PostForm["retry-missed-payments"]; ok {
 		pay_profile.Retry_missed_payments()
