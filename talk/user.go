@@ -151,7 +151,7 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 
 func (t *Talk_user) Add_to_group(group string) {
 	if _, ok := t.Groups()[group]; !ok {
-		log.Println("'", group, "' is not a valid group.")
+		log.Printf("'%s' is not a valid group.\n", group)
 		return
 	}
 	form := url.Values{}
@@ -164,19 +164,24 @@ func (t *Talk_user) Add_to_group(group string) {
 			return
 		}
 	}
-	log.Printf("Talk error on adding %s to group %s: %q\n",
-		t.Username, group, j)
+	log.Printf("Talk error on adding %s to group %s: %q\n", t.Username, group,
+		j)
 }
 
 func (t *Talk_user) Remove_from_group(group string) {
 	if _, ok := t.Groups()[group]; !ok {
-		log.Println("'", group, "' is not a valid group.")
+		log.Printf("'%s' is not a valid group.\n", group)
 		return
 	}
 	form := url.Values{}
 	form.Set("user_id", fmt.Sprint(t.id))
-	data := t.do_form("DELETE",
-		"/groups/"+fmt.Sprint(t.Groups()[group])+"/members", form)
+	data, err := t.do_form("DELETE", "/groups/"+fmt.Sprint(t.Groups()[group])+
+		"/members", form)
+	if err != nil {
+		log.Printf("Failed to remove %s from Talk group %s: %q", t.Username,
+			group, err)
+		return
+	}
 	j, ok := data.(map[string]interface{})
 	if ok {
 		if _, ok := j["success"]; ok {
@@ -185,8 +190,4 @@ func (t *Talk_user) Remove_from_group(group string) {
 	}
 	log.Printf("Talk error on removing %s from group %s: %q\n",
 		t.Username, group, j)
-}
-
-func (t *Talk_user) Activate() {
-	t.put_json("/admin/users/"+fmt.Sprint(t.id)+"/activate", url.Values{})
 }

@@ -51,8 +51,8 @@ func (api *Talk_api) get_json(path string, use_key bool) (interface{}, error) {
 	}
 	defer rsp.Body.Close()
 	if rsp.StatusCode != 200 {
-		return nil, fmt.Errorf("Talk HTTP %d error (GET %s):\n\t%q\n",
-			rsp.StatusCode, path, err)
+		return nil, fmt.Errorf("Talk HTTP %d error (GET %s)\n",
+			rsp.StatusCode, path)
 	}
 	var data interface{}
 	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
@@ -62,31 +62,40 @@ func (api *Talk_api) get_json(path string, use_key bool) (interface{}, error) {
 	return data, nil
 }
 
-//TODO: get rid of all the redundancy, just have a do_form and get_json
-func (api *Talk_api) do_form(method, path string, form url.Values) interface{} {
+//TODO: get rid of redundancy
+func (api *Talk_api) do_form(method, path string, form url.Values) (interface{}, error) {
+	if form == nil {
+		form = url.Values{}
+	}
 	form.Set("api_key", api.api_key)
 	form.Set("api_username", api.admin)
 	req, err := http.NewRequest(method, api.Url+path,
 		strings.NewReader(form.Encode()))
 	if err != nil {
-		log.Panic(err)
+		log.Panicf("do_form input error: %q\n", err)
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	rsp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Printf("Talk error (%s %s):\n\t%q\n", method, path, err)
-		return nil
+		return nil, fmt.Errorf("Talk HTTP protocol error (%s %s):\n\t%q\n",
+			method, path, err)
 	}
 	defer rsp.Body.Close()
 	var data interface{}
-	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
-		if err.Error() != "EOF" {
-			log.Printf("Talk JSON decoding error (%s %s):\n\t%q\n",
-				method, path, err)
+	err = json.NewDecoder(rsp.Body).Decode(&data)
+	if err != nil {
+		if rsp.StatusCode != 200 {
+			return nil, fmt.Errorf("Talk HTTP %d error (%s %s)\n",
+				rsp.StatusCode, method, path)
 		}
-		return nil
+		return nil, fmt.Errorf("Talk JSON decoding error (%s %s):\n\t%q\n",
+			method, path, err)
 	}
-	return data
+	if rsp.StatusCode != 200 {
+		return nil, fmt.Errorf("Talk HTTP %d error (%s %s): %q\n",
+			rsp.StatusCode, method, path, data)
+	}
+	return data, nil
 }
 
 func (api *Talk_api) put_json(path string, form url.Values) interface{} {
@@ -153,7 +162,7 @@ func (api *Talk_api) Message_member(title, message string, users ...*Talk_user) 
 
 // Discourse groups as groups[name] == id
 func (api *Talk_api) Groups() map[string]int {
-	if data, err := api.get_json("/admin/groups.json", true); err != nil {
+	if data, err := api.get_json("/admin/groups.json", true); err == nil {
 		if j, ok := data.([]interface{}); ok {
 			groups := make(map[string]int)
 			for _, group := range j {

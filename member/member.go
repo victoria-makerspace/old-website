@@ -133,7 +133,7 @@ func (m *Member) Set_registration_date(date time.Time) {
 	}
 	m.Registered = date
 	if _, err := m.Exec("UPDATE member "+
-		"SET registration = $1 "+
+		"SET registered = $1 "+
 		"WHERE id = $2", date, m.Id); err != nil {
 		log.Panic(err)
 	}
@@ -221,9 +221,6 @@ func (m *Member) Verify_email(email string) {
 		log.Printf("Failed to sync talk user: (%d) %s <%s>\n", m.Id, m.Username,
 			email)
 	} else {
-		if !m.Verified_email() {
-			m.talk.Activate()
-		}
 		m.set_avatar_url(m.talk.Avatar_url())
 	}
 	m.set_email(email)
