@@ -32,7 +32,6 @@ type Member struct {
 	payment       *billing.Profile
 }
 
-//TODO: support null password keys, and use e-mail verification for login
 //TODO: check corporate account
 func (ms *Members) Get_member_by_id(id int) *Member {
 	m := &Member{Id: id, Members: ms}
@@ -200,7 +199,6 @@ func (m *Member) Send_email_verification(email string) {
 	msg := message{subject: "Makerspace.ca: e-mail verification"}
 	msg.set_from("Makerspace", "admin@makerspace.ca")
 	msg.add_to(m.Name, email)
-	//TODO use config.json value for domain
 	msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
 		"To sign-in to your Makerspace account, you must first verify that " +
 		"are the owner of this associated e-mail address.\n\n" +
@@ -215,7 +213,6 @@ func (m *Member) Send_email_verification(email string) {
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
-//TODO: BUG: still possible for e-mail uniqueness to be violated here
 func (m *Member) Verify_email(email string) error {
 	m.talk = m.Sync(m.Id, m.Username, email, m.Name)
 	if m.talk == nil {

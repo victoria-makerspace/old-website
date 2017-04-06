@@ -122,8 +122,8 @@ button.nav-link {
     bottom: 2px;
 }
 .member-icon-large {
-    height: 8rem;
-    width: 8rem;
+    height: 120px;
+    width: 120px;
     line-height: 5rem;
 }
 .member-icon-large img,
@@ -131,11 +131,10 @@ button.nav-link {
     border-radius: 0.25rem;
 }
 .member-icon-large .glyphicons {
-    font-size: 7rem;
+    font-size: 110px;
 }
 .member-icon-large .glyphicons::before {
-    bottom: 0.6rem;
-    left: 0.4rem;
+    bottom: 0;
 }
 .member-list td:first-child {
     display: flex;
@@ -157,6 +156,12 @@ button.nav-link {
 .profile-username:hover .glyphicons,
 .profile-username:focus .glyphicons {
     color: #014c8c;
+}
+.profile-background {
+    width: 100%;
+    position: absolute;
+    opacity: 0.3;
+    box-shadow: 0 2px 4px -1px rgba(0,0,0,0.5);
 }
 #ms-menu {
     position: absolute;

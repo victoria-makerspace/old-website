@@ -20,7 +20,6 @@
             <h4>{{.Name}}{{if eq $.Session.Member.Id .Id}}<a href="/member/account" class="d-inline-flex pb-1 mx-2 glyphicons glyphicons-cogwheel"></a>{{end}}</h4>
   {{end}}
   {{if .Talk_user}}
-            <a href="{{$.Talk_api.Path}}/u/{{urlquery .Talk_user.Username}}" class="h5 text-muted">@{{.Username}} <span class="glyphicons glyphicons-envelope"></span></a>
             <a href="{{$.Talk_api.Path}}/u/{{urlquery .Talk_user.Username}}" class="profile-username d-flex h5 text-muted">
               @{{.Username}}
               <div class="glyphicons glyphicons-envelope mx-2"></div>

@@ -37,8 +37,13 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 type Talk_user struct {
 	external_id    int
 	id             int
-	Username       string
 	avatar_url     []byte
+	Username       string
+	Admin          bool
+	Title          string
+	Website_url    string
+	Website_name   string
+	Location       string
 	Card_bg_url    string
 	Profile_bg_url string
 	*Talk_api
@@ -48,6 +53,11 @@ func (api *Talk_api) parse_user(external_id int, u map[string]interface{}) *Talk
 	t := &Talk_user{external_id: external_id, Talk_api: api}
 	t.id = int(u["id"].(float64))
 	t.Username = u["username"].(string)
+	t.Admin = u["admin"].(bool)
+	t.Title = u["title"].(string)
+	t.Website_url = u["website"].(string)
+	t.Website_name = u["website_name"].(string)
+	t.Location = u["location"].(string)
 	t.avatar_url = []byte(u["avatar_template"].(string))
 	if card, ok := u["card_background"].(string); ok {
 		t.Card_bg_url = card
