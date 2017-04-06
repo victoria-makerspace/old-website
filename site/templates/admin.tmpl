@@ -8,7 +8,7 @@
 {{end}}
 {{$pending_approvals := .Get_all_pending_members}}
         <h4>Pending Membership Approvals</h4>
-        <form action="/admin" method="post">
+        <form action="/admin" method="post" class="mx-sm-3">
           <table class="table table-sm table-striped table-responsive text-nowrap">
             <thead>
               <tr>
@@ -27,8 +27,8 @@
                 <td class="text-capitalize">{{.Membership_invoice.Fee.Identifier}}</td>
                 <td>{{.Registered.Format "2006-01-02"}}</td>
                 <td>
-                  <button type="submit" name="approve_membership" value="{{.Id}}" class="btn btn-sm btn-primary">Approve</button>
-                  <button type="submit" name="decline_membership" value="{{.Id}}" class="btn btn-sm btn-danger">Decline</button>
+                  <button type="submit" name="approve-membership" value="{{.Id}}" class="btn btn-sm btn-primary">Approve</button>
+                  <button type="submit" name="decline-membership" value="{{.Id}}" class="btn btn-sm btn-danger">Decline</button>
                 </td>
               </tr>
 {{else}}
@@ -42,10 +42,37 @@
           </table>
         </form>
         <h4>Upload Members</h4>
-        <form action="/admin/upload" method="post">
-          <strong>CSV Format:</strong> Username, Name, E-mail <span class="text-muted">{, Registration date}</span>
-          <textarea name="members" class="form-group form-control" rows="5"></textarea>
-          <button type="submit" class="btn btn-primary">Submit</button>
+        <form action="/admin" method="post" class="mx-sm-3">
+          <strong>CSV Format:</strong> Username, Name, E-mail <span class="text-muted">{, Registration date = [YYYY-MM-DD], [free], [verified]}</span><br>
+          <p class="alert alert-info mt-1">
+            The fields in braces are optional. Each new user must be input on a separate line.<br>
+            <strong>Example:</strong> jsmith01, John Smith, j.smith@gmail.com, free, verified <br>
+            The above example creates a new user, jsmith01, who is immediately approved as a free account and has a verified e-mail address.  Without the "verified" flag, creating a new user sends off a verification e-mail before said user can sign-in.
+          </p>
+          <textarea name="member-upload" class="form-group form-control" rows="5">
+{{- range .Data.lines}}
+{{.}}
+{{end -}}
+          </textarea>
+          <button type="submit" class="btn btn-primary mb-2">Submit</button>
+{{range $i, $e := .Data.line_error}}
+  {{with $e}}
+          <p class="alert alert-danger">
+            <strong>Line {{add 1 $i}}:</strong>
+    {{range .}}
+            <br><span class="ml-2">{{.}}.</span>
+    {{end}}
+          </p>
+  {{end}}
+{{end}}
+{{range $i, $m := .Data.line_success}}
+  {{with $m}}
+          <p class="alert alert-success">
+            <strong>Line {{add 1 $i}}:</strong>
+            <a href="/member/{{.Id}}">@{{.Username}}</a> created.
+          </p>
+  {{end}}
+{{end}}
         </form>
       </div>
     </div>

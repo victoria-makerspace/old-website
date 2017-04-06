@@ -107,14 +107,14 @@ func (ms *Members) Check_email_availability(email string) (available bool, err s
 var name_rexp = regexp.MustCompile(`^([\pL\pN\pM\pP]+ ?)+$`)
 
 // New creates a new user, returns nil and a set of errors on invalid input.
-func (ms *Members) New_member(username, email, name, password string) (m *Member, err map[string]string) {
+//	Only checks for e-mail availability, does not send off a verification e-mail
+//	or otherwise store the e-mail address.  The new member is created with an
+//	uninitialized password, which must be set via the reset form.
+func (ms *Members) New_member(username, email, name string) (m *Member, err map[string]string) {
 	err = make(map[string]string)
-	salt := Rand256()
 	m = &Member{
 		Username:      username,
 		Name:          name,
-		password_key:  key(password, salt),
-		password_salt: salt,
 		Members:       ms}
 	if !name_rexp.MatchString(name) {
 		err["name_error"] = "Invalid characters in name"
@@ -137,16 +137,14 @@ func (ms *Members) New_member(username, email, name, password string) (m *Member
 	if e := m.QueryRow(
 		"INSERT INTO member ("+
 			"	username,"+
-			"	name,"+
-			"	password_key,"+
-			"	password_salt"+
+			"	name"+
 			") "+
-			"VALUES ($1, $2, $3, $4) "+
+			"VALUES ($1, $2) "+
 			"RETURNING id, registered",
-		username, name, m.password_key, salt).Scan(&m.Id, &m.Registered); e != nil {
+		username, name).Scan(&m.Id, &m.Registered);
+		e != nil {
 		log.Panic(e)
 	}
-	m.Send_email_verification(email)
 	return m, nil
 }
 
@@ -162,7 +160,7 @@ func (ms *Members) Get_member_from_reset_token(token string) *Member {
 		}
 		log.Panic(err)
 	}
-	window, err := time.ParseDuration(ms.Config["reset-window"].(string))
+	window, err := time.ParseDuration(ms.Config["password-reset-window"].(string))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -176,14 +174,14 @@ func (ms *Members) Get_member_from_reset_token(token string) *Member {
 	return ms.Get_member_by_id(member_id)
 }
 
-func (ms *Members) get_member_from_verification_token(token string) (m *Member, email string) {
-	log.Println(token)
+func (ms *Members) Get_member_from_verification_token(token string) (m *Member, email string) {
 	var member_id int
 	var t time.Time
 	if err := ms.QueryRow(
 		"SELECT member, email, time "+
 			"FROM email_verification_token "+
-			"WHERE token = $1", token).Scan(&member_id, &email, &t); err != nil {
+			"WHERE token = $1", token).Scan(&member_id, &email, &t);
+		err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ""
 		}

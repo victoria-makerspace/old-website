@@ -13,6 +13,7 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 	j, e := api.get_json("/users/check_username.json?username="+
 		url.QueryEscape(username), false)
 	if e != nil {
+		log.Println(e)
 		return false, "Server error"
 	}
 	if j, ok := j.(map[string]interface{}); ok {

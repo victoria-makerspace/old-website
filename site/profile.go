@@ -15,13 +15,13 @@ func member_list_handler(p *page) {
 	switch p.URL.Path {
 	default: p.http_error(404)
 	case "/member/list/active": {
-		p.Name = "active"
 		p.Title = "Active members"
+		p.Data["member_group"] = "active"
 		p.Data["member_list"] = p.Get_all_approved_members()
 	}
 	case "/member/list": {
-		p.Name = "all"
 		p.Title = "All members"
+		p.Data["member_group"] = "all"
 		p.Data["member_list"] = p.Get_all_members()
 	}
 	}

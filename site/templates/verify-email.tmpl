@@ -6,7 +6,7 @@
 {{if .Data.token_error}}
       <p class="alert alert-danger">Invalid reset token.</p>
 {{end}}
-      <h4 class="mb-3">Resend verification e-mail</h4>
+      <h4 class="mb-3">Re-send verification e-mail</h4>
       <form method="post" action="/sso/verify-email">
 {{if not .Session}}
         <div class="form-group{{if .Data.username_error}} has-danger{{end}}">
@@ -24,10 +24,10 @@
           </div>
           <small class="form-control-feedback{{with .Data.email_error}} show">{{.}}{{else}}">{{end}}</small>
         </div>
-        <div class="form-group">
+        <div class="form-group{{if .Data.password_error}} has-danger{{end}}">
           <div class="input-group">
             <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
-            <input type="password" class="form-control" name="password" placeholder="Password" required{{if and (or (not .Session) .Data.username) .Data.email}} autofocus{{end}}>
+            <input type="password" class="form-control" name="password" placeholder="Password" required{{if .Data.email}}{{if or .Session .Data.username}} autofocus{{end}}{{end}}>
           </div>
           <small class="form-control-feedback{{with .Data.password_error}} show">{{.}}{{else}}">{{end}}</small>
         </div>

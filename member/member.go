@@ -5,6 +5,7 @@ import (
 	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/talk"
 	"github.com/lib/pq"
+	"net/url"
 	"log"
 	"time"
 )
@@ -126,6 +127,18 @@ func (m *Member) Set_password(password string) {
 	}
 }
 
+func (m *Member) Set_registration_date(date time.Time) {
+	if date.IsZero() {
+		date = time.Now()
+	}
+	m.Registered = date
+	if _, err := m.Exec("UPDATE member "+
+		"SET registration = $1 "+
+		"WHERE id = $2", date, m.Id); err != nil {
+		log.Panic(err)
+	}
+}
+
 func (m *Member) set_email(email string) {
 	m.Email = email
 	if _, err := m.Exec("UPDATE member "+
@@ -163,17 +176,24 @@ func (m *Member) Send_password_reset() {
 		"A password reset has been requested for your account.  " +
 		"If you did not initiate this request, please ignore this e-mail.\n\n" +
 		"Reset your makerspace password by visiting " +
-		m.Config["url"].(string) + "/sso/reset?token=" + token + "\n\n"
+		m.Config["url"].(string) + "/sso/reset?token=" + token + ".\n\n" +
+		"Your password-reset token will expire in " +
+		m.Config["password-reset-window"].(string) + ", you can request a new" +
+		"token at " + m.Config["url"].(string) + "/sso/reset?username=" +
+		url.QueryEscape(m.Username) + "&email=" + url.QueryEscape(m.Email) +
+		".\n\n"
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
 func (m *Member) Send_email_verification(email string) {
 	token := Rand256()
-	if _, err := m.Exec("INSERT INTO email_verification_token"+
+	if _, err := m.Exec(
+		"INSERT INTO email_verification_token"+
 		"	(member, email, token) "+
 		"VALUES ($1, $2, $3) "+
 		"ON CONFLICT (member) DO UPDATE SET"+
-		"	(email, token, time) = ($2, $3, now())", m.Id, email, token); err != nil {
+		"	(email, token, time) = ($2, $3, now())", m.Id, email, token);
+		err != nil {
 		log.Panic("Failed to set email verification token: ", err)
 	}
 	msg := message{subject: "Makerspace.ca: e-mail verification"}
@@ -181,42 +201,37 @@ func (m *Member) Send_email_verification(email string) {
 	msg.add_to(m.Name, email)
 	//TODO use config.json value for domain
 	msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
-		"Please verify your e-mail address (" + email + ") by visiting " +
-		m.Config["url"].(string) + "/sso/verify-email?token=" + token + "\n\n"
+		"To sign-in to your Makerspace account, you must first verify that " +
+		"are the owner of this associated e-mail address.\n\n" +
+		"If the above name and username is correct, please verify your " +
+		"e-mail address (" + email + ") by visiting " +
+		m.Config["url"].(string) + "/sso/verify-email?token=" + token + "\n\n" +
+		"Your verification token will expire in " +
+		m.Config["email-verification-window"].(string) + ", you can request " +
+		"a new token at " + m.Config["url"].(string) +
+		"/sso/verify-email?username=" + url.QueryEscape(m.Username) +
+		"&email=" + url.QueryEscape(email) + ".\n\n"
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
-func (ms *Members) Verify_email(token string) bool {
-	m, email := ms.get_member_from_verification_token(token)
-	if m == nil {
-		return false
-	}
+//TODO: BUG: still possible for e-mail uniqueness to be violated here
+func (m *Member) Verify_email(email string) {
 	m.talk = m.Sync(m.Id, m.Username, email, m.Name)
 	if m.talk == nil {
-		log.Panicf("Invalid talk user: (%d) %s <%s>\n", m.Id, m.Username,
+		log.Printf("Failed to sync talk user: (%d) %s <%s>\n", m.Id, m.Username,
 			email)
-	}
-	if !m.Verified_email() {
-		m.talk.Activate()
+	} else {
+		if !m.Verified_email() {
+			m.talk.Activate()
+		}
+		m.set_avatar_url(m.talk.Avatar_url())
 	}
 	m.set_email(email)
-	m.set_avatar_url(m.talk.Avatar_url())
 	//TODO: delete unverified members with this pending verification
 	if _, err := m.Exec("DELETE FROM email_verification_token "+
 		"WHERE email = $1", email); err != nil {
 		log.Panic(err)
 	}
-	return true
-}
-
-func (m *Member) activate_member() {
-	m.talk = m.Sync(m.Id, m.Username, m.Email, m.Name)
-	if m.talk == nil {
-		log.Panicf("Invalid talk user: (%d) %s <%s>\n", m.Id, m.Username,
-			m.Email)
-	}
-	m.talk.Activate()
-	m.set_avatar_url(m.talk.Avatar_url())
 }
 
 func (m *Member) Talk_user() *talk.Talk_user {

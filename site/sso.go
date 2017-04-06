@@ -116,6 +116,8 @@ func sso_reset_handler(p *page) {
 		p.http_error(403)
 		return
 	}
+	p.Data["username"] = p.FormValue("username")
+	p.Data["email"] = p.FormValue("email")
 	if token := p.FormValue("token"); token != "" {
 		p.Data["token"] = token
 		m := p.Get_member_from_reset_token(token)
@@ -133,9 +135,12 @@ func sso_reset_handler(p *page) {
 	m := p.Get_member_by_username(p.PostFormValue("username"))
 	if m == nil {
 		p.Data["username_error"] = "Invalid username"
+		delete(p.Data, "username")
 		return
 	} else if p.PostFormValue("email") != m.Email {
-		p.Data["email_error"] = "Incorrect E-mail address for " + p.PostFormValue("username")
+		p.Data["email_error"] = "Incorrect E-mail address for " +
+			p.PostFormValue("username")
+		delete(p.Data, "email")
 		return
 	}
 	m.Send_password_reset()
@@ -147,10 +152,12 @@ func sso_verify_email_handler(p *page) {
 	p.Data["username"] = p.FormValue("username")
 	p.Data["email"] = p.FormValue("email")
 	if token := p.FormValue("token"); token != "" {
-		if !p.Verify_email(token) {
+		m, email := p.Get_member_from_verification_token(token)
+		if m == nil {
 			p.Data["token_error"] = true
 			return
 		}
+		m.Verify_email(email)
 		p.redirect = "/sso"
 		return
 	}
@@ -172,7 +179,8 @@ func sso_verify_email_handler(p *page) {
 		delete(p.Data, "email")
 		p.Data["email_error"] = "E-mail address already verified"
 		return
-	} else if available, err := p.Check_email_availability(p.PostFormValue("email")); !available {
+	} else if available, err := p.Check_email_availability(p.PostFormValue("email"));
+		!available {
 		delete(p.Data, "email")
 		p.Data["email_error"] = err
 		return

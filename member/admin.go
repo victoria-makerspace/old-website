@@ -53,11 +53,8 @@ func (a *Member) Approve_member(m *Member) {
 		log.Panic(err);
 	}
 	m.Approved = true
-	if m.Verified_email() {
-		if m.Talk_user() == nil {
-			m.activate_member()
-		}
-		m.Talk_user().Add_to_group("Members")
+	if m.Talk_user() != nil {
+		m.talk.Add_to_group("Members")
 	}
 	if m.Membership_invoice != nil {
 		m.Payment().Approve_pending_membership(m.Membership_invoice)

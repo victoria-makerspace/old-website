@@ -27,7 +27,7 @@ func join_handler(p *page) {
 	//TODO: don't create talk user until email has
 	//	been verified, and delete all accounts with pending e-mail verifications
 	//	for the same e-mail when one account verifies that e-mail address.
-	m, err := p.New_member(username, email, name, p.PostFormValue("password"))
+	m, err := p.New_member(username, email, name)
 	for k, v := range err {
 		p.Data[k] = v
 	}
@@ -35,7 +35,9 @@ func join_handler(p *page) {
 		log.Printf("Failed to create member: %s <%s>\n", username, email)
 		return
 	}
+	m.Set_password(p.PostFormValue("password"))
 	log.Printf("New member: (%d) %s\n", m.Id, username)
+	m.Send_email_verification(email)
 	p.redirect = "/sso/verify-email?sent=true&username=" +
 		url.QueryEscape(username) + "&email=" + url.QueryEscape(email)
 }

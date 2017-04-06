@@ -1,12 +1,15 @@
 package site
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
+	"time"
+	"github.com/vvanpo/makerspace/member"
 )
 
 func init() {
 	init_handler("admin", admin_handler, "/admin")
-	init_handler("admin-upload", member_upload_handler, "/admin/upload")
 }
 
 func (p *page) must_be_admin() bool {
@@ -24,8 +27,8 @@ func admin_handler(p *page) {
 	if !p.must_be_admin() {
 		return
 	}
-	if p.PostFormValue("approve_membership") != "" {
-		member_id, err := strconv.Atoi(p.PostFormValue("approve_membership"))
+	if p.PostFormValue("approve-membership") != "" {
+		member_id, err := strconv.Atoi(p.PostFormValue("approve-membership"))
 		if err != nil {
 			p.http_error(400)
 			return
@@ -37,8 +40,10 @@ func admin_handler(p *page) {
 			p.http_error(400)
 			return
 		}
-	} else if p.PostFormValue("decline_membership") != "" {
+	} else if p.PostFormValue("decline-membership") != "" {
 
+	} else if p.PostFormValue("member-upload") != "" {
+		member_upload_handler(p)
 	}
 }
 
@@ -47,9 +52,72 @@ func member_upload_handler(p *page) {
 		p.http_error(400)
 		return
 	}
-	if !p.must_be_admin() {
-		return
+	type new_member struct{
+		line int
+		username, name, email string
+		date time.Time
+		free bool
+		verified bool
 	}
-	p.redirect = "/admin"
-	println(p.PostFormValue("members"))
+	new_members := make([]new_member, 0)
+	lines := strings.Split(p.PostFormValue("member-upload"), "\n")
+	line_error := make([][]string, len(lines))
+	line_success := make([]*member.Member, len(lines))
+	for i, line := range lines {
+		line := strings.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
+		fields := strings.Split(line, ",")
+		if len(fields) < 3 {
+			line_error[i] = []string{"Invalid: not enough fields"}
+			continue
+		}
+		nm := new_member{
+			line: i,
+			username: strings.TrimSpace(fields[0]),
+			name: strings.TrimSpace(fields[1]),
+			email: strings.TrimSpace(fields[2])}
+		for j, field := range fields[3:] {
+			field := strings.TrimSpace(field)
+			if field == "free" {
+				nm.free = true
+			} else if field == "verified" {
+				nm.verified = true
+			} else if t, err := time.Parse("2006-01-02", field); err == nil {
+				nm.date = t
+			} else {
+				line_error[i] = []string{"Field " + fmt.Sprint(j) +
+					" invalid: " + field}
+				break
+			}
+		}
+		new_members = append(new_members, nm)
+	}
+	for _, nm := range new_members {
+		m, err := p.New_member(nm.username, nm.email, nm.name)
+		if m == nil {
+			line_error[nm.line] = make([]string, 0)
+			for _, v := range err {
+				line_error[nm.line] = append(line_error[nm.line], v)
+			}
+			continue;
+		}
+		if !nm.date.IsZero() {
+			m.Set_registration_date(nm.date)
+		}
+		if nm.verified {
+			m.Verify_email(nm.email)
+		} else {
+			m.Send_email_verification(nm.email)
+		}
+		if nm.free {
+			p.Approve_member(m)
+		}
+		line_success[nm.line] = m
+		lines = append(lines[:nm.line], lines[nm.line+1:]...)
+	}
+	p.Data["lines"] = lines
+	p.Data["line_error"] = line_error
+	p.Data["line_success"] = line_success
 }
