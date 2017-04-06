@@ -6,7 +6,7 @@
           <a href="/member/{{.Id}}">@{{.Username}}</a>'s profile
         </h3>
         <h4>Membership</h4>
-        <form action="/admin/account/{{.Id}}" method="post" class="mx-2">
+        <form action="/admin/account/{{.Id}}" method="post" class="mx-2 mb-3">
           <div class="mb-2 row">
             <span class="col col-sm-4 font-weight-bold">Type:</span>
             <div class="col text-capitalize">
@@ -20,11 +20,11 @@
   {{end}}
             </div>
           </div>
-          <div class="mb-3 row">
+          <div class="mb-2 row">
   {{if .Approved}}
             <span class="col-sm-4 font-weight-bold">Approved by:</span>
             <div class="col-sm-8">
-              <a href="/member/{{.Id}}">@{{.Approved_by.Username}}</a> on {{.Approved_on.Format "January 2, 2006"}}
+              <a href="/member/{{.Approved_by.Id}}">@{{.Approved_by.Username}}</a> on {{.Approved_on.Format "January 2, 2006"}}
             </div>
   {{else if .Membership_invoice}}
             <span class="col-sm-4 font-weight-bold">Pending approval:</span>
@@ -41,9 +41,10 @@
   {{end}}
           </div>
         </form>
-        <h4>Invoices</h4>
   {{with .Payment}}
-        <table class="mx-2 table table-sm table-responsive text-nowrap">
+    {{if .Invoices}}
+        <h4>Invoices</h4>
+        <table class="mb-3 mx-2 table table-sm table-responsive text-nowrap">
           <thead>
             <tr>
               <th>Description</th>
@@ -53,24 +54,24 @@
             </tr>
           </thead>
           <tbody>
-    {{with $.Data.member.Membership_invoice}}
+      {{with $.Data.member.Membership_invoice}}
             <tr>  
               <td>{{.Description}}</td>
               <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
               <td>
-      {{if .Start_date.IsZero}}
+        {{if .Start_date.IsZero}}
                 <em class="text-muted">Pending approval</em>
-      {{else}}
+        {{else}}
                 {{.Start_date.Format "2006-01-02"}}
-      {{end}}
+        {{end}}
               </td>
               <td>
                 <button type="submit" name="terminate_membership" class="btn btn-sm btn-danger">Terminate</button>
               </td>
             </tr>
-    {{end}}
-    {{range .Invoices}}
-      {{if ne .Category "membership"}}
+      {{end}}
+      {{range .Invoices}}
+        {{if ne .Category "membership"}}
             <tr>  
               <td>{{.Description}}</td>
               <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
@@ -79,10 +80,11 @@
                 <button type="submit" name="terminate" value="{{.Id}}" class="btn btn-sm btn-danger">Terminate</button>
               </td>
             </tr>
+        {{end}}
       {{end}}
-    {{end}}
           </tbody>
         </table>
+    {{end}}
   {{end}}
         <h4>Account information</h4>
         <form action="/member/account" method="post" class="mx-2">
@@ -151,7 +153,7 @@
             </div>
           </div>
   {{with .Talk_user}}
-          <div class="mb-3 row align-items-end">
+          <div class="mb-2 row align-items-end">
             <span class="col-sm-4 font-weight-bold">Talk forum:</span>
             <span class="col-sm-8">
               <a href="{{.Talk_api.Path}}/u/{{urlquery .Username}}/preferences">

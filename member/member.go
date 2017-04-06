@@ -17,6 +17,7 @@ type Member struct {
 	Username        string
 	Name            string
 	Email           string
+	Key_card        string
 	Avatar_tmpl     string
 	Telephone       string
 	Agreed_to_terms bool
@@ -36,7 +37,7 @@ type Member struct {
 //TODO: check corporate account
 func (ms *Members) Get_member_by_id(id int) *Member {
 	m := &Member{Id: id, Members: ms}
-	var email, password_key, password_salt, avatar_tmpl sql.NullString
+	var email, key_card, password_key, password_salt, avatar_tmpl sql.NullString
 	var approved_at pq.NullTime
 	if err := m.QueryRow(
 		"SELECT"+
@@ -45,6 +46,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"	password_key,"+
 			"	password_salt,"+
 			"	email,"+
+			"	key_card,"+
 			"	avatar_tmpl,"+
 			"	agreed_to_terms,"+
 			"	registered,"+
@@ -53,8 +55,8 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"FROM member "+
 			"WHERE id = $1",
 		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &email,
-		&avatar_tmpl, &m.Agreed_to_terms, &m.Registered, &m.Gratuitous,
-		&approved_at);
+		&key_card, &avatar_tmpl, &m.Agreed_to_terms, &m.Registered,
+		&m.Gratuitous, &approved_at);
 		err != nil {
 		if err == sql.ErrNoRows {
 			return nil
@@ -64,6 +66,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 	m.password_key = password_key.String
 	m.password_salt = password_salt.String
 	m.Email = email.String
+	m.Key_card = key_card.String
 	m.Avatar_tmpl = avatar_tmpl.String
 	if approved_at.Valid {
 		m.Approved = true
@@ -138,6 +141,32 @@ func (m *Member) Set_registration_date(date time.Time) {
 		"WHERE id = $2", date, m.Id); err != nil {
 		log.Panic(err)
 	}
+}
+
+var key_card_rexp = regexp.MustCompile(`^[0-9]{2}:[0-9]{5}$`)
+
+func (m *Member) Set_key_card(key_card string) error {
+	if !key_card_rexp.MatchString(key_card) {
+		return fmt.Errorf("Invalid key-card format")
+	}
+	var n int
+	if err := m.QueryRow(
+		"SELECT COUNT(*) "+
+			"FROM member "+
+			"WHERE key_card = $1",
+		key_card).Scan(&n); err != nil {
+		log.Panic(err)
+	}
+	if n != 0 {
+		return fmt.Errorf("Key-card already in use")
+	}
+	m.Key_card = key_card
+	if _, err := m.Exec("UPDATE member "+
+		"SET key_card = $1 "+
+		"WHERE id = $2", key_card, m.Id); err != nil {
+		log.Panic(err)
+	}
+	return nil
 }
 
 func (m *Member) set_email(email string) {

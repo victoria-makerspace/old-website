@@ -12,6 +12,7 @@ CREATE TABLE member (
 	-- NULL indicates unverified e-mail
 	-- TODO: e-mail uniqueness requires case-insensitive check
 	email text UNIQUE,
+	key_card character(8) UNIQUE,
 	avatar_tmpl text,
 	telephone text,
 	agreed_to_terms boolean NOT NULL DEFAULT false,

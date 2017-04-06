@@ -58,12 +58,10 @@ func billing_handler(p *page) {
 		//TODO: reason for cancellation: PostFormValue("cancellation_reason")
 		p.Member.Cancel_membership()
 		p.redirect = "/member/billing"
-		return
 	} else if pay_profile == nil {
 		return
 	} else if _, ok := p.PostForm["retry-missed-payments"]; ok {
 		pay_profile.Retry_missed_payments()
-		return
 	} else if _, ok := p.PostForm["register"]; ok {
 		update_student()
 		if p.Member.Membership_invoice != nil {
@@ -72,12 +70,11 @@ func billing_handler(p *page) {
 		}
 		p.New_membership_invoice()
 		p.redirect = "/member/billing"
-		return
 	} else if _, ok := p.PostForm["terminate"]; ok {
 		id, _ := strconv.Atoi(p.PostFormValue("terminate"))
 		if bill := pay_profile.Get_bill(id); bill != nil {
 			pay_profile.Cancel_recurring_bill(bill)
 		}
-		// Redirect not really necessary as double-submission is harmless.
+		p.redirect = "/member/billing"
 	}
 }

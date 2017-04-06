@@ -45,7 +45,7 @@
           <span class="col-sm-4 font-weight-bold">Approved by:</span>
           <div class="col-sm-8">
   {{if .Member.Approved}}
-            <a href="/member/{{.Id}}">@{{.Member.Approved_by.Username}}</a> on {{.Member.Approved_on.Format "January 2, 2006"}}
+            <a href="/member/{{.Member.Approved_by.Id}}">@{{.Member.Approved_by.Username}}</a> on {{.Member.Approved_on.Format "January 2, 2006"}}
   {{else}}
             <em class="text-muted">Pending approval</em>
   {{end}}
