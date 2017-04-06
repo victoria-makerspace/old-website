@@ -40,6 +40,7 @@ type Talk_user struct {
 	Admin          bool
 	Avatar_tmpl    string
 	Title          string
+	Groups         map[string]int
 	Website_url    string
 	Website_name   string
 	Location       string
@@ -53,11 +54,16 @@ func (api *Talk_api) parse_user(external_id int, u map[string]interface{}) *Talk
 	t.id = int(u["id"].(float64))
 	t.Username = u["username"].(string)
 	t.Admin = u["admin"].(bool)
+	t.Avatar_tmpl = u["avatar_template"].(string)
 	t.Title, _ = u["title"].(string)
+	t.Groups = make(map[string]int)
+	for _, group := range u["groups"].([]interface{}) {
+		g := group.(map[string]interface{})
+		t.Groups[g["name"].(string)] = int(g["id"].(float64))
+	}
 	t.Website_url, _ = u["website"].(string)
 	t.Website_name, _ = u["website_name"].(string)
 	t.Location, _ = u["location"].(string)
-	t.Avatar_tmpl = u["avatar_template"].(string)
 	if card, ok := u["card_background"].(string); ok {
 		t.Card_bg_url = card
 	}
@@ -151,47 +157,34 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 	return msgs
 }
 
-func (t *Talk_user) Add_to_group(group string) {
-	if _, ok := t.Groups()[group]; !ok {
+func (t *Talk_user) Add_to_group(group string) error {
+	return t.Talk_api.Add_to_group(group, t)
+}
+
+func (t *Talk_user) Remove_from_group(group string) {
+	if _, ok := t.Group[group]; !ok {
+		// Not in group
+		return
+	}
+	gid, ok := t.All_groups()[group]
+	if !ok {
 		log.Printf("'%s' is not a valid group.\n", group)
 		return
 	}
 	form := url.Values{}
-	form.Add("user_ids", fmt.Sprint(t.id))
-	data, err := t.do_form("PUT", "/groups/"+fmt.Sprint(t.Groups()[group])+
-		"/members", form)
+	form.Set("user_id", fmt.Sprint(t.id))
+	data, err := t.do_form("DELETE", "/groups/"+fmt.Sprint(gid)+"/members",
+		form)
 	if err != nil {
-		//TODO: propagate errors
+		log.Printf("Failed to remove %s from Talk group %s: %q", t.Username,
+			group, err)
+		return
 	}
 	if j, ok := data.(map[string]interface{}); ok {
 		if _, ok := j["success"]; ok {
 			return
 		}
 	}
-	log.Printf("Talk error on adding %s to group %s: %q\n", t.Username,
-		group, data, err)
-}
-
-func (t *Talk_user) Remove_from_group(group string) {
-	if _, ok := t.Groups()[group]; !ok {
-		log.Printf("'%s' is not a valid group.\n", group)
-		return
-	}
-	form := url.Values{}
-	form.Set("user_id", fmt.Sprint(t.id))
-	data, err := t.do_form("DELETE", "/groups/"+fmt.Sprint(t.Groups()[group])+
-		"/members", form)
-	if err != nil {
-		log.Printf("Failed to remove %s from Talk group %s: %q", t.Username,
-			group, err)
-		return
-	}
-	j, ok := data.(map[string]interface{})
-	if ok {
-		if _, ok := j["success"]; ok {
-			return
-		}
-	}
 	log.Printf("Talk error on removing %s from group %s: %q\n",
-		t.Username, group, j)
+		t.Username, group, data)
 }

@@ -44,7 +44,9 @@ func (a *Member) Approve_member(m *Member) {
 	}
 	m.Approved = true
 	if m.Talk_user() != nil {
-		m.talk.Add_to_group("Members")
+		if err := m.talk.Add_to_group("Members"); err != nil {
+			log.Println(err)
+		}
 	}
 	if m.Membership_invoice != nil {
 		m.Payment().Approve_pending_membership(m.Membership_invoice)

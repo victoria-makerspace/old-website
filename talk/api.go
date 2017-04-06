@@ -139,7 +139,7 @@ func (api *Talk_api) Message_member(title, message string, users ...*Talk_user) 
 }
 
 // Discourse groups as groups[name] == id
-func (api *Talk_api) Groups() map[string]int {
+func (api *Talk_api) All_groups() map[string]int {
 	if data, err := api.get_json("/admin/groups.json", true); err == nil {
 		if j, ok := data.([]interface{}); ok {
 			groups := make(map[string]int)
@@ -155,13 +155,15 @@ func (api *Talk_api) Groups() map[string]int {
 }
 
 func (api *Talk_api) Add_to_group(group string, users ...*Talk_user) error {
-	gid, ok := api.Groups()[group]
+	gid, ok := api.All_groups()[group]
 	if !ok {
 		return fmt.Errorf("'%s' is not a valid group", group)
 	}
 	usernames := make([]string, len(users))
 	for i, t := range users {
-		usernames[i] = url.QueryEscape(t.Username)
+		if _, ok := t.Groups[group]; !ok {
+			usernames[i] = url.QueryEscape(t.Username)
+		}
 	}
 	form := url.Values{}
 	form.Add("usernames", strings.Join(usernames, ","))
