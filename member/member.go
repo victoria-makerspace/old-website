@@ -10,6 +10,7 @@ import (
 	"log"
 	"strings"
 	"time"
+	"regexp"
 )
 
 type Member struct {
@@ -37,8 +38,11 @@ type Member struct {
 //TODO: check corporate account
 func (ms *Members) Get_member_by_id(id int) *Member {
 	m := &Member{Id: id, Members: ms}
-	var email, key_card, password_key, password_salt, avatar_tmpl sql.NullString
-	var approved_at pq.NullTime
+	var (
+		email, key_card, password_key, password_salt, avatar_tmpl,
+		telephone sql.NullString
+		approved_at pq.NullTime
+	)
 	if err := m.QueryRow(
 		"SELECT"+
 			"	username,"+
@@ -48,6 +52,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"	email,"+
 			"	key_card,"+
 			"	avatar_tmpl,"+
+			"	telephone,"+
 			"	agreed_to_terms,"+
 			"	registered,"+
 			"	gratuitous,"+
@@ -55,7 +60,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"FROM member "+
 			"WHERE id = $1",
 		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &email,
-		&key_card, &avatar_tmpl, &m.Agreed_to_terms, &m.Registered,
+		&key_card, &avatar_tmpl, &telephone, &m.Agreed_to_terms, &m.Registered,
 		&m.Gratuitous, &approved_at);
 		err != nil {
 		if err == sql.ErrNoRows {
@@ -68,6 +73,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 	m.Email = email.String
 	m.Key_card = key_card.String
 	m.Avatar_tmpl = avatar_tmpl.String
+	m.Telephone = telephone.String
 	if approved_at.Valid {
 		m.Approved = true
 	}
@@ -131,6 +137,19 @@ func (m *Member) Set_password(password string) {
 	}
 }
 
+func (m *Member) Set_name(name string) error {
+	if _, err := validate_name(name); err != nil {
+		return err
+	}
+	m.Name = name
+	if _, err := m.Exec("UPDATE member "+
+		"SET name = $1 "+
+		"WHERE id = $2", name, m.Id); err != nil {
+		log.Panic(err)
+	}
+	return nil
+}
+
 func (m *Member) Set_registration_date(date time.Time) {
 	if date.IsZero() {
 		date = time.Now()
@@ -164,6 +183,17 @@ func (m *Member) Set_key_card(key_card string) error {
 	if _, err := m.Exec("UPDATE member "+
 		"SET key_card = $1 "+
 		"WHERE id = $2", key_card, m.Id); err != nil {
+		log.Panic(err)
+	}
+	return nil
+}
+
+//TODO: validate input
+func (m *Member) Set_telephone(tel string) error {
+	m.Telephone = tel
+	if _, err := m.Exec("UPDATE member "+
+		"SET telephone = $1 "+
+		"WHERE id = $2", tel, m.Id); err != nil {
 		log.Panic(err)
 	}
 	return nil

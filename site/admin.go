@@ -29,13 +29,6 @@ func admin_handler(p *page) {
 	if !p.must_be_admin() {
 		return
 	}
-	if p.URL.Path != "/admin" {
-		if !account_path_rexp.MatchString(p.URL.Path) {
-			p.http_error(404)
-			return
-		}
-		manage_account_handler(p)
-	}
 	if p.PostFormValue("approve-membership") != "" {
 		member_id, err := strconv.Atoi(p.PostFormValue("approve-membership"))
 		if err != nil {
@@ -68,8 +61,7 @@ func admin_handler(p *page) {
 				".", member.Talk_user(), p.Member.Talk_user())
 		}
 		member.Cancel_membership()
-	}
-	if p.PostFormValue("member-upload") != "" {
+	} else if p.PostFormValue("member-upload") != "" {
 		member_upload_handler(p)
 	}
 }
@@ -125,6 +117,27 @@ func manage_account_handler(p *page) {
 		if invoice := m.Payment().Get_bill(id); invoice != nil {
 			m.Payment().Cancel_recurring_bill(invoice)
 		}
+	} else if p.PostFormValue("registered") != "" {
+		if registered, err := time.ParseInLocation("2006-01-02",
+			p.PostFormValue("registered"), time.Local); err != nil {
+			p.http_error(400)
+		} else if registered.After(time.Now()) {
+			p.Data["registered_error"] = "Invalid input date"
+		} else {
+			m.Set_registration_date(registered)
+		}
+	} else if name := p.PostFormValue("name"); name != "" {
+		if err := m.Set_name(name); err != nil {
+			p.Data["name_error"] = err
+		}
+	} else if p.PostFormValue("key-card") != "" {
+		if err := m.Set_key_card(p.PostFormValue("key-card")); err != nil {
+			p.Data["key_card_error"] = err
+		}
+	} else if tel := p.PostFormValue("telephone"); tel != "" {
+		if err := m.Set_telephone(tel); err != nil {
+			p.Data["telephone_error"] = err
+		}
 	}
 }
 
@@ -165,7 +178,8 @@ func member_upload_handler(p *page) {
 				nm.free = true
 			} else if field == "verified" {
 				nm.verified = true
-			} else if t, err := time.Parse("2006-01-02", field); err == nil {
+			} else if t, err := time.ParseInLocation("2006-01-02", field,
+				time.Local); err == nil {
 				nm.date = t
 			} else {
 				line_error[i] = []string{"Field " + fmt.Sprint(j) +

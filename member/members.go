@@ -1,6 +1,7 @@
 package member
 
 import (
+	"fmt"
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
@@ -106,6 +107,15 @@ func (ms *Members) Check_email_availability(email string) (available bool, err s
 
 var name_rexp = regexp.MustCompile(`^([\pL\pN\pM\pP]+ ?)+$`)
 
+func validate_name(name string) (bool, error) {
+	if !name_rexp.MatchString(name) {
+		return false, fmt.Errorf("Invalid characters in name")
+	} else if len(name) > 100 {
+		return false, fmt.Errorf("Name must be no more than 100 characters")
+	}
+	return true, nil
+}
+
 // New creates a new user, returns nil and a set of errors on invalid input.
 //	Only checks for e-mail availability, does not send off a verification e-mail
 //	or otherwise store the e-mail address.  The new member is created with an
@@ -116,11 +126,8 @@ func (ms *Members) New_member(username, email, name string) (m *Member, err map[
 		Username:      username,
 		Name:          name,
 		Members:       ms}
-	if !name_rexp.MatchString(name) {
-		err["name_error"] = "Invalid characters in name"
-		m = nil
-	} else if len(name) > 100 {
-		err["name_error"] = "Name must be no more than 100 characters"
+	if ok, e := validate_name(name); !ok {
+		err["name_error"] = e.Error()
 		m = nil
 	}
 	if available, e := ms.Check_username_availability(username); !available {

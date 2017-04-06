@@ -56,65 +56,64 @@
         <p class="mx-2 alert alert-warning">You are not currently <a href="/member/billing#Membership-dues">registered</a> as a member.</p>
 {{end}}
         <h3>Account information</h3>
-        <form action="/member/account" method="post" class="mx-2">
+        <div class="mx-2">
           <div class="mb-2 row">
             <span class="col-sm-4 font-weight-bold">Registered:</span>
             <div class="col-sm-8">
               {{.Member.Registered.Format "January 2, 2006"}}
             </div>
           </div>
-          <div class="form-group row{{if .Data.username_error}} has-danger{{end}}">
+          <form action="/member/account" method="post" class="form-group row{{if $.Data.username_error}} has-danger{{end}}">
             <label for="username" class="col-sm-4 col-form-label">Username:</label>
             <div class="col-sm-8">
               <div class="input-group">
                 <span class="input-group-addon">@</span>
                 <input type="text" class="form-control" name="username" minlength="3" maxlength="20" value="{{.Member.Username}}" disabled>
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary" name="username-submit" disabled>Update</button>
+                  <button type="submit" class="btn btn-sm btn-primary" disabled>Update</button>
                 </span>
               </div>
               <small class="form-control-feedback{{with .Data.username_error}} show">{{.}}{{else}}">{{end}}</small>
             </div>
-          </div>
-          <div class="form-group row{{if .Data.email_error}} has-danger{{end}}">
+          </form>
+          <form action="/sso/verify-email" method="post" class="form-group row">
             <label for="email" class="col-sm-4 col-form-label">E-mail:</label>
             <div class="col-sm-8">
               <div class="input-group">
                 <span class="input-group-addon glyphicons glyphicons-envelope"></span>
                 <input type="email" class="form-control" name="email" value="{{.Member.Email}}">
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary" name="email-submit" formaction="/sso/verify-email">Verify</button>
+                  <button type="submit" class="btn btn-sm btn-primary">Verify</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with .Data.email_error}} show">{{.}}{{else}}">{{end}}</small>
             </div>
-          </div>
-          <div class="form-group row{{if .Data.name_error}} has-danger{{end}}">
-            <label for="email" class="col-sm-4 col-form-label">Name:</label>
+          </form>
+          <form action="/member/account" method="post" class="form-group row{{if $.Data.name_error}} has-danger{{end}}">
+            <label for="name" class="col-sm-4 col-form-label">Name:</label>
             <div class="col-sm-8">
               <div class="input-group">
                 <span class="input-group-addon glyphicons glyphicons-user"></span>
                 <input type="text" class="form-control" name="name" value="{{.Member.Name}}" maxlength="100">
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary" name="name-submit">Update</button>
+                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
               <small class="form-control-feedback{{with .Data.name_error}} show">{{.}}{{else}}">{{end}}</small>
             </div>
-          </div>
-          <div class="form-group row{{if .Data.telephone_error}} has-danger{{end}}">
+          </form>
+          <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.telephone_error}} has-danger{{end}}">
             <label for="telephone" class="col-sm-4 col-form-label">Telephone:</label>
             <div class="col-sm-8">
               <div class="input-group">
                 <span class="input-group-addon glyphicons glyphicons-iphone"></span>
-                <input type="tel" class="form-control" name="telephone" value="{{.Member.Telephone}}">
+                <input type="tel" class="form-control" name="telephone" value="{{.Telephone}}">
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary" name="telephone-submit">Update</button>
+                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with .Data.telephone_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback{{with $.Data.telephone_error}} show">{{.}}{{else}}">{{end}}</small>
             </div>
-          </div>
+          </form>
 {{with .Talk_user}}
           <div class="mb-1 row align-items-center">
             <span class="col-4 font-weight-bold">Avatar:</span>
@@ -133,7 +132,7 @@
             </span>
           </div>
 {{end}}
-        </form>
+        </div>
         <h3>Update password</h3>
         <form action="/member/account" method="post" class="mx-2">
           <div class="form-group row{{if .Data.old_password_error}} has-danger{{end}}">
