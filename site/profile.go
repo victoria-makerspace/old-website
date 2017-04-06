@@ -22,7 +22,14 @@ func member_list_handler(p *page) {
 	case "/member/list/active":
 		p.Title = "Active members"
 		p.Data["member_group"] = "active"
-		p.Data["member_list"] = p.Get_all_approved_members()
+		p.Data["member_list"] = p.Get_all_active_members()
+	case "/member/list/new":
+		if !p.must_be_admin() {
+			return
+		}
+		p.Title = "New members"
+		p.Data["member_group"] = "new"
+		p.Data["member_list"] = p.Get_all_unverified_members()
 	case "/member/list/unapproved":
 		if !p.must_be_admin() {
 			return
@@ -37,13 +44,6 @@ func member_list_handler(p *page) {
 		p.Title = "Pending-approval members"
 		p.Data["member_group"] = "pending"
 		p.Data["member_list"] = p.Get_all_pending_members()
-	case "/member/list/unverified":
-		if !p.must_be_admin() {
-			return
-		}
-		p.Title = "Unverified members"
-		p.Data["member_group"] = "unverified"
-		p.Data["member_list"] = p.Get_all_unverified_members()
 	}
 }
 

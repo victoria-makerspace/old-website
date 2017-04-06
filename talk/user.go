@@ -162,7 +162,7 @@ func (t *Talk_user) Add_to_group(group string) error {
 }
 
 func (t *Talk_user) Remove_from_group(group string) {
-	if _, ok := t.Group[group]; !ok {
+	if _, ok := t.Groups[group]; !ok {
 		// Not in group
 		return
 	}

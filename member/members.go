@@ -237,10 +237,20 @@ func (ms *Members) Get_all_members() []*Member {
 		"ORDER BY username ASC")
 }
 
+func (ms *Members) Get_all_active_members() []*Member {
+	return ms.get_members(
+		"SELECT m.id "+
+		"FROM member m "+
+		"JOIN session_http s "+
+		"ON s.member = m.id "+
+		"GROUP BY m.id "+
+		"ORDER BY max(s.last_seen) DESC")
+}
+
 func (ms *Members) Get_all_approved_members() []*Member {
 	return ms.get_members(
 		"SELECT id "+
-		"FROM member m "+
+		"FROM member "+
 		"WHERE approved_at IS NOT NULL "+
 		"ORDER BY username ASC")
 }
