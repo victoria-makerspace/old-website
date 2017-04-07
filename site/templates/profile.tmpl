@@ -63,6 +63,13 @@
           </div>
         </div>
         <hr class="m-0">
+  {{with .Talk_user}}
+    {{with .Bio}}
+        <div class="p-3">
+          {{escape .}}
+        </div>
+    {{end}}
+  {{end}}
       </div>
     </div>
   </div>

@@ -24,6 +24,9 @@ var tmpl_funcmap = template.FuncMap{
 	"sub": func(i, j int) int {
 		return i - j
 	},
+	"escape": func(html string) template.HTML {
+		return template.HTML(html)
+	},
 	"now": func() time.Time {
 		return time.Now()
 	},

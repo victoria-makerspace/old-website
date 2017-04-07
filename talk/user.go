@@ -41,6 +41,7 @@ type Talk_user struct {
 	Avatar_tmpl    string
 	Title          string
 	Groups         map[string]int
+	Bio            string
 	Website_url    string
 	Website_name   string
 	Location       string
@@ -61,6 +62,7 @@ func (api *Talk_api) parse_user(external_id int, u map[string]interface{}) *Talk
 		g := group.(map[string]interface{})
 		t.Groups[g["name"].(string)] = int(g["id"].(float64))
 	}
+	t.Bio, _ = u["bio_cooked"].(string)
 	t.Website_url, _ = u["website"].(string)
 	t.Website_name, _ = u["website_name"].(string)
 	t.Location, _ = u["location"].(string)
