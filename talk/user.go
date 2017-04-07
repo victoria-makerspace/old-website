@@ -125,12 +125,10 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 					msg.Url = t.Path + "/t/" + slug + "/" + fmt.Sprint(id)
 					msg.Title = topic["title"].(string)
 					msg.Reply_count = int(topic["posts_count"].(float64)) - 1
-					msg.First_post, _ = time.ParseInLocation(
-						"2006-01-02T15:04:05.999Z",
-						topic["created_at"].(string), time.Local)
-					msg.Last_post, _ = time.ParseInLocation(
-						"2006-01-02T15:04:05.999Z",
-						topic["last_posted_at"].(string), time.Local)
+					msg.First_post, _ = time.Parse("2006-01-02T15:04:05.999Z",
+						topic["created_at"].(string))
+					msg.Last_post, _ = time.Parse("2006-01-02T15:04:05.999Z",
+						topic["last_posted_at"].(string))
 					if topic["unseen"].(bool) == true {
 						msg.Read = false
 					} else if l := topic["highest_post_number"].(float64); l != 0 {
