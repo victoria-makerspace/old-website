@@ -200,6 +200,7 @@ func member_upload_handler(p *page) {
 		}
 		new_members = append(new_members, nm)
 	}
+	verified := make([]*member.Member, 0)
 	for _, nm := range new_members {
 		m, err := p.New_member(nm.username, nm.email, nm.name)
 		if m == nil {
@@ -215,6 +216,8 @@ func member_upload_handler(p *page) {
 		if nm.verified {
 			if err := m.Verify_email(nm.email); err != nil {
 				line_error[nm.line] = []string{"E-mail verification failed"}
+			} else {
+				verified = append(verified, m)
 			}
 		} else {
 			m.Send_email_verification(nm.email)
@@ -238,4 +241,5 @@ func member_upload_handler(p *page) {
 	p.Data["lines"] = lines
 	p.Data["line_error"] = line_error
 	p.Data["line_success"] = line_success
+	p.Member.Send_password_resets(verified...)
 }

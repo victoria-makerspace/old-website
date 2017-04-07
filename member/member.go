@@ -230,9 +230,9 @@ func (m *Member) Avatar_url(size int) string {
 	return strings.Replace(m.Avatar_tmpl, "{size}", fmt.Sprint(size), 1)
 }
 
-func (m *Member) Send_password_reset() {
+func (m *Member) create_reset_token() string {
 	if !m.Verified_email() {
-		return
+		return ""
 	}
 	token := Rand256()
 	if _, err := m.Exec("INSERT INTO reset_password_token (member, token) "+
@@ -240,6 +240,14 @@ func (m *Member) Send_password_reset() {
 		"ON CONFLICT (member) DO UPDATE SET"+
 		"	(token, time) = ($2, now())", m.Id, token); err != nil {
 		log.Panic("Failed to set password reset token: ", err)
+	}
+	return token
+}
+
+func (m *Member) Send_password_reset() {
+	token := m.create_reset_token()
+	if token == "" {
+		return
 	}
 	msg := message{subject: "Makerspace.ca: password reset"}
 	msg.set_from("Makerspace", "admin@makerspace.ca")
