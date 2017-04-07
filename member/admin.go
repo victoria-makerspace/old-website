@@ -38,10 +38,10 @@ func (a *Member) Approve_member(m *Member) {
 	}
 	if _, err := m.Exec(
 		"UPDATE member "+
-		"SET"+
-		"	approved_at = now(),"+
-		"	approved_by = $1 ", a.Id); err != nil {
-		log.Panic(err);
+			"SET"+
+			"	approved_at = now(),"+
+			"	approved_by = $1 ", a.Id); err != nil {
+		log.Panic(err)
 	}
 	m.Approved = true
 	if m.Talk_user() != nil {
@@ -67,11 +67,11 @@ func (a *Member) Send_password_resets(members ...*Member) {
 		msg.add_to(m.Name, m.Email)
 		URL := m.Config["url"].(string)
 		msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
-			"A password reset has been requested for your "+ URL +
+			"A password reset has been requested for your " + URL +
 			" account on behalf of an administrator (@" + a.Username +
-			").\n\n"+
+			").\n\n" +
 			"Reset your password by visiting " +
-			URL + "/sso/reset?token=" + token + ".\n\n"+
+			URL + "/sso/reset?token=" + token + ".\n\n" +
 			"Your password-reset token will expire in " +
 			m.Config["password-reset-window"].(string) +
 			", you can request a new reset token at " +

@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
 )
 
 var config struct {
@@ -27,7 +26,8 @@ func init() {
 	flag.StringVar(&config_filepath, "c", "", "-c [file]")
 	flag.Parse()
 	if config_filepath == "" {
-		config_filepath = path.Dir(os.Args[0]) + "/config.json"
+		gopath := os.Getenv("GOPATH")
+		config_filepath = gopath + "/src/github.com/vvanpo/makerspace/config.json"
 	}
 	config_file, err := ioutil.ReadFile(config_filepath)
 	if err != nil {

@@ -1,16 +1,16 @@
 package member
 
 import (
-	"fmt"
 	"database/sql"
+	"fmt"
+	"github.com/lib/pq"
 	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/talk"
-	"github.com/lib/pq"
-	"net/url"
 	"log"
+	"net/url"
+	"regexp"
 	"strings"
 	"time"
-	"regexp"
 )
 
 type Member struct {
@@ -24,15 +24,15 @@ type Member struct {
 	Agreed_to_terms bool
 	Registered      time.Time
 	Gratuitous      bool
-	Approved		bool
+	Approved        bool
 	*Admin
 	*Student
 	*Members
-	Membership_invoice    *billing.Invoice
-	password_key  string
-	password_salt string
-	talk          *talk.Talk_user
-	payment       *billing.Profile
+	Membership_invoice *billing.Invoice
+	password_key       string
+	password_salt      string
+	talk               *talk.Talk_user
+	payment            *billing.Profile
 }
 
 //TODO: check corporate account
@@ -61,8 +61,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"WHERE id = $1",
 		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &email,
 		&key_card, &avatar_tmpl, &telephone, &m.Agreed_to_terms, &m.Registered,
-		&m.Gratuitous, &approved_at);
-		err != nil {
+		&m.Gratuitous, &approved_at); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -91,8 +90,7 @@ func (ms *Members) Get_member_by_username(username string) *Member {
 		"SELECT id "+
 			"FROM member "+
 			"WHERE username = $1",
-		username).Scan(&member_id);
-		err != nil {
+		username).Scan(&member_id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -270,11 +268,10 @@ func (m *Member) Send_email_verification(email string) {
 	token := Rand256()
 	if _, err := m.Exec(
 		"INSERT INTO email_verification_token"+
-		"	(member, email, token) "+
-		"VALUES ($1, $2, $3) "+
-		"ON CONFLICT (member) DO UPDATE SET"+
-		"	(email, token, time) = ($2, $3, now())", m.Id, email, token);
-		err != nil {
+			"	(member, email, token) "+
+			"VALUES ($1, $2, $3) "+
+			"ON CONFLICT (member) DO UPDATE SET"+
+			"	(email, token, time) = ($2, $3, now())", m.Id, email, token); err != nil {
 		log.Panic("Failed to set email verification token: ", err)
 	}
 	msg := message{subject: "Makerspace.ca: e-mail verification"}
@@ -306,8 +303,8 @@ func (m *Member) Verify_email(email string) error {
 	//TODO: delete unverified members with this pending verification
 	if _, err := m.Exec(
 		"DELETE FROM email_verification_token "+
-		"WHERE email = $1 "+
-		"	OR member = $2", email, m.Id); err != nil {
+			"WHERE email = $1 "+
+			"	OR member = $2", email, m.Id); err != nil {
 		log.Panic(err)
 	}
 	return nil
@@ -347,11 +344,11 @@ func (m *Member) New_membership_invoice() {
 func (m *Member) Cancel_membership() {
 	if _, err := m.Exec(
 		"UPDATE member "+
-		"SET"+
-		"	gratuitous = 'f',"+
-		"	approved_at = NULL,"+
-		"	approved_by = NULL "+
-		"WHERE id = $1", m.Id); err != nil {
+			"SET"+
+			"	gratuitous = 'f',"+
+			"	approved_at = NULL,"+
+			"	approved_by = NULL "+
+			"WHERE id = $1", m.Id); err != nil {
 		log.Panic(err)
 	}
 	m.Gratuitous = false
@@ -371,8 +368,8 @@ func (m *Member) Approved_on() time.Time {
 	}
 	if err := m.QueryRow(
 		"SELECT approved_at "+
-		"FROM member "+
-		"WHERE id = $1", m.Id).Scan(&approved_at); err != nil {
+			"FROM member "+
+			"WHERE id = $1", m.Id).Scan(&approved_at); err != nil {
 		log.Panic(err)
 	}
 	return approved_at
@@ -385,8 +382,8 @@ func (m *Member) Approved_by() *Member {
 	}
 	if err := m.QueryRow(
 		"SELECT approved_by "+
-		"FROM member "+
-		"WHERE id = $1", m.Id).Scan(&approved_by); err != nil {
+			"FROM member "+
+			"WHERE id = $1", m.Id).Scan(&approved_by); err != nil {
 		log.Panic(err)
 	}
 	return m.Get_member_by_id(approved_by)
@@ -398,9 +395,8 @@ func (m *Member) Last_seen() time.Time {
 	var ls pq.NullTime
 	if err := m.QueryRow(
 		"SELECT max(last_seen) "+
-		"FROM session_http "+
-		"WHERE member = $1", m.Id).Scan(&ls);
-		err != nil && err != sql.ErrNoRows {
+			"FROM session_http "+
+			"WHERE member = $1", m.Id).Scan(&ls); err != nil && err != sql.ErrNoRows {
 		log.Panic(err)
 	}
 	return ls.Time

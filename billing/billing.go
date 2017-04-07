@@ -50,8 +50,8 @@ type Fee struct {
 func (b *Billing) get_fees() {
 	b.Fees = make(map[int]*Fee)
 	rows, err := b.db.Query(
-		"SELECT id, category, identifier, description, amount, recurring "+
-		"FROM fee")
+		"SELECT id, category, identifier, description, amount, recurring " +
+			"FROM fee")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -83,7 +83,7 @@ type Invoice struct {
 	Id          int
 	Member      int
 	Paid_by     int
-	Created		time.Time
+	Created     time.Time
 	Start_date  time.Time
 	End_date    time.Time
 	Description string
@@ -95,23 +95,23 @@ type Invoice struct {
 func (b *Billing) Get_bill(id int) *Invoice {
 	inv := &Invoice{Id: id}
 	var (
-		start_date	pq.NullTime
-		end_date	pq.NullTime
+		start_date  pq.NullTime
+		end_date    pq.NullTime
 		description sql.NullString
 		interval    sql.NullString
 		fee_id      sql.NullInt64
 	)
 	if err := b.db.QueryRow(
 		"SELECT"+
-		"	i.member, i.created, i.start_date, i.paid_by,"+
-		"	i.end_date, COALESCE(i.description, f.description),"+
-		"	COALESCE(i.amount, f.amount),"+
-		"	COALESCE(i.recurring, f.recurring),"+
-		"	f.id "+
-		"FROM invoice i "+
-		"LEFT JOIN fee f "+
-		"ON i.fee = f.id "+
-		"WHERE i.id = $1", id).Scan(&inv.Member, &inv.Created,
+			"	i.member, i.created, i.start_date, i.paid_by,"+
+			"	i.end_date, COALESCE(i.description, f.description),"+
+			"	COALESCE(i.amount, f.amount),"+
+			"	COALESCE(i.recurring, f.recurring),"+
+			"	f.id "+
+			"FROM invoice i "+
+			"LEFT JOIN fee f "+
+			"ON i.fee = f.id "+
+			"WHERE i.id = $1", id).Scan(&inv.Member, &inv.Created,
 		&start_date, &inv.Paid_by, &end_date, &description, &inv.Amount,
 		&interval, &fee_id); err != nil {
 		if err == sql.ErrNoRows {
@@ -134,12 +134,11 @@ func (b *Billing) get_bill_by_fee(fee *Fee, paid_by int) *Invoice {
 	var inv_id int
 	if err := b.db.QueryRow(
 		"SELECT i.id "+
-		"FROM invoice i "+
-		"JOIN fee f "+
-		"ON i.fee = f.id "+
-		"WHERE i.fee = $1"+
-		"	AND i.paid_by = $2", fee.Id, paid_by).Scan(&inv_id);
-		err != nil {
+			"FROM invoice i "+
+			"JOIN fee f "+
+			"ON i.fee = f.id "+
+			"WHERE i.fee = $1"+
+			"	AND i.paid_by = $2", fee.Id, paid_by).Scan(&inv_id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -185,8 +184,7 @@ func (p *Profile) get_recurring_bills() {
 			fee_id      sql.NullInt64
 		)
 		if err = rows.Scan(&inv.Id, &inv.Member, &inv.Created, &inv.Start_date,
-			&end_date, &description, &inv.Amount, &inv.Interval, &fee_id);
-			err != nil {
+			&end_date, &description, &inv.Amount, &inv.Interval, &fee_id); err != nil {
 			log.Panic(err)
 		}
 		inv.End_date = end_date.Time
@@ -228,8 +226,7 @@ func (p *Profile) New_invoice(member_id int, amount float64, description string,
 				"VALUES ($1, $2, 'epoch', $3, $4, $5) "+
 				"RETURNING id, created, start_date, end_date",
 			member_id, p.member_id, inv.Description, amount,
-			fee.Id).Scan(&inv.Id, &inv.Created, &inv.Start_date, &inv.End_date);
-			err != nil {
+			fee.Id).Scan(&inv.Id, &inv.Created, &inv.Start_date, &inv.End_date); err != nil {
 			log.Panic(err)
 		}
 	} else {
@@ -250,7 +247,7 @@ func (p *Profile) New_invoice(member_id int, amount float64, description string,
 //TODO: BUG: not all 'fee' records have non-null 'recurring' fields
 func (p *Profile) New_recurring_bill(fee *Fee, member_id int) *Invoice {
 	if fee == nil {
-		log.Panic("Nil fee argument");
+		log.Panic("Nil fee argument")
 	}
 	if fee.Amount < minimum_txn_amount {
 		log.Printf("Invoice for member %d below minimum amount ($%0.2f < $%0.2f)",
@@ -265,8 +262,7 @@ func (p *Profile) New_recurring_bill(fee *Fee, member_id int) *Invoice {
 		Fee:         fee}
 	if err := p.db.QueryRow("INSERT INTO invoice (member, paid_by, "+
 		"fee) VALUES ($1, $2, $3) RETURNING id, created, start_date", member_id,
-		p.member_id, fee.Id).Scan(&inv.Id, &inv.Created, &inv.Start_date);
-		err != nil {
+		p.member_id, fee.Id).Scan(&inv.Id, &inv.Created, &inv.Start_date); err != nil {
 		log.Panic(err)
 	}
 	p.Invoices = append(p.Invoices, inv)
@@ -282,7 +278,7 @@ func (p *Profile) Cancel_recurring_bill(i *Invoice) {
 			p.Invoices = append(p.Invoices[:n], p.Invoices[n+1:]...)
 		}
 	}
-	query := "UPDATE invoice SET end_date = now() WHERE "+
+	query := "UPDATE invoice SET end_date = now() WHERE " +
 		"id = $1 AND (end_date > now() OR end_date IS NULL)"
 	if i.Start_date.IsZero() {
 		query = "DELETE FROM invoice WHERE id = $1"

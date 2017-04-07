@@ -1,10 +1,10 @@
 package member
 
 import (
-	"fmt"
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"fmt"
 	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/talk"
 	"golang.org/x/crypto/scrypt"
@@ -123,9 +123,9 @@ func validate_name(name string) (bool, error) {
 func (ms *Members) New_member(username, email, name string) (m *Member, err map[string]string) {
 	err = make(map[string]string)
 	m = &Member{
-		Username:      username,
-		Name:          name,
-		Members:       ms}
+		Username: username,
+		Name:     name,
+		Members:  ms}
 	if ok, e := validate_name(name); !ok {
 		err["name_error"] = e.Error()
 		m = nil
@@ -148,8 +148,7 @@ func (ms *Members) New_member(username, email, name string) (m *Member, err map[
 			") "+
 			"VALUES ($1, $2) "+
 			"RETURNING id, registered",
-		username, name).Scan(&m.Id, &m.Registered);
-		e != nil {
+		username, name).Scan(&m.Id, &m.Registered); e != nil {
 		log.Panic(e)
 	}
 	return m, nil
@@ -187,8 +186,7 @@ func (ms *Members) Get_member_from_verification_token(token string) (m *Member, 
 	if err := ms.QueryRow(
 		"SELECT member, email, time "+
 			"FROM email_verification_token "+
-			"WHERE token = $1", token).Scan(&member_id, &email, &t);
-		err != nil {
+			"WHERE token = $1", token).Scan(&member_id, &email, &t); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ""
 		}
@@ -231,62 +229,62 @@ func (ms *Members) get_members(query string) []*Member {
 // Grabs all e-mail-verified members
 func (ms *Members) Get_all_members() []*Member {
 	return ms.get_members(
-		"SELECT id "+
-		"FROM member "+
-		"WHERE email IS NOT NULL "+
-		"ORDER BY username ASC")
+		"SELECT id " +
+			"FROM member " +
+			"WHERE email IS NOT NULL " +
+			"ORDER BY username ASC")
 }
 
 func (ms *Members) Get_all_active_members() []*Member {
 	return ms.get_members(
-		"SELECT m.id "+
-		"FROM member m "+
-		"JOIN session_http s "+
-		"ON s.member = m.id "+
-		"GROUP BY m.id "+
-		"ORDER BY max(s.last_seen) DESC")
+		"SELECT m.id " +
+			"FROM member m " +
+			"JOIN session_http s " +
+			"ON s.member = m.id " +
+			"GROUP BY m.id " +
+			"ORDER BY max(s.last_seen) DESC")
 }
 
 func (ms *Members) Get_new_members(limit int) []*Member {
 	return ms.get_members(
-		"SELECT id "+
-		"FROM member "+
-		"ORDER BY registered DESC "+
-		"LIMIT " + fmt.Sprint(limit))
+		"SELECT id " +
+			"FROM member " +
+			"ORDER BY registered DESC " +
+			"LIMIT " + fmt.Sprint(limit))
 }
 
 func (ms *Members) Get_all_approved_members() []*Member {
 	return ms.get_members(
-		"SELECT id "+
-		"FROM member "+
-		"WHERE approved_at IS NOT NULL "+
-		"ORDER BY username ASC")
+		"SELECT id " +
+			"FROM member " +
+			"WHERE approved_at IS NOT NULL " +
+			"ORDER BY username ASC")
 }
 
 func (ms *Members) Get_all_unapproved_members() []*Member {
 	return ms.get_members(
-		"SELECT id "+
-		"FROM member "+
-		"WHERE approved_at IS NULL "+
-		"ORDER BY username ASC")
+		"SELECT id " +
+			"FROM member " +
+			"WHERE approved_at IS NULL " +
+			"ORDER BY username ASC")
 }
 
 func (ms *Members) Get_all_pending_members() []*Member {
 	return ms.get_members(
-		"SELECT i.member "+
-		"FROM invoice i "+
-		"JOIN fee f "+
-		"ON i.fee = f.id "+
-		"WHERE f.category = 'membership'"+
-		"	AND i.start_date IS NULL"+
-		"	AND (i.end_date < now() OR i.end_date IS NULL) "+
-		"ORDER BY i.created DESC")
+		"SELECT i.member " +
+			"FROM invoice i " +
+			"JOIN fee f " +
+			"ON i.fee = f.id " +
+			"WHERE f.category = 'membership'" +
+			"	AND i.start_date IS NULL" +
+			"	AND (i.end_date < now() OR i.end_date IS NULL) " +
+			"ORDER BY i.created DESC")
 }
 
 func (ms *Members) Get_all_unverified_members() []*Member {
 	return ms.get_members(
-		"SELECT id "+
-		"FROM member "+
-		"WHERE email IS NULL "+
-		"ORDER BY registered DESC")
+		"SELECT id " +
+			"FROM member " +
+			"WHERE email IS NULL " +
+			"ORDER BY registered DESC")
 }

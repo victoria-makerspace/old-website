@@ -3,10 +3,10 @@ package site
 import (
 	"fmt"
 	"github.com/vvanpo/makerspace/member"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	"regexp"
 )
 
 func init() {
@@ -58,7 +58,7 @@ func admin_handler(p *page) {
 		if member.Talk_user() != nil {
 			p.Message_member("Your membership was declined",
 				"Your membership request was declined by @"+p.Member.Username+
-				".", member.Talk_user(), p.Member.Talk_user())
+					".", member.Talk_user(), p.Member.Talk_user())
 		}
 		member.Cancel_membership()
 	} else if p.PostFormValue("member-upload") != "" {
@@ -102,14 +102,14 @@ func manage_account_handler(p *page) {
 		if m.Talk_user() != nil {
 			p.Message_member("Your membership was declined",
 				"Your membership request was declined by @"+p.Member.Username+
-				".", m.Talk_user(), p.Member.Talk_user())
+					".", m.Talk_user(), p.Member.Talk_user())
 		}
 		m.Cancel_membership()
 	} else if _, ok := p.PostForm["terminate_membership"]; ok {
 		if m.Talk_user() != nil {
 			p.Message_member("Your membership has been cancelled",
 				"Your membership request was cancelled by @"+p.Member.Username+
-				".", m.Talk_user(), p.Member.Talk_user())
+					".", m.Talk_user(), p.Member.Talk_user())
 		}
 		m.Cancel_membership()
 	} else if _, ok := p.PostForm["terminate"]; ok && m.Payment() != nil {
@@ -158,7 +158,7 @@ func member_upload_handler(p *page) {
 		date                  time.Time
 		free                  bool
 		verified              bool
-		key_card			  string
+		key_card              string
 	}
 	new_members := make([]new_member, 0)
 	lines := strings.Split(p.PostFormValue("member-upload"), "\n")
@@ -193,7 +193,7 @@ func member_upload_handler(p *page) {
 				time.Local); err == nil {
 				nm.date = t
 			} else {
-				line_error[i] = []string{"Field " + fmt.Sprint(j + 4) +
+				line_error[i] = []string{"Field " + fmt.Sprint(j+4) +
 					" invalid: '" + field + "'"}
 				break
 			}
