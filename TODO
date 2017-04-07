@@ -1,7 +1,14 @@
 Site:
-    - SSO for Discourse automatic login
-    - Discourse CSS
     - Projects pages for members
+    - Form validation for CC registration
+    - Panic recovery in txn scheduler
+    - Deactivate accounts (also in Talk) from admin panel
+    - Modify admin permissions
+    - Storage waitlist
+    - Tool wiki
+    - Class booking and calendar
+    - Corporate accounts
+    - Student validation
 
 Tool use hooks:
     - Laser cutter
@@ -19,7 +26,6 @@ Security:
     Cameras:
 
 Payment:
-    - Beanstream API
     - Failed payment notification
     - Membership termination notification and VITP card cancel
 
