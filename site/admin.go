@@ -138,6 +138,12 @@ func manage_account_handler(p *page) {
 		if err := m.Set_telephone(tel); err != nil {
 			p.Data["telephone_error"] = err
 		}
+	} else if p.PostFormValue("update-type") == fmt.Sprint(m.Id) {
+		if m.Admin == nil && p.PostFormValue("type") == "admin" {
+			//TODO
+		}
+	} else if p.PostFormValue("delete-account") == fmt.Sprint(m.Id) {
+		//TODO
 	}
 }
 

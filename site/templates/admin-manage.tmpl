@@ -92,6 +92,34 @@
   {{end}}
         <h4>Account information</h4>
         <div class="mx-2">
+          <form action="/admin/account/{{.Id}}" method="post" class="form-group row">
+            <label for="type" class="col-sm-4 col-form-label">Type:</label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <select class="form-control" name="type">
+  {{if .Admin}}
+                  <option disabled>Non-member</option>
+                  <option value="member">Member</option>
+                  <option selected value="admin">Administrator</option>
+  {{else if not .Approved}}
+                  <option selected>Non-member</option>
+                  <option disabled value="member">Member</option>
+                  <option value="admin">Administrator</option>
+  {{else}}
+                  <option disabled>Non-member</option>
+                  <option selected value="member">Member</option>
+                  <option value="admin">Administrator</option>
+  {{end}}
+                </select>
+                <div class="input-group-btn">
+                  <button type="submit" name="update-type" value="{{.Id}}" class="btn btn-sm btn-primary">Update</button>
+                </div>
+                <div class="input-group-btn">
+                  <button disabled type="submit" name="delete-account" value="{{.Id}}" class="btn btn-sm btn-danger">Delete</button>
+                </div>
+              </div>
+            </div>
+          </form>
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.registered_error}} has-danger{{end}}">
             <label for="registered" class="col-sm-4 col-form-label">Registered:</label>
             <div class="col-sm-8">
@@ -170,13 +198,21 @@
             </div>
           </form>
   {{with .Talk_user}}
-          <div class="mb-2 row align-items-end">
+          <div class="mb-2 row">
             <span class="col-sm-4 font-weight-bold">Talk forum:</span>
             <span class="col-sm-8">
               <a href="{{.Talk_api.Path}}/u/{{urlquery .Username}}/preferences">
                 Account preferences
                 <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
               </a>
+            </span>
+          </div>
+          <div class="mb-2 row">
+            <span class="col-sm-4 font-weight-bold">Talk groups:</span>
+            <span class="col-sm-8">
+    {{range $k, $v := .Groups}}
+              <a href="{{$.Talk_api.Path}}/groups/{{$k}}">{{$k}}</a>,
+    {{end}}
             </span>
           </div>
   {{end}}
