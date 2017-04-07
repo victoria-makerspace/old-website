@@ -46,17 +46,17 @@ func (api *Talk_api) get_json(path string, use_key bool) (interface{}, error) {
 	}
 	rsp, err := http.Get(URL)
 	if err != nil {
-		return nil, fmt.Errorf("Talk HTTP protocol error (GET %s):\n\t%q\n",
+		return nil, fmt.Errorf("Talk HTTP protocol error (GET %s):\n\t%q",
 			path, err)
 	}
 	defer rsp.Body.Close()
 	if rsp.StatusCode != 200 {
-		return nil, fmt.Errorf("Talk HTTP %d error (GET %s)\n",
+		return nil, fmt.Errorf("Talk HTTP %d error (GET %s)",
 			rsp.StatusCode, path)
 	}
 	var data interface{}
 	if err = json.NewDecoder(rsp.Body).Decode(&data); err != nil {
-		return nil, fmt.Errorf("Talk JSON decoding error (GET %s):\n\t%q\n",
+		return nil, fmt.Errorf("Talk JSON decoding error (GET %s):\n\t%q",
 			path, err)
 	}
 	return data, nil
@@ -72,12 +72,12 @@ func (api *Talk_api) do_form(method, path string, form url.Values) (interface{},
 	req, err := http.NewRequest(method, api.Url+path,
 		strings.NewReader(form.Encode()))
 	if err != nil {
-		log.Panicf("do_form input error: %q\n", err)
+		log.Panicf("do_form input error: %q", err)
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	rsp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Talk HTTP protocol error (%s %s):\n\t%q\n",
+		return nil, fmt.Errorf("Talk HTTP protocol error (%s %s):\n\t%q",
 			method, path, err)
 	}
 	defer rsp.Body.Close()
@@ -85,14 +85,14 @@ func (api *Talk_api) do_form(method, path string, form url.Values) (interface{},
 	err = json.NewDecoder(rsp.Body).Decode(&data)
 	if err != nil {
 		if rsp.StatusCode != 200 {
-			return nil, fmt.Errorf("Talk HTTP %d error (%s %s)\n",
+			return nil, fmt.Errorf("Talk HTTP %d error (%s %s)",
 				rsp.StatusCode, method, path)
 		}
-		return nil, fmt.Errorf("Talk JSON decoding error (%s %s):\n\t%q\n",
+		return nil, fmt.Errorf("Talk JSON decoding error (%s %s):\n\t%q",
 			method, path, err)
 	}
 	if rsp.StatusCode != 200 {
-		return nil, fmt.Errorf("Talk HTTP %d error (%s %s): %q\n",
+		return nil, fmt.Errorf("Talk HTTP %d error (%s %s): %q",
 			rsp.StatusCode, method, path, data)
 	}
 	return data, nil
@@ -167,7 +167,7 @@ func (api *Talk_api) Add_to_group(group string, users ...*Talk_user) error {
 	}
 	form := url.Values{}
 	form.Add("usernames", strings.Join(usernames, ","))
-	data, err := api.do_form("PUT", "groups/"+fmt.Sprint(gid)+"/members.json",
+	data, err := api.do_form("PUT", "/groups/"+fmt.Sprint(gid)+"/members.json",
 		form)
 	if err != nil {
 		return fmt.Errorf("Error adding to Talk group '%s': %q\n", group, err)

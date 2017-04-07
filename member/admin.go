@@ -68,7 +68,7 @@ func (a *Member) Send_password_resets(members ...*Member) {
 		URL := m.Config["url"].(string)
 		msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
 			"A password reset has been requested for your "+ URL +
-			"account on behalf of an administrator (@" + a.Username +
+			" account on behalf of an administrator (@" + a.Username +
 			").\n\n"+
 			"Reset your password by visiting " +
 			URL + "/sso/reset?token=" + token + ".\n\n"+

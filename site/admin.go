@@ -223,7 +223,7 @@ func member_upload_handler(p *page) {
 			m.Send_email_verification(nm.email)
 		}
 		if nm.free {
-			p.Approve_member(m)
+			p.Member.Approve_member(m)
 		}
 		if nm.key_card != "" {
 			if err := m.Set_key_card(nm.key_card); err != nil {
