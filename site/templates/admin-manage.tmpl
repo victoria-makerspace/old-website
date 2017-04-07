@@ -5,6 +5,10 @@
         <h3 class="text-center">
           <a href="/member/{{.Id}}">@{{.Username}}</a>'s profile
         </h3>
+        <h6 class="text-center">
+          <span class="text-muted">Last seen</span>
+          {{fmt_last_seen .Last_seen}}
+        </h6>
         <h4>Membership</h4>
         <form action="/admin/account/{{.Id}}" method="post" class="mx-2 mb-3">
           <div class="mb-2 row">

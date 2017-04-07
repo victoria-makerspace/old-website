@@ -52,9 +52,9 @@ CREATE TABLE student (
 CREATE TABLE session_http (
 	token character(64) PRIMARY KEY,
 	member integer NOT NULL REFERENCES member,
-	sign_in_time timestamp(0) NOT NULL DEFAULT now(),
-	last_seen timestamp(0) NOT NULL DEFAULT now(),
-	expires timestamp(0)
+	sign_in_time timestamp(0) with time zone NOT NULL DEFAULT now(),
+	last_seen timestamp(0) with time zone NOT NULL DEFAULT now(),
+	expires timestamp(0) with time zone
 );
 CREATE TABLE payment_profile (
 	member integer PRIMARY KEY REFERENCES member,
@@ -115,8 +115,8 @@ CREATE TABLE invoice (
 );
 CREATE TABLE txn_scheduler_log (
 	id serial PRIMARY KEY,
-	start_time timestamp(0) NOT NULL DEFAULT now(),
-	end_time timestamp(0),
+	start_time timestamp(0) with time zone NOT NULL DEFAULT now(),
+	end_time timestamp(0) with time zone,
 	interval interval NOT NULL,
 	error text,
 	txn_todo integer NOT NULL,
@@ -129,7 +129,7 @@ CREATE TABLE transaction (
 	id integer PRIMARY KEY,
 	profile integer NOT NULL REFERENCES payment_profile,
 	approved boolean NOT NULL,
-	time timestamp(0) NOT NULL DEFAULT now(),
+	time timestamp(0) with time zone NOT NULL DEFAULT now(),
 	amount real NOT NULL,
 	order_id text,
 	comment text,
@@ -141,7 +141,7 @@ CREATE TABLE transaction (
 );
 CREATE TABLE missed_payment (
 	invoice integer NOT NULL REFERENCES invoice,
-	time timestamp(0) NOT NULL DEFAULT now(),
+	time timestamp(0) with time zone NOT NULL DEFAULT now(),
 	transaction integer REFERENCES transaction,
 	logged integer REFERENCES txn_scheduler_log,
 	PRIMARY KEY (invoice, time)
@@ -156,7 +156,7 @@ CREATE TABLE storage (
 	PRIMARY KEY (number, fee)
 );
 CREATE TABLE storage_waitlist (
-	time timestamp(0) NOT NULL DEFAULT now(),
+	time timestamp(0) with time zone NOT NULL DEFAULT now(),
 	identifier integer NOT NULL REFERENCES fee,
 	member integer NOT NULL REFERENCES member,
 	-- NULL signifies waiting for any number

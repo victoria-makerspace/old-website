@@ -383,3 +383,17 @@ func (m *Member) Approved_by() *Member {
 	}
 	return m.Get_member_by_id(approved_by)
 }
+
+// Last_seen returns the last page-load time in a session by member <m>.
+//	ls.IsZero() == true if <m> has never created a session.
+func (m *Member) Last_seen() time.Time {
+	var ls pq.NullTime
+	if err := m.QueryRow(
+		"SELECT max(last_seen) "+
+		"FROM session_http "+
+		"WHERE member = $1", m.Id).Scan(&ls);
+		err != nil && err != sql.ErrNoRows {
+		log.Panic(err)
+	}
+	return ls.Time
+}

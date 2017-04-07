@@ -23,7 +23,10 @@
         <table class="table table-sm table-responsive table-striped" id="dashboard-messages">
           <thead>
             <tr>
-              <th><span style="font-size: 80%" class="align-baseline glyphicons glyphicons-message-forward mr-2"></span>Title</th>
+              <th class="w-100">
+                <span style="font-size: 80%" class="align-baseline glyphicons glyphicons-message-forward mr-1"></span>
+                Title
+              </th>
               <th>Posters</th>
               <th>Replies</th>
               <th>Last reply</th>
@@ -38,18 +41,20 @@
               <td><a href="{{.Url}}">{{.Title}}</a></td>
               <td class="avatars">
                 {{/*TODO: changed out $orig_poster for external-id*/}}
-                <a href="/member/{{$orig_poster}}" title="{{$orig_poster}} - Original poster{{if $last_and_orig}}, Most recent poster{{end}}"{{if $last_and_orig}} style="box-shadow: 0 0 4px 2px #a7d5ec"{{end}}><img src="{{$orig_poster | index .Poster_avatars}}"></a>
+                <a href="{{$talk_url}}/u/{{$orig_poster}}" title="{{$orig_poster}} - Original poster{{if $last_and_orig}}, Most recent poster{{end}}"{{if $last_and_orig}} style="box-shadow: 0 0 4px 2px #a7d5ec"{{end}}><img src="{{$orig_poster | index .Poster_avatars}}"></a>
     {{range $u, $a := .Poster_avatars}}
       {{if not (or (eq $u $orig_poster) (eq $u $last_poster))}}
-                <a class="hidden-xs-down" href="/member/{{$u}}" title="{{$u}}"><img src="{{$a}}"></a>
+                <a class="hidden-xs-down" href="{{$talk_url}}/u/{{$u}}" title="{{$u}}"><img src="{{$a}}"></a>
       {{end}}
     {{end}}
     {{if not $last_and_orig}}
-                <a class="hidden-xs-down" href="/member/{{$last_poster}}" title="{{$last_poster}} - Most recent poster"><img src="{{$last_poster | index .Poster_avatars}}"></a>
+                <a class="hidden-xs-down" href="{{$talk_url}}/u/{{$last_poster}}" title="{{$last_poster}} - Most recent poster"><img src="{{$last_poster | index .Poster_avatars}}"></a>
     {{end}}
               </td>
               <td>{{.Reply_count}}</td>
-              <td><small>{{.Last_post.Format "2006-01-02"}}</small></td>
+              <td>
+                <small>{{fmt_last_seen .Last_post}}</small>
+              </td>
             </tr>
   {{else}}
             <tr><td colspan="4">You have no messages.</td></tr>

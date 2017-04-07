@@ -2,7 +2,7 @@
     <div class="row justify-content-center">
       <div class="col-lg-10 col-xl-8">
         <h4 class="dropdown">
-          <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 {{with .Data.member_group}}
   {{if eq . "all"}}
             All
@@ -14,6 +14,8 @@
             Unapproved
   {{else if eq . "pending"}}
             Pending
+  {{else if eq . "unverified"}}
+            Unverified
   {{end}}
           </button>
           <div class="dropdown-menu">
@@ -24,24 +26,55 @@
     {{if $.Member.Admin}}
             <a class="dropdown-item{{if eq . "unapproved"}} active{{end}}" href="/member/list/unapproved">Unapproved</a>
             <a class="dropdown-item{{if eq . "pending"}} active{{end}}" href="/member/list/pending">Pending</a>
+            <a class="dropdown-item{{if eq . "unverified"}} active{{end}}" href="/member/list/unverified">Unverified</a>
     {{end}}
   {{end}}
 {{end}}
           </div>
           Members
         </h4>
-        <span class="text-muted">{{len .Data.member_list}} {{if ne .Data.member_group "all"}}{{.Data.member_group}} {{end}}members</span>
+{{if ne .Data.member_group "new"}}
+        <span class="text-muted">
+          {{len .Data.member_list}}
+  {{if ne .Data.member_group "all"}}
+          {{.Data.member_group}}
+  {{end}}
+          members
+        </span>
+{{end}}
 {{with .Data.member_list}}
-        <table class="table table-hover text-nowrap member-list">
+        <table class="table table-responsive table-hover text-nowrap member-list">
           <thead>
             <tr>
-              <th></th>
+  {{with $.Data.member_group}}
+    {{if eq . "new"}}
+              <th class="w-100 py-1">
+                <form action="/member/list/new" method="get" class="d-flex">
+                  <div class="input-group" style="width: inherit">
+                    <span class="input-group-btn">
+                      <button type="submit" class="btn btn-sm btn-secondary">Limit</button>
+                    </span>
+                    <input type="number" name="limit" class="form-control" value="{{len $.Data.member_list}}" style="width: 4rem">
+                  </div>
+                </form>
+              </th>
+    {{else}}
+              <th class="w-100"></th>
+    {{end}}
+    {{if eq . "active"}}
+              <th>Last seen</th>
+    {{end}}
+  {{end}}
               <th>Registered</th>
             </tr>
           </thead>
           <tbody>
   {{range .}}
+    {{if eq $.Data.member_group "unverified"}}
+            <tr class="text-muted{{if $.Session}}{{if eq .Id $.Member.Id}} table-info{{end}}{{end}}">
+    {{else}}
             <tr{{if $.Session}}{{if eq .Id $.Member.Id}} class="table-info"{{end}}{{end}}>
+    {{end}}
               <td>
                 <a href="/member/{{.Id}}" class="member-icon">
                   {{with .Avatar_url 48}}
@@ -59,7 +92,18 @@
     {{end}}
                 </div>
               </td>
+    {{if eq $.Data.member_group "active"}}
+              <td>
+                <small class="text-muted">
+                  {{fmt_last_seen .Last_seen}}
+                </small>
+              </td>
+    {{end}}
+    {{if eq $.Data.member_group "new"}}
+              <td>{{fmt_last_seen .Registered}}</td>
+    {{else}}
               <td>{{.Registered.Format "Jan 02, 2006"}}</td>
+    {{end}}
             </tr>
   {{end}}
           </tbody>

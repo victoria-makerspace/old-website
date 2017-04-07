@@ -1,10 +1,12 @@
 package site
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type handler struct {
@@ -21,6 +23,27 @@ var tmpl_funcmap = template.FuncMap{
 	},
 	"sub": func(i, j int) int {
 		return i - j
+	},
+	"now": func() time.Time {
+		return time.Now()
+	},
+	"fmt_last_seen": func(t time.Time) string {
+		if t.IsZero() {
+			return "never"
+		}
+		now := time.Now()
+		if t.Year() == now.Year() {
+			if t.YearDay() == now.YearDay() {
+				if diff := now.Sub(t); diff < time.Minute {
+					return "just now"
+				} else if diff < time.Hour {
+					return fmt.Sprintf("%.f minutes ago", diff.Minutes())
+				}
+				return "today at " + t.Format("3:04 PM")
+			}
+			return t.Format("Mon, Jan 2")
+		}
+		return t.Format("Jan 2, 2006")
 	},
 }
 

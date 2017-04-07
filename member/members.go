@@ -232,7 +232,7 @@ func (ms *Members) get_members(query string) []*Member {
 func (ms *Members) Get_all_members() []*Member {
 	return ms.get_members(
 		"SELECT id "+
-		"FROM member m "+
+		"FROM member "+
 		"WHERE email IS NOT NULL "+
 		"ORDER BY username ASC")
 }
@@ -247,6 +247,14 @@ func (ms *Members) Get_all_active_members() []*Member {
 		"ORDER BY max(s.last_seen) DESC")
 }
 
+func (ms *Members) Get_new_members(limit int) []*Member {
+	return ms.get_members(
+		"SELECT id "+
+		"FROM member "+
+		"ORDER BY registered DESC "+
+		"LIMIT " + fmt.Sprint(limit))
+}
+
 func (ms *Members) Get_all_approved_members() []*Member {
 	return ms.get_members(
 		"SELECT id "+
@@ -258,7 +266,7 @@ func (ms *Members) Get_all_approved_members() []*Member {
 func (ms *Members) Get_all_unapproved_members() []*Member {
 	return ms.get_members(
 		"SELECT id "+
-		"FROM member m "+
+		"FROM member "+
 		"WHERE approved_at IS NULL "+
 		"ORDER BY username ASC")
 }
@@ -278,7 +286,7 @@ func (ms *Members) Get_all_pending_members() []*Member {
 func (ms *Members) Get_all_unverified_members() []*Member {
 	return ms.get_members(
 		"SELECT id "+
-		"FROM member m "+
+		"FROM member "+
 		"WHERE email IS NULL "+
 		"ORDER BY registered DESC")
 }

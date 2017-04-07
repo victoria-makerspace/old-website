@@ -1,1 +1,1 @@
-pg_dump -C -O -a makerspace > data.sql
+pg_dump -C -O -a makerspace > dump.sql
