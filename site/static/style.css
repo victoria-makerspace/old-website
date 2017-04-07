@@ -278,12 +278,6 @@ a:focus .title-link::after {
 .col-form-label {
     font-weight: bold;
 }
-.form-control-feedback {
-    display: none;
-}
-.form-control-feedback.show {
-    display: inline;
-}
 .input-group-addon {
     color: rgba(90,90,90,1);
     font-size: 1rem;
@@ -291,19 +285,15 @@ a:focus .title-link::after {
 .custom-file-control::after {
     content: "" !important;
 }
-.has-danger .form-control-danger,
-.has-success .form-control-success {
-    padding-right: 0.75rem;
-    background-image: none;
+.form-control-feedback {
+    display: none;
+}
+.has-warning .form-control-feedback,
+.has-danger .form-control-feedback {
+    display: inline;
 }
 input[type=month] {
     width: 12rem;
-}
-#credit-card .form-control[data-beanstream-id] {
-    background-image: none;
-}
-#credit-card .form-control-warning {
-    padding-right: 0.75rem;
 }
 #dashboard-messages a {
     vertical-align: middle;

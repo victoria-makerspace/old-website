@@ -39,8 +39,7 @@ $("#billing input[name=rate]").change(function() {
     $("#student").toggleClass("text-muted", !checked);
     input.prop("required", checked);
     if (!checked) {
-        $("#student .form-group").removeClass("has-danger has-success").find(".form-control-feedback").text("").hide();
-        input.removeClass("form-control-danger form-control-success")
+        $("#student .form-group").removeClass("has-danger has-success").find(".form-control-feedback").text("");
         if (!input.attr("value")) input.val("");
     } else {
         $("#institution").focus();
