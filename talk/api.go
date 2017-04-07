@@ -159,11 +159,14 @@ func (api *Talk_api) Add_to_group(group string, users ...*Talk_user) error {
 	if !ok {
 		return fmt.Errorf("'%s' is not a valid group", group)
 	}
-	usernames := make([]string, len(users))
-	for i, t := range users {
+	usernames := make([]string, 0)
+	for _, t := range users {
 		if _, ok := t.Groups[group]; !ok {
-			usernames[i] = url.QueryEscape(t.Username)
+			usernames = append(usernames, url.QueryEscape(t.Username))
 		}
+	}
+	if len(usernames) == 0 {
+		return nil
 	}
 	form := url.Values{}
 	form.Add("usernames", strings.Join(usernames, ","))

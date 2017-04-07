@@ -40,7 +40,8 @@ func (a *Member) Approve_member(m *Member) {
 		"UPDATE member "+
 			"SET"+
 			"	approved_at = now(),"+
-			"	approved_by = $1 ", a.Id); err != nil {
+			"	approved_by = $1"+
+			"WHERE id = $2", a.Id, m.Id); err != nil {
 		log.Panic(err)
 	}
 	m.Approved = true
