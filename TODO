@@ -9,8 +9,11 @@ Site:
     - Class booking and calendar
     - Corporate accounts
     - Student validation
+    - Talk to SSO redirect alert
+    - Verify 
+    - Talk group membership upon login, and admin panel edit option
 
-Tool use hooks:
+Tool-use hooks:
     - Laser cutter
         - Vacuum
         - Compressed air
