@@ -12,6 +12,7 @@ Site:
     - Talk to SSO redirect alert
     - Verify 
     - Talk group membership upon login, and admin panel edit option
+    - Admin panel list all e-mails sent from server
 
 Tool-use hooks:
     - Laser cutter

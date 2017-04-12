@@ -1,19 +1,21 @@
 {
     "site": {
-        "domain":   "",
-        "port":     1080,
-        "dir":      "/home/makerspace/code"
+        "domain":       "localhost",
+        "tls":          false,
+        "port":         1080,
+        "talk-proxy":   "localhost:1081"
     },
     "members": {
         "reserved_usernames":           ["admin", "moderator", "administrator", "mod", "sys", "system", "community", "info", "you", "name", "username", "user", "nickname", "talk", "support", "director", "makerspace"],
-        "reset-window":                 "15m",
-        "email-verification-window":    "15m",
+        "password-reset-window":        "1 week",
+        "email-verification-window":    "1 week",
         "smtp": {
-            "address":  "",
-            "port":     587,
+            "address":  "localhost",
+            "port":     1025,
             "username": "",
             "password": ""
-        }},
+        }
+    },
     "database": {
             "dbname":   "makerspace",
             "host":     "/var/run/postgresql",
@@ -26,7 +28,6 @@
         "reports-api-key":  ""
     },
     "talk": {
-        "base-url":     "",
         "path":         "/talk",
         "admin":        "system",
         "sso-secret":   "",

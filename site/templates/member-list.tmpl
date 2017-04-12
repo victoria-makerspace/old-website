@@ -70,11 +70,7 @@
           </thead>
           <tbody>
   {{range .}}
-    {{if eq $.Data.member_group "unverified"}}
-            <tr class="text-muted{{if $.Session}}{{if eq .Id $.Member.Id}} table-info{{end}}{{end}}">
-    {{else}}
-            <tr{{if $.Session}}{{if eq .Id $.Member.Id}} class="table-info"{{end}}{{end}}>
-    {{end}}
+            <tr{{if $.Session}}{{if eq .Id $.Member.Id}} class="table-info"{{end}}{{end}}{{if not .Verified_email}} class="text-muted"{{end}}>
               <td>
                 <a href="/member/{{.Id}}" class="member-icon">
                   {{with .Avatar_url 48}}

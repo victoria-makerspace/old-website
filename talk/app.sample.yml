@@ -21,14 +21,13 @@ templates:
 ## see https://meta.discourse.org/t/17247 for details
 expose:
   - "1081:80"   # http
-  - "1082:1080"   # mailcatcher
 
 params:
   db_default_text_search_config: "pg_catalog.english"
 
   ## Set db_shared_buffers to a max of 25% of the total memory.
   ## will be set automatically by bootstrap based on detected RAM, or you can override
-  #db_shared_buffers: "256MB"
+  db_shared_buffers: "1GB"
   
   ## can improve sorting performance, but adds memory usage per-connection
   #db_work_mem: "40MB"
@@ -42,10 +41,10 @@ env:
 
   ## How many concurrent web requests are supported? Depends on memory and CPU cores.
   ## will be set automatically by bootstrap based on detected CPUs, or you can override
-  #UNICORN_WORKERS: 3
+  UNICORN_WORKERS: 5
 
   ## TODO: The domain name this Discourse instance will respond to
-  DISCOURSE_HOSTNAME: 'makerspace.ca'
+  DISCOURSE_HOSTNAME: 'localhost'
 
   DISCOURSE_RELATIVE_URL_ROOT: /talk
   
@@ -55,13 +54,13 @@ env:
 
   ## TODO: List of comma delimited emails that will be made admin and developer
   ## on initial signup example 'user1@example.com,user2@example.com'
-  DISCOURSE_DEVELOPER_EMAILS: 'vvanpo@gmail.com'
+  DISCOURSE_DEVELOPER_EMAILS: ''
 
   ## TODO: The SMTP mail server used to validate new accounts and send notifications
-  DISCOURSE_SMTP_ADDRESS: localhost                # required
+  DISCOURSE_SMTP_ADDRESS: '172.17.0.1'               # required
   DISCOURSE_SMTP_PORT: 1025                        # (optional, default 587)
-  #DISCOURSE_SMTP_USER_NAME: user@example.com      # required
-  #DISCOURSE_SMTP_PASSWORD: pa$$word               # required, WARNING the char '#' in pw can cause problems!
+  DISCOURSE_SMTP_USER_NAME:                        # required
+  DISCOURSE_SMTP_PASSWORD:                         # required, WARNING the char '#' in pw can cause problems!
   #DISCOURSE_SMTP_ENABLE_START_TLS: true           # (optional, default true)
   
   ## If you added the Lets Encrypt template, uncomment below to get a free SSL certificate
@@ -88,25 +87,10 @@ hooks:
         cd: $home/plugins
         cmd:
           - git clone https://github.com/discourse/docker_manager.git
-    - exec:
-        cmd:
-          - apt-get install libsqlite3-dev
-          - gem install mailcatcher
 
 ## Any custom commands to run after building
 run:
   - exec: echo "Beginning of custom commands"
-  - exec:
-      cd: $home
-      cmd:
-        - mkdir -p public/talk
-        - cd public/talk && ln -s ../uploads && ln -s ../backups
-  - file:
-      path: /etc/service/mailcatcher/run
-      chmod: "+x"
-      contents: |
-        #!/bin/sh
-        exec mailcatcher --ip=0.0.0.0
   - replace:
       global: true
       filename: /etc/nginx/conf.d/discourse.conf
@@ -122,4 +106,60 @@ run:
           location /talk {
             rewrite ^/talk/?(.*)$ /$1;
           }
+  - file:
+      path: /shared/site_settings.rb
+      contents: |
+        SiteSetting.title='Talk - Victoria Makerspace'
+        SiteSetting.site_description='Talk forum for Victoria Makerspace members'
+        SiteSetting.company_short_name='Victoria Makerspace'
+        SiteSetting.company_full_name='Victoria Makerspace Association'
+        SiteSetting.company_domain='https://makerspace.ca'
+        SiteSetting.exclude_rel_nofollow_domains='makerspace.ca'
+        SiteSetting.site_contact_username='system'
+        SiteSetting.contact_email='admin@makerspace.ca'
+        SiteSetting.notification_email='admin@makerspace.ca'
+        SiteSetting.contact_url='https://makerspace.ca'
+        SiteSetting.logo_url='/logo-wide-text.svg'
+        SiteSetting.logo_small_url='/logo-square-text.svg'
+        SiteSetting.mobile_logo_url='/logo-wide-text.svg'
+        SiteSetting.favicon_url='/favicon-32x32.png'
+        SiteSetting.apple_touch_icon_url='/logo-square-plain-192.png'
+        SiteSetting.emoji_set='google'
+        SiteSetting.external_system_avatars_url='/talk/letter_avatar_proxy/v2/letter/{first_letter}/{color}/{size}.png'
+        SiteSetting.wizard_enabled='false'
+        SiteSetting.new_version_emails='false'
+        SiteSetting.send_welcome_message='false'
+        SiteSetting.long_polling_base_url='/talk/'
+        SiteSetting.allow_restore='true'
+        SiteSetting.force_https='false'
+        SiteSetting.enable_sso='true'
+        SiteSetting.sso_url='http://localhost/sso'
+        SiteSetting.sso_secret=''
+        SiteSetting.sso_overrides_email='true'
+        SiteSetting.sso_overrides_username='true'
+        SiteSetting.sso_overrides_name='true'
+        SiteSetting.login_required='true'
+        SiteSetting.logout_redirect='/sso/sign-out?return_path=/talk'
+        SiteSetting.top_menu='latest|categories|unread'
+        SiteSetting.category_style='bar'
+        SiteSetting.display_name_on_posts='true'
+        SiteSetting.show_email_on_profile='true'
+        SiteSetting.hide_user_profiles_from_public='true'
+        SiteSetting.automatically_download_gravatars='false'
+        SiteSetting.share_links=''
+        SiteSetting.max_attachment_size_kb='10240'
+        SiteSetting.authorized_extensions='*'
+        SiteSetting.reply_by_email_enabled='true'
+        SiteSetting.reply_by_email_address='reply+%{reply_key}@makerspace.ca'
+        SiteSetting.log_mail_processing_failures='true'
+        SiteSetting.email_in='true'
+        SiteSetting.email_in_min_trust='0'
+        SiteSetting.full_name_required='true'
+        SiteSetting.reserved_usernames='admin|moderator|administrator|mod|sys|system|community|info|you|name|username|user|nickname|discourse|discourseorg|discourseforum|support|director|makerspace'
+  - exec:
+      cd: $home
+      cmd:
+        - mkdir -p public/talk
+        - cd public/talk && ln -s ../uploads && ln -s ../backups
+        - rails r /shared/site_settings.rb
   - exec: echo "End of custom commands"
