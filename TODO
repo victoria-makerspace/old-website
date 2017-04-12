@@ -8,7 +8,6 @@ Site:
     - Student validation
     - Join page form validation
     - Verify Talk group membership upon login
-    - Make members list header position:fixed
     - BUG: changing e-mail will remove talk user assocation
     - Admin panel:
         - Modify admin permissions

@@ -136,6 +136,21 @@ img.member-icon-large,
 .member-icon-large .glyphicons::before {
     bottom: 0;
 }
+.member-list-heading {
+    top: 3.5rem;
+}
+.member-list-heading .row {
+    margin-top: 0.25rem;
+    padding: 0.25rem 0;
+    background: rgba(255,255,255,0.8);
+}
+.member-list-heading .dropdown {
+    z-index: 1030;
+    margin: 0;
+}
+.member-list-heading ~ .container {
+    padding-top: 7rem;
+}
 .member-list td:first-child {
     display: flex;
 }

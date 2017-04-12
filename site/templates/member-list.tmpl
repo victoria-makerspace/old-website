@@ -1,38 +1,46 @@
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-10 col-xl-8">
-        <h4 class="dropdown">
-          <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+  <div class="member-list-heading fixed-top">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-xl-8">
+          <h4 class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 {{with .Data.member_group}}
   {{if eq . "all"}}
-            All
+              All
   {{else if eq . "active"}}
-            Active
+              Active
   {{else if eq . "new"}}
-            New
+              New
   {{else if eq . "unapproved"}}
-            Unapproved
+              Unapproved
   {{else if eq . "pending"}}
-            Pending
+              Pending
   {{else if eq . "unverified"}}
-            Unverified
+              Unverified
   {{end}}
-          </button>
-          <div class="dropdown-menu">
-            <a class="dropdown-item{{if eq . "all"}} active{{end}}" href="/member/list">All</a>
-            <a class="dropdown-item{{if eq . "active"}} active{{end}}" href="/member/list/active">Active</a>
-            <a class="dropdown-item{{if eq . "new"}} active{{end}}" href="/member/list/new">New</a>
+            </button>
+            <div class="dropdown-menu">
+              <a class="dropdown-item{{if eq . "all"}} active{{end}}" href="/member/list">All</a>
+              <a class="dropdown-item{{if eq . "active"}} active{{end}}" href="/member/list/active">Active</a>
+              <a class="dropdown-item{{if eq . "new"}} active{{end}}" href="/member/list/new">New</a>
   {{if $.Session}}
     {{if $.Member.Admin}}
-            <a class="dropdown-item{{if eq . "unapproved"}} active{{end}}" href="/member/list/unapproved">Unapproved</a>
-            <a class="dropdown-item{{if eq . "pending"}} active{{end}}" href="/member/list/pending">Pending</a>
-            <a class="dropdown-item{{if eq . "unverified"}} active{{end}}" href="/member/list/unverified">Unverified</a>
+              <a class="dropdown-item{{if eq . "unapproved"}} active{{end}}" href="/member/list/unapproved">Unapproved</a>
+              <a class="dropdown-item{{if eq . "pending"}} active{{end}}" href="/member/list/pending">Pending</a>
+              <a class="dropdown-item{{if eq . "unverified"}} active{{end}}" href="/member/list/unverified">Unverified</a>
     {{end}}
   {{end}}
 {{end}}
-          </div>
-          Members
-        </h4>
+            </div>
+            Members
+          </h4>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-10 col-xl-8">
 {{if ne .Data.member_group "new"}}
         <span class="text-muted">
           {{len .Data.member_list}}

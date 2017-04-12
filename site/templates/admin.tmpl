@@ -43,10 +43,14 @@
           </table>
         </form>
         <h4>
+{{if .PostFormValue "member-upload"}}
+          <a href="#upload-members" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
+{{else}}
           <a href="#upload-members" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
+{{end}}
           Upload Members
         </h4>
-        <form action="/admin" method="post" id="upload-members" class="collapse mx-sm-3">
+        <form action="/admin" method="post" id="upload-members" class="{{if not (.PostFormValue "member-upload")}}collapse {{end}}mx-sm-3">
           <strong>CSV Format:</strong>
           <p class="ml-3 small">
             Username, Name, E-mail <span class="text-muted">{, Registration date = [YYYY-MM-DD], Card # = [XX:XXXXX], [free], [verified]}</span>
