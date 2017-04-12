@@ -3,6 +3,8 @@
       <h4 class="mb-3">Member sign-in</h4>
 {{if .Data.error_verified}}
       <p class="alert alert-danger">{{.Data.username}} is an unverified account, please <a href="/sso/verify-email">verify</a> e-mail address.</p>
+{{else if .Data.sso}}
+      <p class="alert alert-info">You will be redirected to the Talk forum on sign-in.</p>
 {{end}}
       <form action="/sso{{if and .Data.sso .Data.sig}}?sso={{.Data.sso}}&sig={{.Data.sig}}{{end}}" method="post">
         <div class="form-group{{if .Data.error_username}} has-danger{{end}}">

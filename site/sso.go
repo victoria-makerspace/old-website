@@ -40,11 +40,11 @@ func sso_handler(p *page) {
 	if p.Session == nil {
 		// Embeds return_path in the sign-in form
 		p.Data["return_path"] = return_path
+		if p.FormValue("sso") != "" && p.FormValue("sig") != "" {
+			p.Data["sso"] = p.FormValue("sso")
+			p.Data["sig"] = p.FormValue("sig")
+		}
 		if _, ok := p.PostForm["sign-in"]; !ok {
-			if p.FormValue("sso") != "" && p.FormValue("sig") != "" {
-				p.Data["sso"] = p.FormValue("sso")
-				p.Data["sig"] = p.FormValue("sig")
-			}
 			return
 		}
 		m := p.Get_member_by_username(p.PostFormValue("username"))
