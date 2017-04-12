@@ -7,17 +7,17 @@ Site:
     - Calendar for priority use of tools
     - Student validation
     - Talk to SSO redirect alert
-    - Verify Talk group membership upon login, and admin panel edit option
+    - Verify Talk group membership upon login
     - Make members list header position:fixed
     - BUG: changing e-mail will remove talk user assocation
     - Admin panel:
         - Modify admin permissions
-        - drop-down upload members form dynamically
         - Make automatically sent-out e-mails more explicit and with options
         - list all e-mails sent from server
         - Corporate accounts
         - Storage and invoice management
         - Deactivate accounts (also in Talk)
+        - Force e-mail through Talk API on system/admin notices
 
 Tool-use hooks:
     - Laser cutter

@@ -144,6 +144,14 @@ func manage_account_handler(p *page) {
 		}
 	} else if p.PostFormValue("delete-account") == fmt.Sprint(m.Id) {
 		//TODO
+	} else if p.PostFormValue("remove-from-group") == fmt.Sprint(m.Id) {
+		if m.Talk_user() != nil {
+			m.Talk_user().Remove_from_group(p.PostFormValue("group"))
+		}
+	} else if p.PostFormValue("add-to-group") == fmt.Sprint(m.Id) {
+		if m.Talk_user() != nil {
+			m.Talk_user().Add_to_group(p.PostFormValue("group"))
+		}
 	}
 }
 

@@ -158,10 +158,15 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 }
 
 func (t *Talk_user) Add_to_group(group string) error {
-	return t.Talk_api.Add_to_group(group, t)
+	err := t.Talk_api.Add_to_group(group, t)
+	if err == nil {
+		t.Groups[group] = t.All_groups()[group]
+	}
+	return err
 }
 
 func (t *Talk_user) Remove_from_group(group string) {
+	//TODO propagate errors
 	if _, ok := t.Groups[group]; !ok {
 		// Not in group
 		return
@@ -182,6 +187,7 @@ func (t *Talk_user) Remove_from_group(group string) {
 	}
 	if j, ok := data.(map[string]interface{}); ok {
 		if _, ok := j["success"]; ok {
+			delete(t.Groups, group)
 			return
 		}
 	}
