@@ -7,12 +7,14 @@ Site:
     - Storage waitlist
     - Tool wiki
     - Class booking and calendar
+    - Calendar for priority use of tools
     - Corporate accounts
     - Student validation
     - Talk to SSO redirect alert
     - Verify 
     - Talk group membership upon login, and admin panel edit option
     - Admin panel list all e-mails sent from server
+    - Make members list header position:fixed
 
 Tool-use hooks:
     - Laser cutter

@@ -291,17 +291,16 @@ func (m *Member) Send_email_verification(email string) {
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
-func (m *Member) Verify_email(email string) error {
-	m.talk = m.Sync(m.Id, m.Username, email, m.Name)
-	if m.talk == nil {
-		return fmt.Errorf("Failed to sync talk user: (%d) %s <%s>\n", m.Id,
-			m.Username, email)
+func (m *Member) Verify_email(email string) (err error) {
+	m.talk, err = m.Sync(m.Id, m.Username, email, m.Name)
+	if err != nil {
+		return err
 	} else {
 		m.set_avatar_tmpl(m.talk.Avatar_tmpl)
 	}
 	m.set_email(email)
 	//TODO: delete unverified members with this pending verification
-	if _, err := m.Exec(
+	if _, err = m.Exec(
 		"DELETE FROM email_verification_token "+
 			"WHERE email = $1 "+
 			"	OR member = $2", email, m.Id); err != nil {

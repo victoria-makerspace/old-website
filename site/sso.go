@@ -121,9 +121,9 @@ func sso_reset_handler(p *page) {
 	p.Data["email"] = p.FormValue("email")
 	if token := p.FormValue("token"); token != "" {
 		p.Data["token"] = token
-		m := p.Get_member_from_reset_token(token)
-		if m == nil {
-			p.Data["token_error"] = true
+		m, err := p.Get_member_from_reset_token(token)
+		if err != nil {
+			p.Data["token_error"] = err
 		} else if password := p.PostFormValue("password"); password != "" {
 			m.Set_password(password)
 			p.redirect = "/sso"
@@ -153,12 +153,12 @@ func sso_verify_email_handler(p *page) {
 	p.Data["username"] = p.FormValue("username")
 	p.Data["email"] = p.FormValue("email")
 	if token := p.FormValue("token"); token != "" {
-		m, email := p.Get_member_from_verification_token(token)
-		if m == nil {
-			p.Data["token_error"] = true
+		m, email, err := p.Get_member_from_verification_token(token)
+		if err != nil {
+			p.Data["token_error"] = err
 			return
 		}
-		if err := m.Verify_email(email); err != nil {
+		if err = m.Verify_email(email); err != nil {
 			//TODO: determine whether the server failed or discourse rejected
 			//	e-mail address
 			p.Data["server_error"] = true

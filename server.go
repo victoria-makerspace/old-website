@@ -45,7 +45,11 @@ func init() {
 		url = "http://" + url
 	}
 	config.Members["url"] = url
-	config.Talk["url"] = url + config.Talk["path"]
+	if proxy, ok := config.Site["talk-proxy"].(string); ok {
+		config.Talk["url"] = proxy + config.Talk["path"]
+	} else {
+		config.Talk["url"] = url + config.Talk["path"]
+	}
 }
 
 func main() {

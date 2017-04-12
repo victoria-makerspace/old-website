@@ -154,7 +154,18 @@ func (ms *Members) New_member(username, email, name string) (m *Member, err map[
 	return m, nil
 }
 
-func (ms *Members) Get_member_from_reset_token(token string) *Member {
+func parse_duration(w string) (time.Duration, error) {
+	var weeks int
+	if w == "1 week" {
+		w = fmt.Sprintf("%dh", 7 * 24)
+	} else if n, err := fmt.Sscanf(w, "%d weeks", &weeks);
+		n == 1 && err == nil {
+		w = fmt.Sprintf("%dh", 7 * 24 * weeks)
+	}
+	return time.ParseDuration(w)
+}
+
+func (ms *Members) Get_member_from_reset_token(token string) (*Member, error) {
 	var member_id int
 	var t time.Time
 	if err := ms.QueryRow(
@@ -162,48 +173,54 @@ func (ms *Members) Get_member_from_reset_token(token string) *Member {
 			"FROM reset_password_token "+
 			"WHERE token = $1", token).Scan(&member_id, &t); err != nil {
 		if err == sql.ErrNoRows {
-			return nil
+			return nil, fmt.Errorf("Reset token does not exist")
 		}
 		log.Panic(err)
 	}
-	window, err := time.ParseDuration(ms.Config["password-reset-window"].(string))
+	duration, err := parse_duration(ms.Config["password-reset-window"].(string))
 	if err != nil {
 		log.Panic(err)
 	}
-	if time.Now().After(t.Add(window)) {
+	expires := t.Add(duration)
+	if time.Now().After(expires) {
 		if _, err := ms.Exec("DELETE FROM reset_password_token "+
 			"WHERE token = $1", token); err != nil {
 			log.Panic(err)
 		}
-		return nil
+		return nil, fmt.Errorf("Reset token is expired")
 	}
-	return ms.Get_member_by_id(member_id)
+	return ms.Get_member_by_id(member_id), nil
 }
 
-func (ms *Members) Get_member_from_verification_token(token string) (m *Member, email string) {
-	var member_id int
-	var t time.Time
+func (ms *Members) Get_member_from_verification_token(token string) (*Member, string, error) {
+	var (
+		member_id int
+		email string
+		t time.Time
+	)
 	if err := ms.QueryRow(
 		"SELECT member, email, time "+
 			"FROM email_verification_token "+
-			"WHERE token = $1", token).Scan(&member_id, &email, &t); err != nil {
+			"WHERE token = $1", token).Scan(&member_id, &email, &t);
+		err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ""
+			return nil, "", fmt.Errorf("Verification token does not exist")
 		}
 		log.Panic(err)
 	}
-	window, err := time.ParseDuration(ms.Config["email-verification-window"].(string))
+	duration, err := parse_duration(
+		ms.Config["email-verification-window"].(string))
 	if err != nil {
 		log.Panic(err)
 	}
-	if time.Now().After(t.Add(window)) {
+	if time.Now().After(t.Add(duration)) {
 		if _, err := ms.Exec("DELETE FROM email_verification_token "+
 			"WHERE token = $1", token); err != nil {
 			log.Panic(err)
 		}
-		return nil, ""
+		return nil, "", fmt.Errorf("Verification token is expired")
 	}
-	return ms.Get_member_by_id(member_id), email
+	return ms.Get_member_by_id(member_id), email, nil
 }
 
 func (ms *Members) get_members(query string) []*Member {

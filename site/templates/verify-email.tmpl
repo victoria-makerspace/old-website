@@ -3,8 +3,8 @@
 {{if .FormValue "sent"}}
       <p class="alert alert-success">Verification e-mail sent.  Verification tokens expire after {{index .Members.Config "email-verification-window"}}.</p>
 {{end}}
-{{if .Data.token_error}}
-      <p class="alert alert-danger">Invalid reset token.</p>
+{{with .Data.token_error}}
+      <p class="alert alert-danger">{{.}}.</p>
 {{end}}
       <h4 class="mb-3">Re-send verification e-mail</h4>
       <form method="post" action="/sso/verify-email">

@@ -9,7 +9,8 @@ import (
 	"net/url"
 )
 
-func (api *Talk_api) Sync(external_id int, username, email, name string) *Talk_user {
+func (api *Talk_api) Sync(external_id int, username, email, name string) (*Talk_user, error) {
+	err_string := "Talk: failed to sync @" + username + " <" + email + ">"
 	values := url.Values{}
 	values.Set("external_id", fmt.Sprint(external_id))
 	values.Set("username", username)
@@ -20,17 +21,17 @@ func (api *Talk_api) Sync(external_id int, username, email, name string) *Talk_u
 	values.Set("sso", payload)
 	values.Set("sig", sig)
 	data, err := api.do_form("POST", "/admin/users/sync_sso", values)
-	//TODO: propagate errors
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf(err_string + ": %s", err.Error())
 	}
 	if u, ok := data.(map[string]interface{}); ok {
-		if _, ok := u["failed"]; ok {
-			return nil
+		if e, ok := u["failed"].(string); ok {
+			return nil, fmt.Errorf(err_string + ": " + e)
 		}
-		return api.parse_user(external_id, u)
+		//TODO: check for errors
+		return api.parse_user(external_id, u), nil
 	}
-	return nil
+	return nil, fmt.Errorf(err_string)
 }
 
 func (api *Talk_api) Parse_sso_req(q url.Values) (payload url.Values) {

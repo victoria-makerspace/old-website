@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"os"
 	"path/filepath"
 )
@@ -47,17 +48,17 @@ func Serve(config map[string]interface{}, talk *talk.Talk_api,
 	hs.error_tmpl = template.Must(template.ParseFiles(file_path("templates",
 		"error.tmpl")))
 	hs.register_handlers()
-	if host, ok := config["talk-proxy"].(string); ok {
-		hs.talk_proxy(host)
+	if u, ok := config["talk-proxy"].(string); ok {
+		hs.talk_proxy(u)
 	}
 	go log.Panic(hs.ListenAndServe())
 }
 
-func (hs *http_server) talk_proxy(host string) {
-	rp := &httputil.ReverseProxy{}
-	rp.Director = func(r *http.Request) {
-		r.URL.Scheme = "http"
-		r.URL.Host = host
+func (hs *http_server) talk_proxy(proxy string) {
+	u, err := url.Parse(proxy)
+	if err != nil {
+		log.Fatal(err)
 	}
+	rp := httputil.NewSingleHostReverseProxy(u)
 	hs.Handler.(*http.ServeMux).Handle("/talk/", rp)
 }
