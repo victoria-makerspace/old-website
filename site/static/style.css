@@ -137,6 +137,7 @@ img.member-icon-large,
     bottom: 0;
 }
 .member-list-heading {
+    z-index: 1000;
     top: 3.5rem;
 }
 .member-list-heading .row {
