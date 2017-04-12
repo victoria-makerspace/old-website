@@ -6,21 +6,27 @@
           <a href="/member/{{.Id}}">@{{.Username}}</a>'s membership approved.
         </p>
 {{end}}
-{{$pending_approvals := .Get_all_pending_members}}
-        <h4>Pending Membership Approvals</h4>
-        <form action="/admin" method="post" class="mx-sm-3">
+{{with .Get_all_pending_members}}
+        <h4>
+          <a href="#pending-memberships" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
+          Pending Membership Approvals
+          <a href="/member/list/pending">
+            <span class="title-link"></span>
+          </a>
+        </h4>
+        <form action="/admin" method="post" class="collapse show mx-sm-3" id="pending-memberships">
           <table class="table table-sm table-striped table-responsive text-nowrap">
             <thead>
               <tr>
                 <th>Username</th>
-                <th>Name</th>
-                <th>Membership type</th>
+                <th class="w-100">Name</th>
+                <th>Type</th>
                 <th>Registration date</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-{{range $pending_approvals}}
+  {{range .}}
               <tr>
                 <td><a href="/member/{{.Id}}">@{{.Username}}</a></td>
                 <td>{{.Name}}</td>
@@ -31,26 +37,24 @@
                   <button type="submit" name="decline-membership" value="{{.Id}}" class="btn btn-sm btn-danger">Decline</button>
                 </td>
               </tr>
-{{else}}
-              <tr>
-                <td colspan="5">
-                  <em class="text-muted">No pending memberships.</em>
-                </td>
-              </tr>
+  {{end}}
 {{end}}
             </tbody>
           </table>
         </form>
-        <h4>Upload Members</h4>
-        <form action="/admin" method="post" class="mx-sm-3">
+        <h4>
+          <a href="#upload-members" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
+          Upload Members
+        </h4>
+        <form action="/admin" method="post" id="upload-members" class="collapse mx-sm-3">
           <strong>CSV Format:</strong>
-          <p class="ml-3 small text-nowrap">
+          <p class="ml-3 small">
             Username, Name, E-mail <span class="text-muted">{, Registration date = [YYYY-MM-DD], Card # = [XX:XXXXX], [free], [verified]}</span>
           </p>
           <p class="alert alert-info mt-1">
             The fields in braces are optional. Each new user must be input on a separate line.<br>
             <strong>Example:</strong><br>
-              <small class="ml-3 text-nowrap">
+              <small class="ml-3">
                 jsmith01, John Smith, j.smith@gmail.com, 00:00000, free, verified
               </small>
               <br>

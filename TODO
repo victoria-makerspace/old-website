@@ -1,20 +1,23 @@
 Site:
     - Projects pages for members
-    - Form validation for CC registration
     - Panic recovery in txn scheduler
-    - Deactivate accounts (also in Talk) from admin panel
-    - Modify admin permissions
     - Storage waitlist
     - Tool wiki
     - Class booking and calendar
     - Calendar for priority use of tools
-    - Corporate accounts
     - Student validation
     - Talk to SSO redirect alert
-    - Verify 
-    - Talk group membership upon login, and admin panel edit option
-    - Admin panel list all e-mails sent from server
+    - Verify Talk group membership upon login, and admin panel edit option
     - Make members list header position:fixed
+    - BUG: changing e-mail will remove talk user assocation
+    - Admin panel:
+        - Modify admin permissions
+        - drop-down upload members form dynamically
+        - Make automatically sent-out e-mails more explicit and with options
+        - list all e-mails sent from server
+        - Corporate accounts
+        - Storage and invoice management
+        - Deactivate accounts (also in Talk)
 
 Tool-use hooks:
     - Laser cutter

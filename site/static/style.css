@@ -275,6 +275,17 @@ a:focus .title-link::after {
     content: "\E051";
     color: #014c8c;
 }
+.dropdown-chevron {
+    font-size: 1rem;
+    vertical-align: baseline;
+    font-family: "Glyphicons Regular";
+}
+.dropdown-chevron::before {
+    content: "\E601";
+}
+.dropdown-chevron.collapsed::before {
+    content: "\E602";
+}
 .col-form-label {
     font-weight: bold;
 }

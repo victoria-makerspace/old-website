@@ -3,7 +3,7 @@
         "domain":       "localhost",
         "tls":          false,
         "port":         1080,
-        "talk-proxy":   "localhost:1081"
+        "talk-proxy":   "http://localhost:1081"
     },
     "members": {
         "reserved_usernames":           ["admin", "moderator", "administrator", "mod", "sys", "system", "community", "info", "you", "name", "username", "user", "nickname", "talk", "support", "director", "makerspace"],
