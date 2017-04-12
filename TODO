@@ -8,6 +8,7 @@ Site:
     - Student validation
     - Join page form validation
     - Verify Talk group membership upon login
+    - Member search
     - Admin panel:
         - Modify admin permissions
         - Make automatically sent-out e-mails more explicit and with options
@@ -17,7 +18,9 @@ Site:
         - Deactivate accounts (also in Talk)
         - Force e-mail through Talk API on system/admin notices
         - Session & activity log
+        - Reset user password, and mass-reset
     - BUG: changing e-mail will remove talk user assocation
+    - Joining users should only enter their e-mail, upon verification they can fill in username and the like, and it should say which (if any) existing Talk account will get associated
 
 Tool-use hooks:
     - Laser cutter
