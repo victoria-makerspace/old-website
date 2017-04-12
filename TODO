@@ -1,14 +1,13 @@
 Site:
     - Projects pages for members
+    - Calendar for priority use of tools
     - Panic recovery in txn scheduler
     - Storage waitlist
     - Tool wiki
     - Class booking and calendar
-    - Calendar for priority use of tools
     - Student validation
     - Join page form validation
     - Verify Talk group membership upon login
-    - BUG: changing e-mail will remove talk user assocation
     - Admin panel:
         - Modify admin permissions
         - Make automatically sent-out e-mails more explicit and with options
@@ -17,6 +16,8 @@ Site:
         - Storage and invoice management
         - Deactivate accounts (also in Talk)
         - Force e-mail through Talk API on system/admin notices
+        - Session & activity log
+    - BUG: changing e-mail will remove talk user assocation
 
 Tool-use hooks:
     - Laser cutter

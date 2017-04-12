@@ -2,7 +2,6 @@ package site
 
 import (
 	"database/sql"
-	"github.com/lib/pq"
 	"github.com/vvanpo/makerspace/member"
 	"log"
 	"net/http"
@@ -71,9 +70,13 @@ func (p *page) authenticate() {
 		return
 	}
 	var member_id int
-	var expires pq.NullTime
 	// Select non-expired sessions
-	if err := p.db.QueryRow("SELECT member, expires FROM session_http WHERE token = $1 AND (expires > now() OR expires IS NULL)", cookie.Value).Scan(&member_id, &expires); err != nil {
+	if err := p.db.QueryRow(
+		"SELECT member "+
+		"FROM session_http "+
+		"WHERE token = $1"+
+		"	AND (expires > now() OR expires IS NULL)",
+		cookie.Value).Scan(&member_id); err != nil {
 		if err == sql.ErrNoRows {
 			// Invalid session cookie
 			p.unset_session_cookie()
@@ -81,13 +84,16 @@ func (p *page) authenticate() {
 		}
 		log.Panic(err)
 	}
-	p.Session = &Session{Member: p.Get_member_by_id(member_id),
-		token: member.Rand256()}
+	p.Session = &Session{
+		Member: p.Get_member_by_id(member_id),
+		token: cookie.Value}
 	if !p.Session.Member.Verified_email() {
 		log.Panic("Invalid session found from unverified member.")
 	}
-	p.set_session_cookie(p.Session.token, expires.Valid)
-	if _, err := p.db.Exec("UPDATE session_http SET token = $1, last_seen = now(), expires = now() + interval '1 year' WHERE token = $2", p.Session.token, cookie.Value); err != nil {
+	if _, err := p.db.Exec(
+		"UPDATE session_http "+
+		"SET last_seen = now() "+
+		"WHERE token = $1", p.Session.token); err != nil {
 		log.Panic(err)
 	}
 }
@@ -97,7 +103,10 @@ func (p *page) destroy_session() {
 	if p.Session == nil {
 		return
 	}
-	if _, err := p.db.Exec("UPDATE session_http SET expires = 'epoch' WHERE token = $1", p.Session.token); err != nil {
+	if _, err := p.db.Exec(
+		"UPDATE session_http "+
+		"SET expires = 'epoch' "+
+		"WHERE token = $1", p.Session.token); err != nil {
 		log.Panic(err)
 	}
 	p.unset_session_cookie()
