@@ -9,18 +9,21 @@ Site:
     - Join page form validation
     - Verify Talk group membership upon login
     - Member search
+    - Fix read/unread flag on private messages
     - Admin panel:
         - Modify admin permissions
         - Make automatically sent-out e-mails more explicit and with options
-        - list all e-mails sent from server
-        - Corporate accounts
+        - Record and list all e-mails sent from server
+        - Corporate accounts, link corporate members to corporate membership
         - Storage and invoice management
         - Deactivate accounts (also in Talk)
         - Force e-mail through Talk API on system/admin notices
         - Session & activity log
         - Reset user password, and mass-reset
+        - Set membership fees
     - BUG: changing e-mail will remove talk user assocation
     - Joining users should only enter their e-mail, upon verification they can fill in username and the like, and it should say which (if any) existing Talk account will get associated
+    - Use recurring billing API, get rid of custom missed-txn and txn scheduling
 
 Tool-use hooks:
     - Laser cutter
