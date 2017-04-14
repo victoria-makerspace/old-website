@@ -35,11 +35,14 @@ func admin_handler(p *page) {
 			p.http_error(400)
 			return
 		}
-		if member := p.Get_member_by_id(member_id); member == nil {
+		if m := p.Get_member_by_id(member_id); m == nil {
 			p.http_error(400)
-		} else if !member.Approved {
-			p.Member.Approve_member(member)
-			p.Data["Member_approved"] = member
+		} else if m.Get_membership == nil {
+			p.Member.Approve_membership(m)
+			p.Data["Member_approved"] = m
+			if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
+				//TODO
+			}
 		} else {
 			p.http_error(500)
 		}
@@ -50,17 +53,17 @@ func admin_handler(p *page) {
 			p.http_error(400)
 			return
 		}
-		member := p.Get_member_by_id(member_id)
-		if member == nil {
+		m := p.Get_member_by_id(member_id)
+		if m == nil {
 			p.http_error(400)
 			return
 		}
-		if member.Talk_user() != nil {
-			p.Message_member("Your membership was declined",
+		//TODO p.Decline_membership
+		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
+			p.Message_member("Your membership request was declined",
 				"Your membership request was declined by @"+p.Member.Username+
-					".", member.Talk_user(), p.Member.Talk_user())
+					".", m.Talk_user(), p.Member.Talk_user())
 		}
-		member.Cancel_membership()
 	} else if p.PostFormValue("member-upload") != "" {
 		member_upload_handler(p)
 	}
@@ -88,8 +91,11 @@ func manage_account_handler(p *page) {
 		member_id, err := strconv.Atoi(p.PostFormValue("approve-membership"))
 		if err != nil || member_id != m.Id {
 			p.http_error(400)
-		} else if !m.Approved {
-			p.Member.Approve_member(m)
+		} else if m.Get_membership == nil {
+			p.Member.Approve_membership(m)
+			if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
+				//TODO
+			}
 		} else {
 			p.http_error(500)
 		}
@@ -99,24 +105,22 @@ func manage_account_handler(p *page) {
 			p.http_error(400)
 			return
 		}
-		if m.Talk_user() != nil {
-			p.Message_member("Your membership was declined",
+		//TODO p.Decline_membership
+		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
+			p.Message_member("Your membership request was declined",
 				"Your membership request was declined by @"+p.Member.Username+
 					".", m.Talk_user(), p.Member.Talk_user())
 		}
-		m.Cancel_membership()
 	} else if _, ok := p.PostForm["terminate_membership"]; ok {
-		if m.Talk_user() != nil {
+		m.Cancel_membership()
+		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
 			p.Message_member("Your membership has been cancelled",
-				"Your membership request was cancelled by @"+p.Member.Username+
+				"Your membership was cancelled by @"+p.Member.Username+
 					".", m.Talk_user(), p.Member.Talk_user())
 		}
-		m.Cancel_membership()
-	} else if _, ok := p.PostForm["terminate"]; ok && m.Payment() != nil {
-		id, _ := strconv.Atoi(p.PostFormValue("terminate"))
-		if invoice := m.Payment().Get_bill(id); invoice != nil {
-			m.Payment().Cancel_recurring_bill(invoice)
-		}
+	} else if _, ok := p.PostForm["terminate"]; ok {
+		//id, _ := strconv.Atoi(p.PostFormValue("terminate"))
+		//TODO p.Cancel_subscription
 	} else if p.PostFormValue("registered") != "" {
 		if registered, err := time.ParseInLocation("2006-01-02",
 			p.PostFormValue("registered"), time.Local); err != nil {
@@ -231,7 +235,7 @@ func member_upload_handler(p *page) {
 			m.Send_email_verification(nm.email)
 		}
 		if nm.free {
-			p.Member.Approve_member(m)
+			p.Member.Approve_membership(m)
 		}
 		if nm.key_card != "" {
 			if err := m.Set_key_card(nm.key_card); err != nil {

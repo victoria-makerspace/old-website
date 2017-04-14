@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
-	"github.com/vvanpo/makerspace/billing"
+	"github.com/stripe/stripe-go"
 	"github.com/vvanpo/makerspace/talk"
 	"log"
 	"net/url"
@@ -23,16 +23,14 @@ type Member struct {
 	Telephone       string
 	Agreed_to_terms bool
 	Registered      time.Time
-	Gratuitous      bool
-	Approved        bool
 	*Admin
 	*Student
 	*Members
-	Membership_invoice *billing.Invoice
-	password_key       string
-	password_salt      string
-	talk               *talk.Talk_user
-	payment            *billing.Profile
+	customer_id   string
+	customer      *stripe.Customer
+	password_key  string
+	password_salt string
+	talk          *talk.Talk_user
 }
 
 //TODO: check corporate account
@@ -40,8 +38,7 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 	m := &Member{Id: id, Members: ms}
 	var (
 		email, key_card, password_key, password_salt, avatar_tmpl,
-		telephone sql.NullString
-		approved_at pq.NullTime
+		telephone, customer_id sql.NullString
 	)
 	if err := m.QueryRow(
 		"SELECT"+
@@ -55,13 +52,12 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 			"	telephone,"+
 			"	agreed_to_terms,"+
 			"	registered,"+
-			"	gratuitous,"+
-			"	approved_at "+
+			"	stripe_customer_id "+
 			"FROM member "+
 			"WHERE id = $1",
 		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &email,
 		&key_card, &avatar_tmpl, &telephone, &m.Agreed_to_terms, &m.Registered,
-		&m.Gratuitous, &approved_at); err != nil {
+		&customer_id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -73,14 +69,9 @@ func (ms *Members) Get_member_by_id(id int) *Member {
 	m.Key_card = key_card.String
 	m.Avatar_tmpl = avatar_tmpl.String
 	m.Telephone = telephone.String
-	if approved_at.Valid {
-		m.Approved = true
-	}
+	m.customer_id = customer_id.String
 	m.get_student()
 	m.get_admin()
-	if m.Payment() != nil {
-		m.Membership_invoice = m.payment.Get_membership()
-	}
 	return m
 }
 
@@ -99,11 +90,53 @@ func (ms *Members) Get_member_by_username(username string) *Member {
 	return ms.Get_member_by_id(member_id)
 }
 
+func (ms *Members) Get_member_by_customer_id(customer_id string) *Member {
+	var member_id int
+	if err := ms.QueryRow(
+		"SELECT id "+
+			"FROM member "+
+			"WHERE customer_id = $1",
+		customer_id).Scan(&member_id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		log.Panic(err)
+	}
+	return ms.Get_member_by_id(member_id)
+}
+
 //TODO: cascade through all tables
 func (m *Member) Delete_member() {
 	if _, err := m.Exec("DELETE FROM member WHERE id = $1", m.Id); err != nil {
 		log.Panic(err)
 	}
+}
+
+type Pending_subscription struct {
+	*Member
+	Requested_at time.Time
+	Plan_id string
+}
+
+func (m *Member) Get_pending_subscriptions() []*Pending_subscription {
+	pending := make([]*Pending_subscription, 0)
+	rows, err := m.Query(
+		"SELECT requested_at, plan_id " +
+		"FROM pending_subscription " +
+		"WHERE member = $1 " +
+		"ORDER BY requested_at DESC", m.Id)
+	defer rows.Close()
+	if err != nil && err != sql.ErrNoRows {
+		log.Panic(err)
+	}
+	for rows.Next() {
+		p := Pending_subscription{Member: m}
+		if err = rows.Scan(&p.Requested_at, &p.Plan_id); err != nil {
+			log.Panic(err)
+		}
+		pending = append(pending, &p)
+	}
+	return pending
 }
 
 func (m *Member) Verified_email() bool {
@@ -206,15 +239,6 @@ func (m *Member) set_email(email string) {
 	}
 }
 
-func (m *Member) set_gratuitous(free bool) {
-	m.Gratuitous = free
-	if _, err := m.Exec("UPDATE member "+
-		"SET gratuitous = $1 "+
-		"WHERE id = $2", free, m.Id); err != nil {
-		log.Panic(err)
-	}
-}
-
 func (m *Member) set_avatar_tmpl(avatar_tmpl string) {
 	m.Avatar_tmpl = avatar_tmpl
 	if _, err := m.Exec("UPDATE member "+
@@ -255,10 +279,12 @@ func (m *Member) Send_password_reset() {
 		"A password reset has been requested for your account.  " +
 		"If you did not initiate this request, please ignore this e-mail.\n\n" +
 		"Reset your makerspace password by visiting " +
-		m.Config["url"].(string) + "/sso/reset?token=" + token + ".\n\n" +
+		//m.Config["url"].(string) +
+		"/sso/reset?token=" + token + ".\n\n" +
 		"Your password-reset token will expire in " +
-		m.Config["password-reset-window"].(string) + ", you can request a new" +
-		"token at " + m.Config["url"].(string) + "/sso/reset?username=" +
+		m.Config.Password_reset_window + ", you can request a new" +
+		"token at " +//+ m.Config["url"].(string)
+		"/sso/reset?username=" +
 		url.QueryEscape(m.Username) + "&email=" + url.QueryEscape(m.Email) +
 		".\n\n"
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
@@ -282,10 +308,11 @@ func (m *Member) Send_email_verification(email string) {
 		"are the owner of this associated e-mail address.\n\n" +
 		"If the above name and username is correct, please verify your " +
 		"e-mail address (" + email + ") by visiting " +
-		m.Config["url"].(string) + "/sso/verify-email?token=" + token + "\n\n" +
+		//m.Config["url"].(string) +
+		"/sso/verify-email?token=" + token + "\n\n" +
 		"Your verification token will expire in " +
-		m.Config["email-verification-window"].(string) + ", you can request " +
-		"a new token at " + m.Config["url"].(string) +
+		m.Config.Email_verification_window + ", you can request " +
+		"a new token at " + //m.Config["url"].(string) +
 		"/sso/verify-email?username=" + url.QueryEscape(m.Username) +
 		"&email=" + url.QueryEscape(email) + ".\n\n"
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
@@ -319,73 +346,6 @@ func (m *Member) Talk_user() *talk.Talk_user {
 		}
 	}
 	return m.talk
-}
-
-func (m *Member) Payment() *billing.Profile {
-	if m.payment == nil {
-		m.payment = m.Get_profile(m.Id)
-	}
-	return m.payment
-}
-
-func (m *Member) New_membership_invoice() {
-	if m.Payment() == nil {
-		m.payment = m.New_profile(m.Id)
-	}
-	m.Membership_invoice = m.payment.New_pending_membership(m.Student != nil)
-	//TODO: propagate errors
-	if m.Membership_invoice != nil && m.Approved {
-		m.payment.Approve_pending_membership(m.Membership_invoice)
-		m.set_gratuitous(false)
-	}
-}
-
-func (m *Member) Cancel_membership() {
-	if _, err := m.Exec(
-		"UPDATE member "+
-			"SET"+
-			"	gratuitous = 'f',"+
-			"	approved_at = NULL,"+
-			"	approved_by = NULL "+
-			"WHERE id = $1", m.Id); err != nil {
-		log.Panic(err)
-	}
-	m.Gratuitous = false
-	m.Approved = false
-	if m.Membership_invoice != nil {
-		m.payment.Cancel_membership()
-	}
-	if m.Talk_user() != nil {
-		m.Talk_user().Remove_from_group("Members")
-	}
-}
-
-func (m *Member) Approved_on() time.Time {
-	var approved_at time.Time
-	if !m.Approved {
-		return approved_at
-	}
-	if err := m.QueryRow(
-		"SELECT approved_at "+
-			"FROM member "+
-			"WHERE id = $1", m.Id).Scan(&approved_at); err != nil {
-		log.Panic(err)
-	}
-	return approved_at
-}
-
-func (m *Member) Approved_by() *Member {
-	var approved_by int
-	if !m.Approved {
-		return nil
-	}
-	if err := m.QueryRow(
-		"SELECT approved_by "+
-			"FROM member "+
-			"WHERE id = $1", m.Id).Scan(&approved_by); err != nil {
-		log.Panic(err)
-	}
-	return m.Get_member_by_id(approved_by)
 }
 
 // Last_seen returns the last page-load time in a session by member <m>.

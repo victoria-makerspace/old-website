@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
-	"github.com/vvanpo/makerspace/billing"
+	"github.com/stripe/stripe-go"
 	"github.com/vvanpo/makerspace/talk"
 	"golang.org/x/crypto/scrypt"
 	"log"
@@ -13,11 +13,34 @@ import (
 	"time"
 )
 
+type Config struct {
+	Reserved_usernames        []string
+	Password_reset_window     string
+	Email_verification_window string
+	Smtp                      struct {
+		Address  string
+		Port     int
+		Username string
+		Password string
+	}
+	Billing struct {
+		Private_key string
+		Public_key  string
+	}
+}
+
 type Members struct {
-	Config map[string]interface{}
+	Config
 	*sql.DB
 	*talk.Talk_api
-	*billing.Billing
+	Plans map[string]*stripe.Plan
+}
+
+func New(config Config, db *sql.DB, talk *talk.Talk_api) *Members {
+	stripe.Key = config.Billing.Private_key
+	ms := &Members{config, db, talk, make(map[string]*stripe.Plan)}
+	ms.load_plans()
+	return ms
 }
 
 func Rand256() string {
@@ -65,8 +88,8 @@ func (ms *Members) Check_username_availability(username string) (available bool,
 	} else if username_confusing_suffix_rexp.MatchString(username) {
 		return false, "Username must not end in a confusing filetype suffix"
 	}
-	for _, u := range ms.Config["reserved_usernames"].([]interface{}) {
-		if username == u.(string) {
+	for _, u := range ms.Config.Reserved_usernames {
+		if username == u {
 			return false, "Username reserved"
 		}
 	}
@@ -157,10 +180,9 @@ func (ms *Members) New_member(username, email, name string) (m *Member, err map[
 func parse_duration(w string) (time.Duration, error) {
 	var weeks int
 	if w == "1 week" {
-		w = fmt.Sprintf("%dh", 7 * 24)
-	} else if n, err := fmt.Sscanf(w, "%d weeks", &weeks);
-		n == 1 && err == nil {
-		w = fmt.Sprintf("%dh", 7 * 24 * weeks)
+		w = fmt.Sprintf("%dh", 7*24)
+	} else if n, err := fmt.Sscanf(w, "%d weeks", &weeks); n == 1 && err == nil {
+		w = fmt.Sprintf("%dh", 7*24*weeks)
 	}
 	return time.ParseDuration(w)
 }
@@ -177,7 +199,7 @@ func (ms *Members) Get_member_from_reset_token(token string) (*Member, error) {
 		}
 		log.Panic(err)
 	}
-	duration, err := parse_duration(ms.Config["password-reset-window"].(string))
+	duration, err := parse_duration(ms.Config.Password_reset_window)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -195,21 +217,20 @@ func (ms *Members) Get_member_from_reset_token(token string) (*Member, error) {
 func (ms *Members) Get_member_from_verification_token(token string) (*Member, string, error) {
 	var (
 		member_id int
-		email string
-		t time.Time
+		email     string
+		t         time.Time
 	)
 	if err := ms.QueryRow(
 		"SELECT member, email, time "+
 			"FROM email_verification_token "+
-			"WHERE token = $1", token).Scan(&member_id, &email, &t);
-		err != nil {
+			"WHERE token = $1", token).Scan(&member_id, &email, &t); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, "", fmt.Errorf("Verification token does not exist")
 		}
 		log.Panic(err)
 	}
 	duration, err := parse_duration(
-		ms.Config["email-verification-window"].(string))
+		ms.Config.Email_verification_window)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -268,40 +289,4 @@ func (ms *Members) Get_new_members(limit int) []*Member {
 			"FROM member " +
 			"ORDER BY registered DESC " +
 			"LIMIT " + fmt.Sprint(limit))
-}
-
-func (ms *Members) Get_all_approved_members() []*Member {
-	return ms.get_members(
-		"SELECT id " +
-			"FROM member " +
-			"WHERE approved_at IS NOT NULL " +
-			"ORDER BY username ASC")
-}
-
-func (ms *Members) Get_all_unapproved_members() []*Member {
-	return ms.get_members(
-		"SELECT id " +
-			"FROM member " +
-			"WHERE approved_at IS NULL " +
-			"ORDER BY username ASC")
-}
-
-func (ms *Members) Get_all_pending_members() []*Member {
-	return ms.get_members(
-		"SELECT i.member " +
-			"FROM invoice i " +
-			"JOIN fee f " +
-			"ON i.fee = f.id " +
-			"WHERE f.category = 'membership'" +
-			"	AND i.start_date IS NULL" +
-			"	AND (i.end_date < now() OR i.end_date IS NULL) " +
-			"ORDER BY i.created DESC")
-}
-
-func (ms *Members) Get_all_unverified_members() []*Member {
-	return ms.get_members(
-		"SELECT id " +
-			"FROM member " +
-			"WHERE email IS NULL " +
-			"ORDER BY registered DESC")
 }

@@ -6,32 +6,32 @@
           <a href="/member/{{.Id}}">@{{.Username}}</a>'s membership approved.
         </p>
 {{end}}
-{{with .Get_all_pending_members}}
+{{with .Get_all_pending_subscriptions}}
         <h4>
-          <a href="#pending-memberships" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
-          Pending Membership Approvals
+          <a href="#pending-subscriptions" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
+          Pending Subscription Requests
           <a href="/member/list/pending">
             <span class="title-link"></span>
           </a>
         </h4>
-        <form action="/admin" method="post" class="collapse show mx-sm-3" id="pending-memberships">
+        <form action="/admin" method="post" class="collapse show mx-sm-3" id="pending-subscriptions">
           <table class="table table-sm table-striped table-responsive text-nowrap">
             <thead>
               <tr>
                 <th>Username</th>
                 <th class="w-100">Name</th>
                 <th>Type</th>
-                <th>Registration date</th>
+                <th>Request date</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
   {{range .}}
               <tr>
-                <td><a href="/member/{{.Id}}">@{{.Username}}</a></td>
-                <td>{{.Name}}</td>
-                <td class="text-capitalize">{{.Membership_invoice.Fee.Identifier}}</td>
-                <td>{{.Registered.Format "2006-01-02"}}</td>
+                <td><a href="/member/{{.Member.Id}}">@{{.Username}}</a></td>
+                <td>{{.Member.Name}}</td>
+                <td>{{index $.Plans .Plan_id | .Name}}</td>
+                <td>{{.Requested_at.Format "2006-01-02"}}</td>
                 <td>
                   <button type="submit" name="approve-membership" value="{{.Id}}" class="btn btn-sm btn-primary">Approve</button>
                   <button type="submit" name="decline-membership" value="{{.Id}}" class="btn btn-sm btn-danger">Decline</button>
@@ -53,16 +53,16 @@
         <form action="/admin" method="post" id="upload-members" class="{{if not (.PostFormValue "member-upload")}}collapse {{end}}mx-sm-3">
           <strong>CSV Format:</strong>
           <p class="ml-3 small">
-            Username, Name, E-mail <span class="text-muted">{, Registration date = [YYYY-MM-DD], Card # = [XX:XXXXX], [free], [verified]}</span>
+            Username, Name, E-mail <span class="text-muted">{, Registration date = [YYYY-MM-DD], Card # = [XX:XXXXX], [free]}</span>
           </p>
           <p class="alert alert-info mt-1">
             The fields in braces are optional. Each new user must be input on a separate line.<br>
             <strong>Example:</strong><br>
               <small class="ml-3">
-                jsmith01, John Smith, j.smith@gmail.com, 00:00000, free, verified
+                jsmith01, John Smith, j.smith@gmail.com, 00:00000, free
               </small>
               <br>
-            The above example creates a new user, jsmith01, who is immediately approved as a free account and has a verified e-mail address.  Without the "verified" flag, creating a new user sends off a verification e-mail before said user can sign-in.
+            The above example creates a new user, jsmith01, who is immediately approved as a free account.  Each new user is sent an automatic password-reset e-mail.
           </p>
           <textarea name="member-upload" class="form-group form-control" rows="5">
 {{- range .Data.lines}}

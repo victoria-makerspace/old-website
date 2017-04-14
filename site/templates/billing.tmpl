@@ -1,5 +1,4 @@
-{{$membership := .Member.Membership_invoice}}
-{{if or $membership .Member.Gratuitous}}
+{{if .Member.Get_membership}}
   <div class="modal fade" id="terminate_membership" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -46,7 +45,7 @@
           All prices and transactions are in Canadian dollars.<br>
           Billing inquiries should be addressed to <a href="mailto:accounting@makerspace.ca">accounting@makerspace.ca</a>.
         </p>
-{{with .Member.Payment}}
+{{/*with .Member.Payment}}
         <section>
           <h4>Transactions history</h4>
           <div class="px-2 px-sm-3">
@@ -173,7 +172,7 @@
           </div>
         </section>
         <hr>
-{{end}}
+{{end*/}}
         <section>
 {{define "register-cc"}}
           <h4>Register credit card<img class="ml-3 mb-2" style="height: 1.5rem" src="/mcvs_acc_hrz.svg"></h4>
@@ -302,6 +301,7 @@
               <p class="alert alert-warning">You must register a credit card.</p>
   {{end}}
               <div class="d-inline-flex flex-row-reverse">
+              <input type="hidden" name="membership">
   {{if not $membership}}
               <button type="submit" name="register" class="ml-1 btn btn-primary"{{if not .Member.Payment}} disabled{{else if not .Member.Payment.Get_card}} disabled{{else if not .Member.Agreed_to_terms}} disabled{{end}}>Register</button>
   {{end}}

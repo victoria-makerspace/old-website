@@ -2,23 +2,33 @@ package member
 
 import (
 	"database/sql"
-	"github.com/vvanpo/makerspace/billing"
+	"github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/sub"
 	"log"
+	"strconv"
 )
 
 type Storage struct {
-	*billing.Fee
 	Number    int
-	Size      float64
-	Price     float64
+	Size      int
 	Available bool
+	*stripe.Plan
 	*Member
 }
 
-func (ms *Members) Get_storage(fee *billing.Fee) []*Storage {
+func (ms *Members) Get_storage(plan_id string) []*Storage {
 	storage := make([]*Storage, 0)
-	rows, err := ms.Query("SELECT number, size, invoice, available "+
-		"FROM storage WHERE fee = $1 ORDER BY number ASC", fee.Id)
+	i := sub.List(&stripe.SubListParams{Plan: plan_id})
+	members := make(map[int]*Member)
+	for i.Next() {
+		number, err := strconv.Atoi(i.Sub().Meta["number"])
+		if err != nil {
+			log.Panic(err)
+		}
+		members[number] =  ms.Get_member_by_customer_id(i.Sub().Customer.ID)
+	}
+	rows, err := ms.Query("SELECT number, size, available "+
+		"FROM storage WHERE plan_id = $1 ORDER BY number ASC", plan_id)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -26,25 +36,19 @@ func (ms *Members) Get_storage(fee *billing.Fee) []*Storage {
 	for rows.Next() {
 		var (
 			number     int
-			size       sql.NullFloat64
-			invoice_id sql.NullInt64
+			size       sql.NullInt64
 			available  bool
 		)
-		if err = rows.Scan(&number, &size, &invoice_id, &available); err != nil {
+		if err = rows.Scan(&number, &size, &available); err != nil {
 			log.Panic(err)
 		}
 		s := &Storage{
-			Fee:       fee,
 			Number:    number,
-			Size:      size.Float64,
-			Price:     fee.Amount,
-			Available: available}
-		if fee.Identifier == "wall" {
-			s.Price *= s.Size
-		}
-		if invoice_id.Valid {
-			i := ms.Get_bill(int(invoice_id.Int64))
-			s.Member = ms.Get_member_by_id(i.Member)
+			Size:      int(size.Int64),
+			Available: available,
+			Plan:      ms.Plans[plan_id]}
+		if m, ok := members[number]; ok {
+			s.Member = m
 		}
 		storage = append(storage, s)
 	}

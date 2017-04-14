@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/member"
 	"github.com/vvanpo/makerspace/site"
 	"github.com/vvanpo/makerspace/talk"
@@ -14,9 +13,8 @@ import (
 
 var config struct {
 	Site       map[string]interface{}
-	Members    map[string]interface{}
+	Members    member.Config
 	Database   map[string]string
-	Beanstream map[string]string
 	Talk       map[string]string
 	Smtp       map[string]string
 }
@@ -44,7 +42,6 @@ func init() {
 	} else {
 		url = "http://" + url
 	}
-	config.Members["url"] = url
 	if proxy, ok := config.Site["talk-proxy"].(string); ok {
 		config.Talk["url"] = proxy + config.Talk["path"]
 	} else {
@@ -54,10 +51,7 @@ func init() {
 
 func main() {
 	db := Database(config.Database)
-	bs := config.Beanstream
-	b := billing.Billing_new(bs["merchant-id"], bs["payments-api-key"],
-		bs["profiles-api-key"], bs["reports-api-key"], db)
 	talk := talk.New_talk_api(config.Talk)
-	members := &member.Members{config.Members, db, talk, b}
+	members := member.New(config.Members, db, talk)
 	site.Serve(config.Site, talk, members, db)
 }

@@ -33,27 +33,6 @@ func member_list_handler(p *page) {
 			}
 		}
 		p.Data["member_list"] = p.Get_new_members(limit)
-	case "/member/list/unapproved":
-		if !p.must_be_admin() {
-			return
-		}
-		p.Title = "Unapproved members"
-		p.Data["member_group"] = "unapproved"
-		p.Data["member_list"] = p.Get_all_unapproved_members()
-	case "/member/list/pending":
-		if !p.must_be_admin() {
-			return
-		}
-		p.Title = "Pending-approval members"
-		p.Data["member_group"] = "pending"
-		p.Data["member_list"] = p.Get_all_pending_members()
-	case "/member/list/unverified":
-		if !p.must_be_admin() {
-			return
-		}
-		p.Title = "Unverified members"
-		p.Data["member_group"] = "unverified"
-		p.Data["member_list"] = p.Get_all_unverified_members()
 	}
 }
 
