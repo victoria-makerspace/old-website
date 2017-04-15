@@ -136,6 +136,9 @@
           </h4>
           <form id="membership-registration" class="collapse show px-2 px-sm-3" method="post" action="/member/billing">
 {{end}}
+{{if .Member.Get_pending_membership}}
+            <p class="alert alert-success">Your membership request is pending approval.</p>
+{{end}}
             <fieldset class="form-group mb-2 mb-sm-3">
               <label class="custom-control custom-radio">
                 <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not .Member.Student}} checked{{end}}>

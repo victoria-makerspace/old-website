@@ -35,10 +35,13 @@ func admin_handler(p *page) {
 			p.http_error(400)
 			return
 		}
-		if m := p.Get_member_by_id(member_id); m == nil {
+		if m := p.Get_member_by_id(member_id);
+			m == nil || m.Get_pending_membership() == nil {
 			p.http_error(400)
-		} else if m.Get_membership == nil {
-			p.Member.Approve_membership(m)
+		} else if m.Get_membership() == nil {
+			if err := p.Approve_membership(m); err != nil {
+				p.http_error(500)
+			}
 			p.Data["Member_approved"] = m
 			if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
 				//TODO

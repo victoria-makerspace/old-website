@@ -1,6 +1,6 @@
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-lg-10 col-xl-8">
+      <div class="col-xl-10">
 {{with .Data.member_approved}}
         <p class="alert alert-success">
           <a href="/member/{{.Id}}">@{{.Username}}</a>'s membership approved.
@@ -20,6 +20,7 @@
                 <th>Type</th>
                 <th>Request date</th>
                 <th></th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -33,6 +34,11 @@
                   <button type="submit" name="approve-membership" value="{{.Id}}" class="btn btn-sm btn-primary">Approve</button>
                   <button type="submit" name="decline-membership" value="{{.Id}}" class="btn btn-sm btn-danger">Decline</button>
                 </td>
+                <td>
+                  <label class="form-check-label small">
+                    <input type="checkbox" class="form-check-input" name="notify" checked>
+                    Notify
+                  </label>
               </tr>
   {{end}}
 {{end}}

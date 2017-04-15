@@ -6,8 +6,6 @@
         <p class="alert alert-info">
           Please read and agree to the <a href="/terms">Terms &amp; Conditions</a> before registering to become a member, or making use of Makerspace as a guest.
         </p>
-{{else if .Member.Get_pending_membership}}
-        <p class="alert alert-info">Your membership request is pending approval.</p>
 {{end}}
 {{with .Talk_user}}
         <h4>

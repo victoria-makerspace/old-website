@@ -53,14 +53,22 @@ func (ms *Members) Get_all_pending_subscriptions() []*Pending_subscription {
 }
 
 func (a *Member) Approve_subscription(p *Pending_subscription) error {
+	plan, ok := a.Plans[p.Plan_id]
+	if !ok {
+		return fmt.Errorf("Invalid plan identifier '%s'", p.Plan_id)
+	}
 	if p.Member.Customer() == nil {
-		if a.Plans[p.Plan_id].Amount != 0 {
+		if plan.Amount != 0 {
 			return fmt.Errorf("No valid payment source")
 		} else if err := p.Member.Update_customer("", nil); err != nil {
 			return err
 		}
 	}
-	params := &stripe.SubParams{Customer: p.Member.customer_id}
+	params := &stripe.SubParams{
+		Customer: p.Member.customer_id,
+		Plan: p.Plan_id}
+	params.Params.Meta = make(map[string]string)
+	params.Meta["member_id"] = fmt.Sprint(p.Member.Id)
 	params.Meta["approved_by"] = fmt.Sprint(a.Id)
 	if _, err := a.Exec(
 		"DELETE FROM pending_subscription "+
