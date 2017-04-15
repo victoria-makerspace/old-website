@@ -382,6 +382,25 @@ input[type=month] {
     background-color: #014c8c;
 }
 
+.StripeElement {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    border: 1px solid rgba(0,0,0,.15);
+    box-shadow: 0 1px 3px 0 #e6ebf1;
+    transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
+}
+.StripeElement--focus {
+    box-shadow: 0 1px 3px 0 #cfd7df;
+    border-color: #5cb3fd;
+}
+.StripeElement--invalid {
+    border-color: #d9534f;
+}
+.StripeElement--success {
+    border-color: #5cb85c;
+}
+
+
 @media (max-width: 575px) {
     .navbar > .container {
         margin: 0;

@@ -60,7 +60,7 @@ func (m *Member) Request_subscription(plan_id string) error {
 		"INSERT INTO pending_subscription "+
 		"(member, plan_id) "+
 		"VALUES ($1, $2) "+
-		"ON CONFLICT DO UPDATE "+
+		"ON CONFLICT (member, plan_id) DO UPDATE "+
 		"SET plan_id = $2", m.Id, plan_id); err != nil {
 		log.Panic(err)
 	}

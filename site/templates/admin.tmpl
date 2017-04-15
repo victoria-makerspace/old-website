@@ -10,9 +10,6 @@
         <h4>
           <a href="#pending-subscriptions" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
           Pending Subscription Requests
-          <a href="/member/list/pending">
-            <span class="title-link"></span>
-          </a>
         </h4>
         <form action="/admin" method="post" class="collapse show mx-sm-3" id="pending-subscriptions">
           <table class="table table-sm table-striped table-responsive text-nowrap">
@@ -30,7 +27,7 @@
               <tr>
                 <td><a href="/member/{{.Member.Id}}">@{{.Username}}</a></td>
                 <td>{{.Member.Name}}</td>
-                <td>{{index $.Plans .Plan_id | .Name}}</td>
+                <td>{{with index $.Plans .Plan_id}}{{.Name}}{{end}}</td>
                 <td>{{.Requested_at.Format "2006-01-02"}}</td>
                 <td>
                   <button type="submit" name="approve-membership" value="{{.Id}}" class="btn btn-sm btn-primary">Approve</button>

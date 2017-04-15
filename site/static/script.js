@@ -26,13 +26,7 @@ $(document).ready(function() {
     });
 });
 
-$(this).on("beanstream_payfields_loaded", function() {
-    $("#credit-card input[data-beanstream-id]").each(function() {
-        $(this).addClass("form-control");
-        $(this).attr("id", $(this).attr("data-beanstream-id"))
-    });
-});
-$("#billing input[name=rate]").change(function() {
+$("#membership-registration input[name=rate]").change(function() {
     var checked = $("#student-rate").prop("checked");
     var input = $("#student input");
     $("#student").prop("disabled", !checked);

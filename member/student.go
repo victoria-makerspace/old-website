@@ -30,7 +30,13 @@ func (m *Member) get_student() {
 }
 
 //TODO: verify student email
-func (m *Member) Update_student(institution, email string, grad_date time.Time) {
+func (m *Member) Update_student(institution, email string, grad_date time.Time) error {
+	if grad_date.Before(time.Now().AddDate(0, 1, 0)) {
+		return fmt.Errorf("Graduation date cannot be in the past")
+	}
+	if !email_rexp.MatchString(email) {
+		return fmt.Errorf("Invalid E-mail address")
+	}
 	query := "INSERT INTO student (member, institution, student_email, " +
 		"graduation_date) VALUES ($1, $2, $3, $4)"
 	if m.Student != nil {
@@ -48,6 +54,7 @@ func (m *Member) Update_student(institution, email string, grad_date time.Time) 
 		log.Panic(err)
 	}
 	m.Student = &Student{institution, email, grad_date}
+	return nil
 }
 
 func (m *Member) Delete_student() {

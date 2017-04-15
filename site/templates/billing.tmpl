@@ -45,271 +45,149 @@
           All prices and transactions are in Canadian dollars.<br>
           Billing inquiries should be addressed to <a href="mailto:accounting@makerspace.ca">accounting@makerspace.ca</a>.
         </p>
-{{/*with .Member.Payment}}
         <section>
-          <h4>Transactions history</h4>
-          <div class="px-2 px-sm-3">
-  {{with .Get_transactions}}
-            <table class="table table-sm table-striped table-responsive text-nowrap">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th class="w-100">Description</th>
-                  <th>Card</th>
-                </tr>
-              </thead>
-              <tbody>
-    {{$count := len .}}
-    {{range $i, $t := .}}
-                <tr{{if gt $i 8}} class="d-none"{{end}}>
-                  <td scope="row" class="font-weight-bold">{{sub $count $i}}</td>
-                  <td>{{$t.Time.Format "2006-01-02"}}</td>
-                  <td class="font-weight-bold">{{$t.Invoice.Amount | printf "$%.2f"}}</td>
-                  <td>{{$t.Invoice.Description}}</td>
-                  <td><small class="text-muted">x-{{$t.Card}}</small></td>
-                </tr>
-    {{end}}
-              </tbody>
-            </table>
-  {{else}}
-            <p>You have no recent transactions.</p>
-  {{end}}
-  {{if .Invoices}}
-            <h5 id="Payments">Monthly payments</h5>
-    {{with .Error}}
-            <p class="alert alert-danger">
-      {{if or (eq . 1) (eq . 2)}}
-              You do not currently have any credit card information on file.
-      {{else if eq . 3}}
-              Your credit card is invalid.
-      {{else if eq . 4}}
-              Your credit card is expired.
-      {{end}}
-              The following payments will fail.  Please update your credit card information.
-            </p>
-    {{end}}
-    {{with $membership}}
-      {{if .Start_date.IsZero}}
-            <p class="alert alert-info">
-              Your membership is awaiting approval from an administrator.  Billing will commence once approved.
-            </p>
-      {{end}}
-    {{end}}
-            <form action="/member/billing" method="post" id="monthly">
-              <table class="table table-sm table-responsive text-nowrap">
-                <thead>
-                  <tr>
-                    <th class="w-100">Description</th>
-                    <th>Amount</th>
-                    <th>Start date</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-    {{with $membership}}
-                  <tr>  
-                    <td>
-                      <a href="/member/account#Membership">
-                        {{.Description}}<span class="title-link"></span>
-                      </a>
-                    </td>
-                    <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
-                    <td>
-      {{if .Start_date.IsZero}}
-                      <em class="text-muted">Pending approval</em>
-      {{else}}
-                      {{.Start_date.Format "2006-01-02"}}
-      {{end}}
-                    </td>
-                    <td>
-                      <button type="button" data-toggle="modal" data-target="#terminate_membership" class="btn btn-sm btn-danger">Terminate</button>
-                    </td>
-                  </tr>
-    {{end}}
-    {{range .Invoices}}
-      {{if ne .Category "membership"}}
-                  <tr>  
-                    <td>{{.Description}}</td>
-                    <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
-                    <td>{{.Start_date.Format "2006-01-02"}}</td>
-                    <td>
-                      <button type="submit" name="terminate" value="{{.Id}}" class="btn btn-sm btn-danger">Terminate</button>
-                    </td>
-                  </tr>
-      {{end}}
-    {{end}}
-                </tbody>
-              </table>
-            </form>
-  {{end}}
-  {{with .Get_missed_payments}}
-            <form action="/member/billing" method="post">
-              <h5 class="text-danger">Missed payments
-                <button type="submit" name="retry-missed-payments" class="btn btn-sm btn-warning">Retry</button>
-              </h5>
-            </form>
-            <table class="table table-warning table-sm table-responsive text-nowrap">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-    {{range .}}
-                <tr class="text-danger">
-                  <td>{{.Time.Format "2006-01-02"}}</td>
-                  <td class="font-weight-bold">{{.Invoice.Amount | printf "$%.2f"}}</td>
-                  <td>{{.Invoice.Description}}</td>
-                </tr>
-    {{end}}
-              </tbody>
-            </table>
-  {{end}}
-          </div>
-        </section>
-        <hr>
-{{end*/}}
-        <section>
-{{define "register-cc"}}
-          <h4>Register credit card<img class="ml-3 mb-2" style="height: 1.5rem" src="/mcvs_acc_hrz.svg"></h4>
-          <p class="mx-2 mx-sm-3 alert alert-info">This form allows the online payment service <a href="http://www.beanstream.com/home/">Beanstream</a> to create a payment profile, that we can use to process payments and recurring bills.  No credit card information is stored on or touches our server.<br>
-            Credit card registration will not incur a transaction or register you to become a Makerspace member, which must be done below.
-          </p>
-{{end}}
-{{if not .Member.Payment}}
-  {{template "register-cc"}}
-{{else if not .Member.Payment.Get_card}}
-  {{template "register-cc"}}
+          <h4>
+{{if and .Customer .Customer.DefaultSource}}
+            <a href="#cc-form" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
+            Update card
+            <img class="ml-3 mb-2" style="height: 1.5rem" src="/mcvs_acc_hrz.svg">
+          </h4>
+          <script src="https://js.stripe.com/v3/"></script>
+          <form action="/member/billing" method="post" id="cc-form" class="collapse px-2 px-sm-3">
 {{else}}
-  {{with .Member.Payment.Get_card}}
-          <h4>Update credit card<img class="ml-3 mb-2" style="height: 1.5rem" src="/mcvs_acc_hrz.svg"></h4>
-          <div class="d-flex flex-wrap flex-sm-nowrap justify-content-between px-2 px-sm-3">
-            <dl class="row no-gutters mb-0 mb-sm-3 text-muted">
-              <dt class="col-4">Cardholder:</dt>
-              <dd class="col-8 mb-0 initialism">{{.Name}}</dd>
-              <dt class="col-4">Number:</dt>
-              <dd class="col-8 mb-0">{{.Number}}</dd>
-              <dt class="col-4">Expiry:</dt>
-              <dd class="col-8">{{.ExpiryMonth}}/20{{.ExpiryYear}}</dd>
-            </dl>
-            <form action="/member/billing" method="post" class="mb-3">
-              <button type="submit" name="delete-card" class="btn btn-warning">Delete</button>
-            </form>
-          </div>
-  {{end}}
+            Register card
+            <img class="ml-3 mb-2" style="height: 1.5rem" src="/mcvs_acc_hrz.svg">
+          </h4>
+          <script src="https://js.stripe.com/v3/"></script>
+          <form action="/member/billing" method="post" id="cc-form" class="collapse show px-2 px-sm-3">
 {{end}}
-          <form action="/member/billing" method="post" id="credit-card" class="px-2 px-sm-3">
-            <div class="form-group row mb-2 mb-sm-3">
-              <label for="name" class="col-sm-4 col-form-label">Name</label>
-              <div class="col-sm-8">
-                <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if not .Member.Payment}} autofocus{{else if not .Member.Payment.Get_card}} autofocus{{end}}>
-                <small class="form-control-feedback"></small>
+            <div class="row">
+              <div class="col-sm-8 form-group">
+                <div id="card-element"></div>
+                <div class="text-danger" id="card-errors"></div>
+              </div>
+              <div class="col-sm-4">
+                <button type="submit" class="btn btn-primary">Register card</button>
               </div>
             </div>
-            <div class="form-group row mb-2 mb-sm-3">
-              <label for="ccNumber" class="col-sm-4 col-form-label">Card number</label>
-              <div class="col-sm-8">
-                <div class="input-group" data-beanstream-target="ccNumber_input">
-                  <span class="input-group-addon glyphicons glyphicons-credit-card"></span>
-                </div>
-                <small data-beanstream-target="ccNumber_error" class="form-control-feedback"></small>
-              </div>
-            </div>
-            <div class="form-group row mb-2 mb-sm-3">
-              <label for="ccExp" class="col-sm-4 col-form-label">Expiry <span class="font-weight-normal text-muted">(mm/yyyy)</span></label>
-              <div class="col-sm-8">
-                <div class="input-group" data-beanstream-target="ccExp_input">
-                  <span class="input-group-addon glyphicons glyphicons-calendar"></span>
-                </div>
-                <small data-beanstream-target="ccExp_error" class="form-control-feedback"></small>
-              </div>
-            </div>
-            <div class="form-group row">
-              <label for="ccCvv" class="col-sm-4 col-form-label">CVV</label>
-              <div class="col-sm-8">
-                <div class="input-group" data-beanstream-target="ccCvv_input">
-                  <span class="input-group-addon glyphicons glyphicons-lock"></span>
-                </div>
-                <small data-beanstream-target="ccCvv_error" class="form-control-feedback"></small>
-              </div>
-            </div>
-            <script src="https://payform.beanstream.com/payfields/beanstream_payfields.js" data-submitForm="true"></script>
-            <button type="submit" class="btn btn-primary">
-{{if not .Member.Payment}}
-              Register
-{{else if not .Member.Payment.Get_card}}
-              Register
-{{else}}
-              Update
-{{end}}
-            </button>
           </form>
+          <script>
+            var stripe = Stripe("{{.Config.Billing.Public_key}}");
+            var elements = stripe.elements();
+            var style = {
+              base: {
+                color: '#464a4c',
+                lineHeight: '20px',
+                fontSize: '16px',
+                '::placeholder': {
+                  color: '#aab7c4'
+                }
+              },
+              invalid: {
+                color: '#fa755a',
+                iconColor: '#fa755a'
+              }
+            };
+            var card = elements.create("card", {style: style});
+            card.mount("#card-element");
+            card.addEventListener("change", function(event) {
+              var displayError = document.getElementById("card-errors");
+              if (event.error) {
+                displayError.textContent = event.error.message;
+              } else {
+                displayError.textContent = "";
+              }
+            });
+            var form = document.getElementById("cc-form");
+            form.addEventListener("submit", function(event) {
+              event.preventDefault();
+              stripe.createToken(card).then(function(result) {
+                if (result.error) {
+                  var errorElement = document.getElementById('card-errors');
+                  errorElement.textContent = result.error.message;
+                } else {
+                  stripeTokenHandler(result.token);
+                }
+              });
+            });
+            function stripeTokenHandler(token) {
+              var form = document.getElementById("cc-form");
+              var hiddenInput = document.createElement("input");
+              hiddenInput.setAttribute("type", "hidden");
+              hiddenInput.setAttribute('name', 'stripeToken');
+              hiddenInput.setAttribute('value', token.id);
+              form.appendChild(hiddenInput);
+              form.submit();
+            }
+          </script>
         </section>
-{{if not .Member.Gratuitous}}
         <hr>
-        <section id="Membership-dues">
-            <h4>Membership dues</h4>
-            <form id="billing" class="px-2 px-sm-3" method="post" action="/member/billing">
-  {{if not $membership}}
-              <p class="alert alert-info">On initial registration, pending approval, your membership fee gets prorated for the remainder of the month (at the time of approval).  Once approved, and following your initial prorated payment, successive membership payments will be processed on the 1st of every month.</p>
-  {{end}}
-                <fieldset class="form-group mb-2 mb-sm-3">
-                    <label class="custom-control custom-radio">
-                        <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not .Member.Student}} checked{{end}}>
-                        <span class="custom-control-indicator"></span>
-                        <span class="custom-control-description"><b>Regular</b> ($50/month)</span>
-                    </label>
-                    <label class="custom-control custom-radio">
-                        <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if .Member.Student}} checked{{end}}>
-                        <span class="custom-control-indicator"></span>
-                        <span class="custom-control-description"><b>Student</b> ($30/month)</span>
-                    </label>
-                </fieldset>
-                <fieldset id="student"{{if not .Member.Student}}class="text-muted" disabled{{end}}>
-                    <legend class="h5 mb-0 mb-sm-2">Student info</legend>
-                    <div class="form-group row mb-2"> 
-                        <label for="institution" class="col-sm-4 col-form-label">Institution name</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" id="institution" name="institution" {{if .Member.Student}} value="{{.Member.Student.Institution}}" required{{end}}>
-                            <small class="form-control-feedback"></small>
-                        </div>
-                    </div>
-                    <div class="form-group row mb-2"> 
-                        <label for="student_email" class="col-sm-4 col-form-label">Student E-mail</label>
-                        <div class="col-sm-8">
-                            <input type="email" class="form-control" name="student_email" {{if .Member.Student}} value="{{.Member.Student.Email}}" required{{end}}>
-                            <small class="form-control-feedback"></small>
-                        </div>
-                    </div>
-                <div class="form-group row mb-sm-2">
-                  <label for="graduation" class="col-sm-4 col-form-label">Expected graduation</label>
-                  <div class="col-sm-8">
-                    <input type="month" class="form-control" id="graduation" name="graduation"{{if .Member.Student}} value="{{.Member.Student.Graduation_date.Format "2006-01"}}" required{{end}}>
-                    <small class="form-control-feedback"></small>
-                  </div>
+        <section>
+{{if .Get_membership}}
+          <h4>
+            <a href="#membership-registration" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
+            Update Membership
+          </h4>
+          <form id="membership-registration" class="collapse px-2 px-sm-3" method="post" action="/member/billing">
+{{else}}
+          <h4>
+            <a href="#membership-registration" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
+            Membership registration
+          </h4>
+          <form id="membership-registration" class="collapse show px-2 px-sm-3" method="post" action="/member/billing">
+{{end}}
+            <fieldset class="form-group mb-2 mb-sm-3">
+              <label class="custom-control custom-radio">
+                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not .Member.Student}} checked{{end}}>
+                <span class="custom-control-indicator"></span>
+                <span class="custom-control-description"><b>Regular</b> ($50/month)</span>
+              </label>
+              <label class="custom-control custom-radio">
+                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if .Member.Student}} checked{{end}}>
+                <span class="custom-control-indicator"></span>
+                <span class="custom-control-description"><b>Student</b> ($30/month)</span>
+              </label>
+            </fieldset>
+            <fieldset id="student"{{if not .Member.Student}}class="text-muted" disabled{{end}}>
+              <legend class="h5 mb-0 mb-sm-2">Student info</legend>
+              <div class="form-group row mb-2"> 
+                <label for="institution" class="col-sm-4 col-form-label">Institution name</label>
+                <div class="col-sm-8">
+                  <input type="text" class="form-control" id="institution" name="institution" {{if .Member.Student}} value="{{.Member.Student.Institution}}" required{{end}}>
                 </div>
-              </fieldset>
-  {{if not .Member.Agreed_to_terms}}
-              <p class="alert alert-danger">You must agree to the <a href="/terms">Terms & Conditions</a>.</p>
-  {{else if not .Member.Payment}}
-              <p class="alert alert-warning">You must register a credit card.</p>
-  {{else if not .Member.Payment.Get_card}}
-              <p class="alert alert-warning">You must register a credit card.</p>
+              </div>
+              <div class="form-group row mb-2"> 
+                <label for="student_email" class="col-sm-4 col-form-label">Student E-mail</label>
+                <div class="col-sm-8">
+                  <input type="email" class="form-control" name="student_email" {{if .Member.Student}} value="{{.Member.Student.Email}}" required{{end}}>
+                </div>
+              </div>
+              <div class="form-group row mb-sm-2">
+                <label for="graduation" class="col-sm-4 col-form-label">Expected graduation</label>
+                <div class="col-sm-8">
+                  <input type="month" class="form-control" id="graduation" name="graduation"{{if .Member.Student}} value="{{.Member.Student.Graduation_date.Format "2006-01"}}" required{{end}}>
+                </div>
+              </div>
+            </fieldset>
+{{with .Data.membership_registration_error}}
+            <p class="text-danger">{{.}}</p>
+{{end}}
+{{if not .Member.Agreed_to_terms}}
+          <p class="alert alert-danger">You must agree to the <a href="/terms">Terms & Conditions</a>.</p>
+{{end}}
+          <div class="d-inline-flex flex-row-reverse">
+            <input type="hidden" name="membership">
+{{if not .Get_membership}}
+{{if and .Customer .Customer.DefaultSource}}
+              <button type="submit" name="register" class="ml-1 btn btn-primary"{{if not .Member.Agreed_to_terms}} disabled{{end}}>Register</button>
+  {{else}}
+              <button type="submit" name="register" class="ml-1 btn btn-primary"disabled>Register</button>
   {{end}}
-              <div class="d-inline-flex flex-row-reverse">
-              <input type="hidden" name="membership">
-  {{if not $membership}}
-              <button type="submit" name="register" class="ml-1 btn btn-primary"{{if not .Member.Payment}} disabled{{else if not .Member.Payment.Get_card}} disabled{{else if not .Member.Agreed_to_terms}} disabled{{end}}>Register</button>
-  {{end}}
+{{end}}
               <button type="submit" name="update" class="btn btn-secondary">Update</button>
             </div>
           </form>
         </section>
-{{end}}
       </div>
     </div>
   </div>
