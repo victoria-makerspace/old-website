@@ -1,13 +1,13 @@
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-lg-11 col-xl-9">
+      <div class="col-xl-10">
         <p class="alert alert-warning">
           The storage waitlist and registration forms are not currently implemented.  Please <span class="text-nowrap">e-mail</span> <a href="mailto:storage@makerspace.ca">storage@makerspace.ca</a> for information about storage availabilities.
         </p>
-        <form action="/member/storage" method="post" class="row justify-content-center">
+        <form action="/member/storage" method="post" class="row no-gutters justify-content-center">
 {{range .List_storage_plans}}
   {{$storage := $.List_storage .}}
-          <div class="col-sm-auto col-lg-6">
+          <div class="col col-lg-auto">
   {{with index $storage 0}}
             <h5 class="">{{.Plan.Name}}</h5>
     {{with index .Plan.Meta "notice"}}
@@ -18,7 +18,8 @@
               <thead>
                 <tr>
                   <th>#</th>
-                  <th class="w-100">Owner</th>
+                  <th class="d-md-none w-100">Owner</th>
+                  <th class="d-none d-md-table-cell">Owner</th>
                   <th>Fee <span class="small text-muted">(monthly)</span></th>
                   <th class="text-center">Waitlist</th>
                 </tr>
