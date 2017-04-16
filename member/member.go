@@ -95,7 +95,7 @@ func (ms *Members) Get_member_by_customer_id(customer_id string) *Member {
 	if err := ms.QueryRow(
 		"SELECT id "+
 			"FROM member "+
-			"WHERE customer_id = $1",
+			"WHERE stripe_customer_id = $1",
 		customer_id).Scan(&member_id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil

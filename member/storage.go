@@ -1,7 +1,6 @@
 package member
 
 import (
-	"database/sql"
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/sub"
 	"log"
@@ -10,7 +9,7 @@ import (
 
 type Storage struct {
 	Number    int
-	Size      int
+	Quantity  uint64
 	Available bool
 	*stripe.Plan
 	*Member
@@ -31,30 +30,22 @@ func (ms *Members) Get_storage(plan_id string) []*Storage {
 		}
 		members[number] =  ms.Get_member_by_customer_id(i.Sub().Customer.ID)
 	}
-	rows, err := ms.Query("SELECT number, size, available "+
+	rows, err := ms.Query("SELECT number, quantity, available "+
 		"FROM storage WHERE plan_id = $1 ORDER BY number ASC", plan_id)
 	if err != nil {
 		log.Panic(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var (
-			number     int
-			size       sql.NullInt64
-			available  bool
-		)
-		if err = rows.Scan(&number, &size, &available); err != nil {
+		var s Storage
+		if err = rows.Scan(&s.Number, &s.Quantity, &s.Available); err != nil {
 			log.Panic(err)
 		}
-		s := &Storage{
-			Number:    number,
-			Size:      int(size.Int64),
-			Available: available,
-			Plan:      ms.Plans[plan_id]}
-		if m, ok := members[number]; ok {
+		s.Plan = ms.Plans[plan_id]
+		if m, ok := members[s.Number]; ok {
 			s.Member = m
 		}
-		storage = append(storage, s)
+		storage = append(storage, &s)
 	}
 	return storage
 }

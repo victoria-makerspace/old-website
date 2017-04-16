@@ -4,59 +4,70 @@
         <p class="alert alert-warning">
           The storage waitlist and registration forms are not currently implemented.  Please <span class="text-nowrap">e-mail</span> <a href="mailto:storage@makerspace.ca">storage@makerspace.ca</a> for information about storage availabilities.
         </p>
+{{define "storage"}}
         <form action="/member/storage" method="post">
           <h5 class="mb-0">Wall storage</h5>
-          <small class="align-top text-muted">Locations 1 &amp; 2 are reserved by Makerspace</small>
-          <table class="table table-sm table-responsive storage-table" id="storage-table-wall">
+  {{with index .Data.wall_storage 0}}
+    {{with index .Plan.Meta "notice"}}
+          <small class="pl-sm-2 align-top text-muted">{{.}}</small>
+    {{end}}
+  {{end}}
+          <table class="px-sm-2 table table-sm table-responsive text-nowrap text-center">
             <thead>
               <tr>
                 <th>#</th>
-                <th>Owner</th>
-                <th>$/month</th>
-                <th>Waitlist</th>
+                <th class="w-100">Owner</th>
+                <th>Fee <span class="small text-muted">(monthly)</span></th>
+                <th class="text-center">Waitlist</th>
               </tr>
             </thead>
             <tbody>
-{{range .Data.wall_storage}}
+  {{range .Data.wall_storage}}
               <tr{{if not .Available}}
                   class="text-muted"
                 {{else if .Member}}
                   {{if eq .Member.Id $.Member.Id}}
                   class="table-success"
-                {{- end}}{{end}}>
+                {{end}}{{end}}>
                 <th scope="row">{{.Number}}</th>
-  {{- with .Member -}}
-                <td>
+                <td class="text-left">
+    {{with .Member}}
                   <a href="/member/{{.Id}}">@{{.Username}}</a>
-                </td>
-  {{else}}
-                <td>-</td>
-  {{- end}}
-                <td>
-  {{if .Available}}
-                  ${{.Price | printf "%.2f"}}{{else}}-
-  {{end}}
+    {{else}}
+                  <span class="ml-2">-</span>
+    {{end}}
                 </td>
                 <td>
-  {{if not .Available}}
+    {{if .Available}}
+                  {{fmt_money (mul .Quantity .Plan.Amount)}}
+    {{else}}
+                  -
+    {{end}}
+                </td>
+                <td>
+    {{if not .Available}}
                   <small>Unavailable</small>
-  {{else if not .Member}}
+    {{else if not .Member}}
                   <button type="button" class="btn btn-sm btn-outline-info disabled" data-toggle="collapse" data-target="#storage-available-wall">Available</button>
-  {{else if eq $.Member.Id .Member.Id}}
+    {{else if eq $.Member.Id .Member.Id}}
                   <a href="/member/billing#Payments" class="btn btn-sm btn-warning">Cancel</a>
-  {{else}}
+    {{else}}
                   <button type="button" class="btn btn-sm btn-outline-secondary disabled" data-target="#storage-waitlist-wall">Waitlist</button>
-  {{end -}}
+    {{end}}
                 </td>
               </tr>
-{{end}}
+  {{end}}
             </tbody>
           </table>
+        </form>
+{{end}}
+{{template "storage" .}}
+        <form action="/member/storage" method="post">
           <div class="row">
             <div class="col">
               <h5>Hall lockers</h5>
               <p>Fee: $5.00/month</p>
-              <table class="table table-sm table-responsive storage-table" id="storage-table-hall-lockers">
+              <table class="table table-sm table-responsive">
                 <thead>
                   <tr>
                     <th>#</th>
@@ -100,7 +111,7 @@
               <h5 class="mb-0">Bathroom lockers</h5>
               <small class="align-top text-muted">Lockers 7 &amp; 8 are reserved for VITP cleaners</small>
               <p>Fee: $5.00/month</p>
-              <table class="table table-sm table-responsive storage-table" id="storage-table-bathroom-lockers">
+              <table class="table table-sm table-responsive">
                 <thead>
                   <tr>
                     <th>#</th>
