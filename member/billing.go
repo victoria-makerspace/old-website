@@ -33,21 +33,24 @@ func (m *Member) Update_customer(token string, params *stripe.CustomerParams) er
 	params.Desc = m.Name + "'s account"
 	params.Email = m.Email
 	var err error
+	var cust *stripe.Customer
 	if m.customer_id == "" {
-		if m.customer, err = customer.New(params); err == nil {
-			m.customer_id = m.customer.ID
-		}
+		cust, err = customer.New(params)
 	} else {
-		m.customer, err = customer.Update(m.customer.ID, params)
+		cust, err = customer.Update(m.customer.ID, params)
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf(err.(*stripe.Error).Msg)
 	}
-	if _, err := m.Exec(
-		"UPDATE member "+
-			"SET stripe_customer_id = $2 "+
-			"WHERE id = $1", m.Id, m.customer.ID); err != nil {
-		log.Panic(err)
+	m.customer = cust
+	if m.customer_id == "" {
+		m.customer_id = m.customer.ID
+		if _, err := m.Exec(
+			"UPDATE member "+
+				"SET stripe_customer_id = $2 "+
+				"WHERE id = $1", m.Id, m.customer.ID); err != nil {
+			log.Panic(err)
+		}
 	}
 	return nil
 }
