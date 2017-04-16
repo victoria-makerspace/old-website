@@ -49,7 +49,7 @@
                   </select>
                 </div>
               </div>
-  {{with .Get_membership}}
+  {{with $ms}}
               <div class="my-1 row">
                 <div class="col">
                   <strong>Cancel membership:</strong>
@@ -68,7 +68,7 @@
             </div>
           </div>
           <div class="mb-2 row">
-  {{with .Get_membership}}
+  {{with $ms}}
             <span class="col-sm-4 font-weight-bold">Approved by:</span>
             <div class="col-sm-8">
               <a href="/member/{{with $.Approved_by .}}{{.Id}}{{end}}">
