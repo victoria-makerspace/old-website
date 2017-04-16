@@ -17,15 +17,16 @@
           <div class="mb-2 row">
             <span class="col col-sm-4 font-weight-bold">Type:</span>
             <div class="col">
-{{with .Get_pending_membership}}
-              <p class="alert alert-info mt-2 mb-2">
-                Your request for "{{with index $.Plans .Plan_id}}{{.Name}}{{end}}" is pending approval.
-              </p>
-{{end}}
 {{with $ms}}
               {{.Plan.Name}}
 {{else}}
+  {{with .Get_pending_membership}}
+              <p class="alert alert-info mt-2 mb-2">
+                Your membership request is pending approval.
+              </p>
+  {{else}}
               None
+  {{end}}
 {{end}}
             </div>
           </div>

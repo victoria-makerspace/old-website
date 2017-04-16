@@ -8,22 +8,22 @@
 {{end}}
         <h5>
           <a href="https://dashboard.stripe.com">
-            Stripe Dashboard
+            Stripe dashboard
             <span class="title-link"></span>
           </a>
         </h5>
 {{with .Get_all_pending_subscriptions}}
         <h4>
           <a href="#pending-subscriptions" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
-          Pending Subscription Requests
+          Pending subscription requests
         </h4>
         <form action="/admin" method="post" class="collapse show mx-sm-3" id="pending-subscriptions">
           <table class="table table-sm table-striped table-responsive text-nowrap">
             <thead>
               <tr>
                 <th>Username</th>
-                <th class="w-100">Name</th>
-                <th>Type</th>
+                <th class="w-75">Name</th>
+                <th class="w-25">Type</th>
                 <th>Request date</th>
                 <th></th>
                 <th></th>
@@ -58,7 +58,7 @@
 {{else}}
           <a href="#upload-members" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
 {{end}}
-          Upload Members
+          Upload members
         </h4>
         <form action="/admin" method="post" id="upload-members" class="{{if not (.PostFormValue "member-upload")}}collapse {{end}}mx-sm-3">
           <strong>CSV Format:</strong>

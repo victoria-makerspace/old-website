@@ -20,7 +20,7 @@ func (m *Member) Request_membership(rate string) error {
 		if ms.Plan.ID == rate {
 			return fmt.Errorf("Cannot duplicate existing membership")
 		}
-		if rate == "membership-regular" || rate == "membership-student" {
+		if ms.Plan.Amount < plan.Amount {
 			params := &stripe.SubParams{Plan: rate}
 			return m.Update_membership(params)
 		}

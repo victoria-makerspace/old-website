@@ -1,11 +1,14 @@
 package site
 
-import ()
+import (
+	"regexp"
+	"strconv"
+)
 
 func init() {
 	init_handler("dashboard", dashboard_handler, "/member/dashboard")
 	init_handler("account", account_handler, "/member/account")
-	init_handler("storage", storage_handler, "/member/storage")
+	init_handler("profile", profile_handler, "/member/")
 }
 
 func dashboard_handler(p *page) {
@@ -43,12 +46,18 @@ func account_handler(p *page) {
 	}
 }
 
-func storage_handler(p *page) {
-	p.Title = "Storage"
-	if !p.must_authenticate() {
+var profile_path_rexp = regexp.MustCompile(`^/member/[0-9]+$`)
+
+func profile_handler(p *page) {
+	if !profile_path_rexp.MatchString(p.URL.Path) {
+		p.http_error(404)
+	}
+	member_id, _ := strconv.Atoi(p.URL.Path[len("/member/"):])
+	m := p.Get_member_by_id(member_id)
+	if m == nil {
+		p.http_error(404)
 		return
 	}
-	p.Data["wall_storage"] = p.Get_storage(p.Plans["storage-wall"].ID)
-	p.Data["hall_lockers"] = p.Get_storage(p.Plans["storage-hall-locker"].ID)
-	p.Data["bathroom_lockers"] = p.Get_storage(p.Plans["storage-bathroom-locker"].ID)
+	p.Title = "@" + m.Username
+	p.Data["member"] = m
 }

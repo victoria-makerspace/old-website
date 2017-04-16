@@ -21,7 +21,11 @@ func (ms *Members) Get_storage(plan_id string) []*Storage {
 	i := sub.List(&stripe.SubListParams{Plan: plan_id})
 	members := make(map[int]*Member)
 	for i.Next() {
-		number, err := strconv.Atoi(i.Sub().Meta["number"])
+		n, ok := i.Sub().Meta["number"]
+		if !ok {
+			continue
+		}
+		number, err := strconv.Atoi(n)
 		if err != nil {
 			log.Panic(err)
 		}

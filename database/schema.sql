@@ -73,7 +73,9 @@ CREATE TABLE storage (
 	number integer NOT NULL,
 	plan_id text NOT NULL,
 	available boolean NOT NULL DEFAULT true,
-	size integer,
+	-- For variable-size storage, <quantity> defines the multiplication factor
+	--	given to the subscription to charge a multiple of base plan amount
+	quantity integer NOT NULL DEFAULT 1,
 	PRIMARY KEY (number, plan_id)
 );
 CREATE TABLE storage_waitlist (
