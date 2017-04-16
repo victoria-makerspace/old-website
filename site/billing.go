@@ -65,8 +65,12 @@ func billing_handler(p *page) {
 			return
 		}
 		p.Cancel_pending_subscription(pending)
-	} else if _, ok := p.PostForm["cancel-subscription"]; ok {
-		//id, _ := strconv.Atoi(p.PostFormValue("terminate"))
-		//TODO terminate subscription
+	} else if sub_id := p.PostFormValue("cancel-subscription"); sub_id != "" {
+		if sub_id == p.Membership_id() {
+			p.http_error(403)
+			return
+		}
+		p.Data["cancel_subscription_error"] = p.Cancel_subscription(sub_id)
+		p.redirect = "/member/billing"
 	}
 }

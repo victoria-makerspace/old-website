@@ -4,6 +4,7 @@ import (
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/customer"
 	"github.com/stripe/stripe-go/plan"
+	"github.com/stripe/stripe-go/sub"
 	"log"
 	"fmt"
 	"strconv"
@@ -102,6 +103,14 @@ func (m *Member) Active_subscriptions() map[string]*stripe.Sub {
 		}
 	}
 	return subs
+}
+
+func (m *Member) Cancel_subscription(id string) error {
+	if _, ok := m.Active_subscriptions()[id]; !ok {
+		return fmt.Errorf("Invalid subscription ID")
+	}
+	_, err := sub.Cancel(id, nil)
+	return err
 }
 
 func (ms *Members) Approved_by(sub *stripe.Sub) *Member {

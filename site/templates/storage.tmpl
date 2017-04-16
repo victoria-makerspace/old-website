@@ -48,7 +48,7 @@
     {{else if not .Member}}
                     <button type="button" class="btn btn-sm btn-outline-info disabled" data-toggle="collapse" data-target="#storage-available-wall">Available</button>
     {{else if eq $.Member.Id .Member.Id}}
-                    <a href="/member/billing#Payments" class="btn btn-sm btn-warning">Cancel</a>
+                    <a href="/member/billing#Subscriptions" class="btn btn-sm btn-warning">Cancel</a>
     {{else}}
                     <button type="button" class="btn btn-sm btn-outline-secondary disabled" data-target="#storage-waitlist-wall">Waitlist</button>
     {{end}}
