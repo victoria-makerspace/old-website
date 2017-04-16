@@ -62,7 +62,7 @@
               </thead>
               <tbody>
   {{range .}}
-                <tr{{if eq .ID $ms.ID}} class="table-active"{{end}}>
+                <tr{{if eq .ID $.Membership_id}} class="table-active"{{end}}>
                   <td>{{.Plan.Name}}</td>
                   <td>{{fmt_money (mul .Quantity .Plan.Amount)}}</td>
                   <td>
@@ -72,7 +72,7 @@
                   </td>
                   <td>{{(timestamp .Created).Format "02/01/2006"}}</td>
                   <td>
-    {{if eq .ID $ms.ID}}
+    {{if eq .ID $.Membership_id}}
                     <button type="button" data-toggle="modal" data-target="#cancel-membership" class="btn btn-sm btn-danger">Cancel</button>
     {{else}}
                     <button type="submit" name="cancel-subscription" value="{{.ID}}" class="btn btn-sm btn-danger">Cancel</button>

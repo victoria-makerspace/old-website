@@ -46,9 +46,16 @@ func (m *Member) Get_membership() *stripe.Sub {
 	return nil
 }
 
-func (m *Member) Membership_id() string {
+func (m *Member) Membership_plan() string {
 	if ms := m.Get_membership(); ms != nil {
 		return ms.Plan.ID
+	}
+	return ""
+}
+
+func (m *Member) Membership_id() string {
+	if ms := m.Get_membership(); ms != nil {
+		return ms.ID
 	}
 	return ""
 }
