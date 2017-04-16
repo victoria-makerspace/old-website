@@ -24,6 +24,12 @@ var tmpl_funcmap = template.FuncMap{
 	"sub": func(i, j int) int {
 		return i - j
 	},
+	"mul": func(i, j uint64) uint64 {
+		return i * j
+	},
+	"div": func(i, j float64) float64 {
+		return i / j
+	},
 	"escape": func(html string) template.HTML {
 		return template.HTML(html)
 	},
@@ -47,6 +53,12 @@ var tmpl_funcmap = template.FuncMap{
 			return t.Format("Mon, Jan 2")
 		}
 		return t.Format("Jan 2, 2006")
+	},
+	"timestamp": func(t int64) time.Time {
+		return time.Unix(t, 0)
+	},
+	"fmt_money": func(amount uint64) string {
+		return fmt.Sprintf("$%.2f", float64(amount)/100)
 	},
 }
 

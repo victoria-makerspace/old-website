@@ -2,6 +2,7 @@
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
 {{with .Data.member}}
+  {{$ms := .Get_membership}}
         <h3 class="text-center">
           <a href="/member/{{.Id}}">@{{.Username}}</a>'s profile
         </h3>
@@ -14,7 +15,7 @@
           <div class="mb-2 row">
             <span class="col col-sm-4 font-weight-bold">Type:</span>
             <div class="col text-capitalize">
-  {{with .Get_membership}}
+  {{with $ms}}
               {{.Plan.Name}}
   {{else}}
               None
@@ -26,6 +27,7 @@
           </div>
           <div class="collapse" id="modify-membership">
             <div class="mx-2 mb-2 py-2 px-3 card bg-faded">
+  {{if ne .Membership_id "membership-free"}}
               <div class="my-1 row">
                 <div class="col">
                   <strong>Approve free membership:</strong>
@@ -36,6 +38,7 @@
                   </button>
                 </div>
               </div>
+  {{end}}
               <div class="my-1 row">
                 <div class="col">
                   <strong>Link to corporate member:</strong>

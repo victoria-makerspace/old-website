@@ -41,10 +41,11 @@
                   <button type="submit" name="decline-membership" value="{{.Id}}" class="btn btn-sm btn-danger">Decline</button>
                 </td>
                 <td>
-                  <label class="form-check-label small">
+                  <label title="Send notification message to @{{.Username}}" class="form-check-label small">
                     <input type="checkbox" class="form-check-input" name="notify">
                     Notify
                   </label>
+                </td>
               </tr>
   {{end}}
 {{end}}

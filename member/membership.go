@@ -38,15 +38,19 @@ func (m *Member) Get_pending_membership() *Pending_subscription {
 }
 
 func (m *Member) Get_membership() *stripe.Sub {
-	if m.Customer() == nil {
-		return nil
-	}
-	for _, s := range m.customer.Subs.Values {
-		if strings.HasPrefix(s.Plan.ID, "membership") && s.Ended == 0 {
+	for _, s := range m.Active_subscriptions() {
+		if strings.HasPrefix(s.Plan.ID, "membership") {
 			return s
 		}
 	}
 	return nil
+}
+
+func (m *Member) Membership_id() string {
+	if ms := m.Get_membership(); ms != nil {
+		return ms.Plan.ID
+	}
+	return ""
 }
 
 func (m *Member) Update_membership(params *stripe.SubParams) error {

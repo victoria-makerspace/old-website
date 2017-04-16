@@ -38,6 +38,7 @@ type Members struct {
 
 func New(config Config, db *sql.DB, talk *talk.Talk_api) *Members {
 	stripe.Key = config.Billing.Private_key
+	stripe.LogLevel = 1
 	ms := &Members{config, db, talk, make(map[string]*stripe.Plan)}
 	ms.load_plans()
 	return ms

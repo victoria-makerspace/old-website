@@ -41,14 +41,53 @@
 {{end}}
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-md-10 col-lg-8 col-xl-7">
+      <div class="col-lg-10 col-xl-8">
         <p class="alert alert-info">
           All prices and transactions are in Canadian dollars.<br>
           Billing inquiries should be addressed to <a href="mailto:accounting@makerspace.ca">accounting@makerspace.ca</a>.
         </p>
+{{with .Active_subscriptions}}
+        <section>
+          <h4>Subscriptions</h4>
+          <form action="/member/billing" method="post" class="mx-sm-3">
+            <table class="table table-sm table-striped table-responsive text-nowrap">
+              <thead>
+                <tr>
+                  <th class="w-100">Name</th>
+                  <th>Amount</th>
+                  <th>Current period</th>
+                  <th>Created</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+  {{range .}}
+                <tr{{if eq .ID $ms.ID}} class="table-active"{{end}}>
+                  <td>{{.Plan.Name}}</td>
+                  <td>{{fmt_money (mul .Quantity .Plan.Amount)}}</td>
+                  <td>
+                    {{(timestamp .PeriodStart).Format "Jan 02"}}
+                    &ndash;
+                    {{(timestamp .PeriodEnd).Format "Jan 02"}}
+                  </td>
+                  <td>{{(timestamp .Created).Format "02/01/2006"}}</td>
+                  <td>
+    {{if eq .ID $ms.ID}}
+                    <button type="button" data-toggle="modal" data-target="#cancel-membership" class="btn btn-sm btn-danger">Cancel</button>
+    {{else}}
+                    <button type="submit" name="cancel-subscription" value="{{.ID}}" class="btn btn-sm btn-danger">Cancel</button>
+    {{end}}
+                  </td>
+                </tr>
+  {{end}}
+              </tbody>
+            </table>
+          </form>
+        </section>
+{{end}}
         <section>
           <h4>
-{{if and .Customer .Customer.DefaultSource}}
+{{if .Has_card}}
             <a href="#cc-form" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
             Update card
             <img class="ml-3 mb-2" style="height: 1.5rem" src="/mcvs_acc_hrz.svg">
@@ -147,7 +186,7 @@
               <button type="submit" class="btn btn-sm btn-danger" name="cancel-pending-membership">Cancel</button>
             </p>
 {{end}}
-            <fieldset class="mb-1">
+            <fieldset class="mb-1"{{if or (not .Member.Agreed_to_terms) (not .Has_card)}} disabled{{end}}>
               <label class="custom-control custom-radio">
 {{with $ms}}
                 <input type="radio" name="rate" class="custom-control-input" value="membership-regular"{{if eq .Plan.ID "membership-regular"}} checked{{end}}>
@@ -209,19 +248,17 @@
             </fieldset>
             <div class="d-inline-flex mt-2">
 {{if $ms}}
-              <button type="submit" name="register-membership" class="btn btn-primary">Update</button>
+              <button type="submit" name="register-membership" class="btn btn-primary"{{if not .Has_card}} disabled{{end}}>Update</button>
               <button type="button" data-toggle="modal" data-target="#cancel-membership" class="ml-1 btn btn-danger">Cancel</button>
 {{else}}
-  {{if and .Customer .Customer.DefaultSource}}
-              <button type="submit" name="register-membership" class="btn btn-primary"{{if not .Member.Agreed_to_terms}} disabled{{end}}>Register</button>
-  {{else}}
-              <button type="submit" name="register-membership" class="btn btn-primary" disabled>Register</button>
-  {{end}}
+              <button type="submit" name="register-membership" class="btn btn-primary"{{if or (not .Member.Agreed_to_terms) (not .Has_card)}} disabled{{end}}>Register</button>
 {{end}}
 {{if not .Member.Agreed_to_terms}}
               <p class="alert alert-warning ml-3 mb-0 py-2">
                 You must agree to the <a href="/terms">Terms & Conditions</a> before requesting a membership.
               </p>
+{{else if not .Has_card}}
+              <p class="alert alert-warning ml-3 mb-0 py-2">You must register a credit card before membership registration.</p>
 {{end}}
 {{with .Data.membership_registration_error}}
               <p class="alert alert-danger ml-3 mb-0 py-2">{{.}}.</p>

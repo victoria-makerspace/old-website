@@ -52,6 +52,13 @@ func (m *Member) Update_customer(token string, params *stripe.CustomerParams) er
 	return nil
 }
 
+func (m *Member) Has_card() bool {
+	if c := m.Customer(); c != nil && c.DefaultSource != nil {
+		return true
+	}
+	return false
+}
+
 type Pending_subscription struct {
 	*Member
 	Requested_at time.Time
@@ -80,6 +87,18 @@ func (ms *Members) Cancel_pending_subscription(p *Pending_subscription) {
 		err != nil {
 		log.Panic(err)
 	}
+}
+
+func (m *Member) Active_subscriptions() map[string]*stripe.Sub {
+	subs := make(map[string]*stripe.Sub)
+	if m.Customer() != nil {
+		for _, s := range m.customer.Subs.Values {
+			if s.Ended == 0 {
+				subs[s.ID] = s
+			}
+		}
+	}
+	return subs
 }
 
 func (ms *Members) Approved_by(sub *stripe.Sub) *Member {
