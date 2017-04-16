@@ -35,7 +35,7 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 
 type Talk_user struct {
 	external_id    int
-	id             int
+	Id             int
 	Username       string
 	Admin          bool
 	Avatar_tmpl    string
@@ -52,7 +52,7 @@ type Talk_user struct {
 
 func (api *Talk_api) parse_user(external_id int, u map[string]interface{}) *Talk_user {
 	t := &Talk_user{external_id: external_id, Talk_api: api}
-	t.id = int(u["id"].(float64))
+	t.Id = int(u["id"].(float64))
 	t.Username = u["username"].(string)
 	t.Admin = u["admin"].(bool)
 	t.Avatar_tmpl = u["avatar_template"].(string)
@@ -177,7 +177,7 @@ func (t *Talk_user) Remove_from_group(group string) {
 		return
 	}
 	form := url.Values{}
-	form.Set("user_id", fmt.Sprint(t.id))
+	form.Set("user_id", fmt.Sprint(t.Id))
 	data, err := t.do_form("DELETE", "/groups/"+fmt.Sprint(gid)+"/members",
 		form)
 	if err != nil {

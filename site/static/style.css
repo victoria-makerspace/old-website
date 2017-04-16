@@ -414,9 +414,6 @@ input[type=month] {
     #notifications a:nth-child(7) ~ a {
         display: none;
     }
-    #student:disabled {
-        display: none;
-    }
 }
 @media (min-width: 576px) {
     .navbar-brand-large {

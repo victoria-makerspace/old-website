@@ -27,15 +27,10 @@ $(document).ready(function() {
 });
 
 $("#membership-registration input[name=rate]").change(function() {
-    var checked = $("#student-rate").prop("checked");
-    var input = $("#student input");
-    $("#student").prop("disabled", !checked);
-    $("#student").toggleClass("text-muted", !checked);
-    input.prop("required", checked);
-    if (!checked) {
-        $("#student .form-group").removeClass("has-danger has-success").find(".form-control-feedback").text("");
-        if (!input.attr("value")) input.val("");
-    } else {
+    if ($("#student-rate").prop("checked")) {
+        $("#student").addClass("show");
         $("#institution").focus();
+    } else {
+        $("#student").removeClass("show");
     }
 });

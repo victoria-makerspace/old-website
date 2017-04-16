@@ -38,7 +38,7 @@ func admin_handler(p *page) {
 		if m := p.Get_member_by_id(member_id);
 			m == nil || m.Get_pending_membership() == nil {
 			p.http_error(400)
-		} else if m.Get_membership() == nil {
+		} else {
 			if err := p.Approve_membership(m); err != nil {
 				p.http_error(500)
 			}
@@ -46,8 +46,6 @@ func admin_handler(p *page) {
 			if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
 				//TODO
 			}
-		} else {
-			p.http_error(500)
 		}
 		return
 	} else if p.PostFormValue("decline-membership") != "" {
@@ -61,7 +59,12 @@ func admin_handler(p *page) {
 			p.http_error(400)
 			return
 		}
-		//TODO p.Decline_membership
+		pending := m.Get_pending_membership()
+		if pending == nil {
+			p.http_error(400)
+			return
+		}
+		p.Cancel_pending_subscription(pending)
 		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
 			p.Message_member("Your membership request was declined",
 				"Your membership request was declined by @"+p.Member.Username+
@@ -75,11 +78,11 @@ func admin_handler(p *page) {
 var account_path_rexp = regexp.MustCompile(`^/admin/account/[0-9]+$`)
 
 func manage_account_handler(p *page) {
-	if !p.must_be_admin() {
-		return
-	}
 	if !account_path_rexp.MatchString(p.URL.Path) {
 		p.http_error(404)
+		return
+	}
+	if !p.must_be_admin() {
 		return
 	}
 	member_id, _ := strconv.Atoi(p.URL.Path[len("/admin/account/"):])
@@ -94,14 +97,13 @@ func manage_account_handler(p *page) {
 		member_id, err := strconv.Atoi(p.PostFormValue("approve-membership"))
 		if err != nil || member_id != m.Id {
 			p.http_error(400)
-		} else if m.Get_membership == nil {
-			p.Member.Approve_membership(m)
-			if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
-				//TODO
-			}
-		} else {
-			p.http_error(500)
+			return
 		}
+		p.Member.Approve_membership(m)
+		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
+			//TODO
+		}
+		p.redirect = p.URL.Path
 	} else if p.PostFormValue("decline-membership") != "" {
 		member_id, err := strconv.Atoi(p.PostFormValue("decline-membership"))
 		if err != nil || member_id != m.Id {
@@ -114,16 +116,22 @@ func manage_account_handler(p *page) {
 				"Your membership request was declined by @"+p.Member.Username+
 					".", m.Talk_user(), p.Member.Talk_user())
 		}
-	} else if _, ok := p.PostForm["terminate_membership"]; ok {
+	} else if p.PostFormValue("approve-free-membership") != "" {
+		p.Member.Approve_free_membership(m)
+		p.redirect = p.URL.Path
+	} else if sub_id := p.PostFormValue("cancel-membership"); sub_id != "" {
+		membership := m.Get_membership()
+		if sub_id != membership.ID {
+			p.http_error(400)
+			return
+		}
 		m.Cancel_membership()
 		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
 			p.Message_member("Your membership has been cancelled",
 				"Your membership was cancelled by @"+p.Member.Username+
 					".", m.Talk_user(), p.Member.Talk_user())
 		}
-	} else if _, ok := p.PostForm["terminate"]; ok {
-		//id, _ := strconv.Atoi(p.PostFormValue("terminate"))
-		//TODO p.Cancel_subscription
+		p.redirect = p.URL.Path
 	} else if p.PostFormValue("registered") != "" {
 		if registered, err := time.ParseInLocation("2006-01-02",
 			p.PostFormValue("registered"), time.Local); err != nil {
@@ -145,20 +153,6 @@ func manage_account_handler(p *page) {
 		if err := m.Set_telephone(tel); err != nil {
 			p.Data["telephone_error"] = err
 		}
-	} else if p.PostFormValue("update-type") == fmt.Sprint(m.Id) {
-		if m.Admin == nil && p.PostFormValue("type") == "admin" {
-			//TODO
-		}
-	} else if p.PostFormValue("delete-account") == fmt.Sprint(m.Id) {
-		//TODO
-	} else if p.PostFormValue("remove-from-group") == fmt.Sprint(m.Id) {
-		if m.Talk_user() != nil {
-			m.Talk_user().Remove_from_group(p.PostFormValue("group"))
-		}
-	} else if p.PostFormValue("add-to-group") == fmt.Sprint(m.Id) {
-		if m.Talk_user() != nil {
-			m.Talk_user().Add_to_group(p.PostFormValue("group"))
-		}
 	}
 }
 
@@ -172,7 +166,6 @@ func member_upload_handler(p *page) {
 		username, name, email string
 		date                  time.Time
 		free                  bool
-		verified              bool
 		key_card              string
 	}
 	new_members := make([]new_member, 0)
@@ -200,8 +193,6 @@ func member_upload_handler(p *page) {
 				continue
 			} else if field == "free" {
 				nm.free = true
-			} else if field == "verified" {
-				nm.verified = true
 			} else if member.Key_card_rexp.MatchString(field) {
 				nm.key_card = field
 			} else if t, err := time.ParseInLocation("2006-01-02", field,
@@ -215,7 +206,7 @@ func member_upload_handler(p *page) {
 		}
 		new_members = append(new_members, nm)
 	}
-	verified := make([]*member.Member, 0)
+	success := make([]*member.Member, 0)
 	for _, nm := range new_members {
 		m, err := p.New_member(nm.username, nm.email, nm.name)
 		if m == nil {
@@ -228,14 +219,10 @@ func member_upload_handler(p *page) {
 		if !nm.date.IsZero() {
 			m.Set_registration_date(nm.date)
 		}
-		if nm.verified {
-			if err := m.Verify_email(nm.email); err != nil {
-				line_error[nm.line] = []string{"E-mail verification failed"}
-			} else {
-				verified = append(verified, m)
-			}
+		if err := m.Verify_email(nm.email); err != nil {
+			line_error[nm.line] = []string{"E-mail verification failed"}
 		} else {
-			m.Send_email_verification(nm.email)
+			success = append(success, m)
 		}
 		if nm.free {
 			p.Member.Approve_membership(m)
@@ -256,5 +243,5 @@ func member_upload_handler(p *page) {
 	p.Data["lines"] = lines
 	p.Data["line_error"] = line_error
 	p.Data["line_success"] = line_success
-	p.Member.Send_password_resets(verified...)
+	p.Member.Send_password_resets(success...)
 }

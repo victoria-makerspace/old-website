@@ -6,6 +6,12 @@
           <a href="/member/{{.Id}}">@{{.Username}}</a>'s membership approved.
         </p>
 {{end}}
+        <h5>
+          <a href="https://dashboard.stripe.com">
+            Stripe Dashboard
+            <span class="title-link"></span>
+          </a>
+        </h5>
 {{with .Get_all_pending_subscriptions}}
         <h4>
           <a href="#pending-subscriptions" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
@@ -36,7 +42,7 @@
                 </td>
                 <td>
                   <label class="form-check-label small">
-                    <input type="checkbox" class="form-check-input" name="notify" checked>
+                    <input type="checkbox" class="form-check-input" name="notify">
                     Notify
                   </label>
               </tr>

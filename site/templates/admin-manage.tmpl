@@ -15,10 +15,52 @@
             <span class="col col-sm-4 font-weight-bold">Type:</span>
             <div class="col text-capitalize">
   {{with .Get_membership}}
-              .Plan.Name
-              <button type="submit" name="terminate_membership" value="{{.ID}}" class="ml-1 btn btn-sm btn-danger">Cancel</button>
+              {{.Plan.Name}}
   {{else}}
               None
+  {{end}}
+              <button type="button" data-toggle="collapse" data-target="#modify-membership" class="ml-1 btn btn-sm btn-secondary dropdown-toggle">
+                Modify
+              </button>
+            </div>
+          </div>
+          <div class="collapse" id="modify-membership">
+            <div class="mx-2 mb-2 py-2 px-3 card bg-faded">
+              <div class="my-1 row">
+                <div class="col">
+                  <strong>Approve free membership:</strong>
+                </div>
+                <div class="col">
+                  <button class="btn btn-sm btn-primary" type="submit" name="approve-free-membership" value="{{.Id}}">
+                    Approve
+                  </button>
+                </div>
+              </div>
+              <div class="my-1 row">
+                <div class="col">
+                  <strong>Link to corporate member:</strong>
+                </div>
+                <div class="col">
+                  <select class="form-control">
+                    {TODO}
+                  </select>
+                </div>
+              </div>
+  {{with .Get_membership}}
+              <div class="my-1 row">
+                <div class="col">
+                  <strong>Cancel membership:</strong>
+                </div>
+                <div class="col">
+                  <button class="btn btn-sm btn-danger" type="submit" name="cancel-membership" value="{{.ID}}">
+                    Cancel
+                  </button>
+                  <label title="Send notification message" class="ml-2 form-check-label small">
+                    <input type="checkbox" class="form-check-input" name="notify" checked>
+                    Notify
+                  </label>
+                </div>
+              </div>
   {{end}}
             </div>
           </div>
@@ -26,7 +68,9 @@
   {{with .Get_membership}}
             <span class="col-sm-4 font-weight-bold">Approved by:</span>
             <div class="col-sm-8">
-              <a href="/member/{{$.Approved_by . | .Id}}">@{{$.Approved_by . | .Username}}</a> on {{.Created_at.Format "January 2, 2006"}}
+              <a href="/member/{{with $.Approved_by .}}{{.Id}}{{end}}">
+                @{{with $.Approved_by .}}{{.Username}}{{end}}</a>
+                on {{with $.Created_at .}}{{.Format "January 2, 2006"}}{{end}}
             </div>
   {{else}}
     {{with .Get_pending_membership}}
@@ -37,10 +81,6 @@
             </div>
     {{end}}
   {{end}}
-            <span class="col-sm-4 font-weight-bold">Designate free membership:</span>
-            <div class="col-sm-8">
-              <button type="submit" name="set-free-membership" value="{{.Id}}" class="btn btn-sm btn-warning">Update</button>
-            </div>
           </div>
         </form>
         <h4>Account information</h4>
@@ -125,38 +165,15 @@
   {{with .Talk_user}}
           <div class="mb-2 row">
             <span class="col-sm-4 font-weight-bold">Talk forum:</span>
-            <span class="col-sm-8">
+            <div class="col-sm-8">
               <a href="{{.Talk_api.Path}}/u/{{urlquery .Username}}/preferences">
                 Account preferences
                 <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
+              </a><br>
+              <a href="{{.Talk_api.Path}}/admin/users/{{.Id}}/{{urlquery .Username}}">
+                Account management
+                <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
               </a>
-            </span>
-          </div>
-          <div class="mb-2 row">
-            <span class="col-sm-4 font-weight-bold">Talk groups:</span>
-            <div class="col-sm-8">
-    {{with .Groups}}
-              <form method="post" action="/admin/account/{{$.Data.member.Id}}" class="input-group form-group">
-                <select class="form-control" name="group">
-      {{range $name, $gid := .}}
-                  <option value="{{$name}}">{{$name}}</option>
-      {{end}}
-                </select>
-                <div class="input-group-btn">
-                  <button type="submit" name="remove-from-group" value="{{$.Data.member.Id}}" class="btn btn-sm btn-danger">Remove from group</button>
-                </div>
-              </form>
-    {{end}}
-              <form method="post" action="/admin/account/{{$.Data.member.Id}}" class="input-group">
-                <select class="form-control" name="group">
-    {{range $name, $gid := .All_groups}}
-                  <option {{if index $.Data.member.Talk_user.Groups $name}}disabled{{else}}value="{{$name}}"{{end}}>{{$name}}</option>
-    {{end}}
-                </select>
-                <div class="input-group-btn">
-                  <button type="submit" name="add-to-group" value="{{$.Data.member.Id}}" class="btn btn-sm btn-secondary">Add to group</button>
-                </div>
-              </form>
             </div>
           </div>
   {{end}}

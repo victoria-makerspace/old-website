@@ -52,6 +52,12 @@ func (m *Member) Update_customer(token string, params *stripe.CustomerParams) er
 	return nil
 }
 
+type Pending_subscription struct {
+	*Member
+	Requested_at time.Time
+	Plan_id string
+}
+
 func (m *Member) Request_subscription(plan_id string) error {
 	if m.Customer() == nil || m.customer.DefaultSource == nil {
 		return fmt.Errorf("No valid payment source")
@@ -60,11 +66,20 @@ func (m *Member) Request_subscription(plan_id string) error {
 		"INSERT INTO pending_subscription "+
 		"(member, plan_id) "+
 		"VALUES ($1, $2) "+
-		"ON CONFLICT (member, plan_id) DO UPDATE "+
-		"SET plan_id = $2", m.Id, plan_id); err != nil {
+		"ON CONFLICT (member, plan_id) DO NOTHING", m.Id, plan_id);
+		err != nil {
 		log.Panic(err)
 	}
 	return nil
+}
+
+func (ms *Members) Cancel_pending_subscription(p *Pending_subscription) {
+	if _, err := ms.Exec(
+		"DELETE FROM pending_subscription "+
+		"WHERE member = $1 AND plan_id = $2", p.Member.Id, p.Plan_id);
+		err != nil {
+		log.Panic(err)
+	}
 }
 
 func (ms *Members) Approved_by(sub *stripe.Sub) *Member {

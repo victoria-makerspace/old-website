@@ -42,12 +42,6 @@ func (m *Member) Update_student(institution, email string, grad_date time.Time) 
 	if m.Student != nil {
 		query = "UPDATE student SET institution = $2, student_email = $3, " +
 			"graduation_date = $4 WHERE member = $1"
-	} else if m.Get_membership() != nil {
-		params := &stripe.SubParams{Plan: m.Plans["membership-student"].ID}
-		params.Meta["institution"] = institution
-		params.Meta["student-email"] = email
-		params.Meta["grad-date"] = fmt.Sprint(grad_date.Unix())
-		m.Update_membership(params)
 	}
 	if _, err := m.Exec(query, m.Id, institution, email, grad_date);
 		err != nil {
@@ -62,7 +56,7 @@ func (m *Member) Delete_student() {
 		return
 	}
 	m.Student = nil
-	if m.Get_membership() != nil {
+	if ms := m.Get_membership(); ms != nil && ms.Plan.ID == "membership-student" {
 		m.Update_membership(&stripe.SubParams{
 			Plan: m.Plans["membership-regular"].ID})
 	}

@@ -1,18 +1,19 @@
-{{if .Member.Get_membership}}
-  <div class="modal fade" id="terminate_membership" tabindex="-1" role="dialog" aria-hidden="true">
+{{$ms := .Get_membership}}
+{{if $ms}}
+  <div class="modal fade" id="cancel-membership" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Terminate membership</h5>
+          <h5 class="modal-title">Cancel membership</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <form action="/member/billing#terminate_membership" method="post">
+        <form action="/member/billing#cancel-membership" method="post">
           <div class="modal-body">
-            <p>Terminating your membership fees will result in immediate revocation of access to makerspace.  Any leased lockers/storage will be cancelled and given to the next member on the waitlist.</p>
+            <p>Cancelling your membership will result in immediate revocation of access to makerspace.</p>
             <div class="form-group">
-              <textarea class="form-control" name="cancellation_reason" rows="5" placeholder="Is there a reason for your cancellation that you would be willing to share?" autofocus></textarea>
+              <textarea class="form-control" name="cancellation-reason" rows="5" placeholder="Is there a reason for your cancellation that you would be willing to share?" autofocus></textarea>
             </div>
           </div>
           <div class="modal-footer align-items-end flex-wrap">
@@ -30,7 +31,7 @@
             </div>
             <div class="mt-2">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="submit" name="terminate_membership" class="btn btn-danger m-0">Terminate</button>
+              <button type="submit" name="cancel-membership" value="{{$ms.ID}}" class="btn btn-danger m-0">Cancel</button>
             </div>
           </div>
         </form>
@@ -123,71 +124,108 @@
         </section>
         <hr>
         <section>
-{{if .Get_membership}}
           <h4>
-            <a href="#membership-registration" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
-            Update Membership
-          </h4>
-          <form id="membership-registration" class="collapse px-2 px-sm-3" method="post" action="/member/billing">
-{{else}}
-          <h4>
+{{if or (not $ms) (or .Data.membership_registration_error .Get_pending_membership)}}
             <a href="#membership-registration" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
+{{else}}
+            <a href="#membership-registration" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
+{{end}}
+{{if $ms}}
+            Update Membership
+{{else}}
             Membership registration
+{{end}}
           </h4>
+{{if or (not $ms) (or .Data.membership_registration_error .Get_pending_membership)}}
           <form id="membership-registration" class="collapse show px-2 px-sm-3" method="post" action="/member/billing">
+{{else}}
+          <form id="membership-registration" class="collapse px-2 px-sm-3" method="post" action="/member/billing">
 {{end}}
-{{if .Member.Get_pending_membership}}
-            <p class="alert alert-success">Your membership request is pending approval.</p>
+{{with .Member.Get_pending_membership}}
+            <p class="alert alert-success">
+              Your request for "{{with index $.Plans .Plan_id}}{{.Name}}{{end}}" is pending approval.
+              <button type="submit" class="btn btn-sm btn-danger" name="cancel-pending-membership">Cancel</button>
+            </p>
 {{end}}
-            <fieldset class="form-group mb-2 mb-sm-3">
+            <fieldset class="mb-1">
               <label class="custom-control custom-radio">
-                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not .Member.Student}} checked{{end}}>
+{{with $ms}}
+                <input type="radio" name="rate" class="custom-control-input" value="membership-regular"{{if eq .Plan.ID "membership-regular"}} checked{{end}}>
+{{else}}
+                <input type="radio" name="rate" class="custom-control-input" value="membership-regular"{{if not .Member.Student}} checked{{end}}>
+{{end}}
                 <span class="custom-control-indicator"></span>
                 <span class="custom-control-description"><b>Regular</b> ($50/month)</span>
               </label>
               <label class="custom-control custom-radio">
-                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if .Member.Student}} checked{{end}}>
+{{with $ms}}
+                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="membership-student"{{if eq .Plan.ID "membership-student"}} checked{{end}}>
+{{else}}
+                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="membership-student"{{if .Member.Student}} checked{{end}}>
+{{end}}
                 <span class="custom-control-indicator"></span>
                 <span class="custom-control-description"><b>Student</b> ($30/month)</span>
               </label>
+{{with $ms}}
+  {{if eq .Plan.ID "membership-free"}}
+              <label class="custom-control custom-radio">
+                <input type="radio" class="custom-control-input" name="rate" checked>
+                <span class="custom-control-indicator"></span>
+                <span class="custom-control-description"><b>Free</b></span>
+              </label>
+  {{end}}
+{{end}}
             </fieldset>
-            <fieldset id="student"{{if not .Member.Student}}class="text-muted" disabled{{end}}>
+{{if $ms}}
+  {{if eq $ms.Plan.ID "membership-student"}}
+            <fieldset id="student" class="mt-2 collapse show">
+  {{else}}
+            <fieldset id="student" class="mt-2 collapse">
+  {{end}}
+{{else if .Member.Student}}
+            <fieldset id="student" class="mt-2 collapse show">
+{{else}}
+            <fieldset id="student" class="mt-2 collapse">
+{{end}}
               <legend class="h5 mb-0 mb-sm-2">Student info</legend>
               <div class="form-group row mb-2"> 
                 <label for="institution" class="col-sm-4 col-form-label">Institution name</label>
                 <div class="col-sm-8">
-                  <input type="text" class="form-control" id="institution" name="institution" {{if .Member.Student}} value="{{.Member.Student.Institution}}" required{{end}}>
+                  <input type="text" class="form-control" name="institution" {{if .Member.Student}} value="{{.Member.Student.Institution}}"{{end}} required>
                 </div>
               </div>
               <div class="form-group row mb-2"> 
-                <label for="student_email" class="col-sm-4 col-form-label">Student E-mail</label>
+                <label for="student-email" class="col-sm-4 col-form-label">Student E-mail</label>
                 <div class="col-sm-8">
-                  <input type="email" class="form-control" name="student_email" {{if .Member.Student}} value="{{.Member.Student.Email}}" required{{end}}>
+                  <input type="email" class="form-control" name="student-email" {{if .Member.Student}} value="{{.Member.Student.Email}}"{{end}} required>
                 </div>
               </div>
               <div class="form-group row mb-sm-2">
-                <label for="graduation" class="col-sm-4 col-form-label">Expected graduation</label>
+                <label for="graduation-date" class="col-sm-4 col-form-label">Expected graduation</label>
                 <div class="col-sm-8">
-                  <input type="month" class="form-control" id="graduation" name="graduation"{{if .Member.Student}} value="{{.Member.Student.Graduation_date.Format "2006-01"}}" required{{end}}>
+                  <input type="month" class="form-control" name="graduation-date"{{if .Member.Student}} value="{{.Member.Student.Graduation_date.Format "2006-01"}}"{{end}} required>
                 </div>
               </div>
             </fieldset>
-{{with .Data.membership_registration_error}}
-            <p class="text-danger">{{.}}</p>
-{{end}}
-{{if not .Member.Agreed_to_terms}}
-          <p class="alert alert-danger">You must agree to the <a href="/terms">Terms & Conditions</a>.</p>
-{{end}}
-          <div class="d-inline-flex flex-row-reverse">
-            <input type="hidden" name="membership">
-{{if not .Get_membership}}
-{{if and .Customer .Customer.DefaultSource}}
-              <button type="submit" name="register" class="ml-1 btn btn-primary"{{if not .Member.Agreed_to_terms}} disabled{{end}}>Register</button>
+            <div class="d-inline-flex mt-2">
+{{if $ms}}
+              <button type="submit" name="register-membership" class="btn btn-primary">Update</button>
+              <button type="button" data-toggle="modal" data-target="#cancel-membership" class="ml-1 btn btn-danger">Cancel</button>
+{{else}}
+  {{if and .Customer .Customer.DefaultSource}}
+              <button type="submit" name="register-membership" class="btn btn-primary"{{if not .Member.Agreed_to_terms}} disabled{{end}}>Register</button>
   {{else}}
-              <button type="submit" name="register" class="ml-1 btn btn-primary"disabled>Register</button>
+              <button type="submit" name="register-membership" class="btn btn-primary" disabled>Register</button>
   {{end}}
 {{end}}
-              <button type="submit" name="update" class="btn btn-secondary">Update</button>
+{{if not .Member.Agreed_to_terms}}
+              <p class="alert alert-warning ml-3 mb-0 py-2">
+                You must agree to the <a href="/terms">Terms & Conditions</a> before requesting a membership.
+              </p>
+{{end}}
+{{with .Data.membership_registration_error}}
+              <p class="alert alert-danger ml-3 mb-0 py-2">{{.}}.</p>
+{{end}}
             </div>
           </form>
         </section>

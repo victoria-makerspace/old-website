@@ -11,25 +11,12 @@
               Active
   {{else if eq . "new"}}
               New
-  {{else if eq . "unapproved"}}
-              Unapproved
-  {{else if eq . "pending"}}
-              Pending
-  {{else if eq . "unverified"}}
-              Unverified
   {{end}}
             </button>
             <div class="dropdown-menu">
               <a class="dropdown-item{{if eq . "all"}} active{{end}}" href="/member/list">All</a>
               <a class="dropdown-item{{if eq . "active"}} active{{end}}" href="/member/list/active">Active</a>
               <a class="dropdown-item{{if eq . "new"}} active{{end}}" href="/member/list/new">New</a>
-  {{if $.Session}}
-    {{if $.Member.Admin}}
-              <a class="dropdown-item{{if eq . "unapproved"}} active{{end}}" href="/member/list/unapproved">Unapproved</a>
-              <a class="dropdown-item{{if eq . "pending"}} active{{end}}" href="/member/list/pending">Pending</a>
-              <a class="dropdown-item{{if eq . "unverified"}} active{{end}}" href="/member/list/unverified">Unverified</a>
-    {{end}}
-  {{end}}
 {{end}}
             </div>
             Members

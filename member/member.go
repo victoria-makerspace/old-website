@@ -112,12 +112,6 @@ func (m *Member) Delete_member() {
 	}
 }
 
-type Pending_subscription struct {
-	*Member
-	Requested_at time.Time
-	Plan_id string
-}
-
 func (m *Member) Get_pending_subscriptions() []*Pending_subscription {
 	pending := make([]*Pending_subscription, 0)
 	rows, err := m.Query(

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"time"
 )
 
 type Admin struct {
@@ -70,24 +71,36 @@ func (a *Member) Approve_subscription(p *Pending_subscription) error {
 	params.Params.Meta = make(map[string]string)
 	params.Meta["member_id"] = fmt.Sprint(p.Member.Id)
 	params.Meta["approved_by"] = fmt.Sprint(a.Id)
-	if _, err := a.Exec(
-		"DELETE FROM pending_subscription "+
-		"WHERE member = $1 AND plan_id = $2", p.Member.Id, p.Plan_id);
-		err != nil {
-		log.Panic(err)
-	}
+	a.Cancel_pending_subscription(p)
 	_, err := sub.New(params)
 	return err
 }
 
 func (a *Member) Approve_membership(m *Member) error {
-	if m.Get_membership() != nil {
-		return fmt.Errorf("@%s already has a membership", m.Username)
-	}
 	p := m.Get_pending_membership()
 	if p == nil {
 		return fmt.Errorf("@%s has not requested a membership", m.Username)
 	}
+	if m.Get_membership() != nil {
+		params := &stripe.SubParams{Plan: p.Plan_id}
+		a.Cancel_pending_subscription(p)
+		return m.Update_membership(params)
+	}
+	if m.Talk_user() != nil {
+		m.talk.Add_to_group("Members")
+	}
+	return a.Approve_subscription(p)
+}
+
+func (a *Member) Approve_free_membership(m *Member) error {
+	if m.Get_membership() != nil {
+		params := &stripe.SubParams{Plan: "membership-free"}
+		return m.Update_membership(params)
+	}
+	if p := m.Get_pending_membership(); p != nil {
+		a.Cancel_pending_subscription(p)
+	}
+	p := &Pending_subscription{m, time.Now(), "membership-free"}
 	if m.Talk_user() != nil {
 		m.talk.Add_to_group("Members")
 	}
