@@ -185,6 +185,12 @@
               Your request for "{{with index $.Plans .Plan_id}}{{.Name}}{{end}}" is pending approval.
               <button type="submit" class="btn btn-sm btn-danger" name="cancel-pending-membership">Cancel</button>
             </p>
+{{else}}
+  {{if not $ms}}
+            <p>
+              Before you can become a member, you should attend an open-house.  Open-house nights are on the 2nd and 4th Tuesday of each month, from 7 to 9pm.
+            </p>
+  {{end}}
 {{end}}
             <fieldset class="mb-1"{{if or (not .Member.Agreed_to_terms) (not .Has_card)}} disabled{{end}}>
               <label class="custom-control custom-radio">

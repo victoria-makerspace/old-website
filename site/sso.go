@@ -2,8 +2,8 @@ package site
 
 import (
 	"fmt"
-	"github.com/vvanpo/makerspace/member"
 	"log"
+	"github.com/vvanpo/makerspace/member"
 	"net/url"
 )
 
@@ -43,6 +43,7 @@ func sso_handler(p *page) {
 			p.Data["sig"] = p.FormValue("sig")
 		}
 		if _, ok := p.PostForm["sign-in"]; !ok {
+			p.Data["username"] = p.FormValue("username")
 			return
 		}
 		m := p.Get_member_by_username(p.PostFormValue("username"))
@@ -131,52 +132,44 @@ func sso_reset_handler(p *page) {
 
 //TODO: Move initial verification to join page
 func sso_verify_email_handler(p *page) {
+	if !p.must_authenticate() {
+		return
+	}
 	p.Title = "Verify e-mail address"
-	p.Data["username"] = p.FormValue("username")
-	p.Data["email"] = p.FormValue("email")
 	if token := p.FormValue("token"); token != "" {
-		m, email, err := p.Get_member_from_verification_token(token)
-		if err != nil {
-			p.Data["token_error"] = err
+		email, m := p.Verify_email_token(token)
+		if email == "" {
+			p.Data["token_error"] = "Invalid verification token"
 			return
 		}
-		if err = m.Verify_email(email); err != nil {
+		if m.Id != p.Member.Id {
+			p.http_error(403)
+			return
+		}
+		if err := p.Verify_email(email); err != nil {
 			//TODO: determine whether the server failed or discourse rejected
 			//	e-mail address
 			p.Data["server_error"] = true
 			log.Println(err)
 			return
 		}
-		p.redirect = "/sso"
+		p.redirect = "/sso?username=" + url.QueryEscape(p.Username)
 		return
 	}
 	if _, ok := p.PostForm["send-verification-email"]; !ok {
 		return
 	}
-	var m *member.Member
-	if p.Session == nil {
-		m = p.Get_member_by_username(p.PostFormValue("username"))
-		if m == nil {
-			delete(p.Data, "username")
-			p.Data["username_error"] = "Invalid username"
-			return
-		}
-	} else {
-		m = p.Member
-	}
-	if m.Email == p.PostFormValue("email") {
-		delete(p.Data, "email")
+	if p.Email == p.PostFormValue("email") {
 		p.Data["email_error"] = "E-mail address already verified"
 		return
 	} else if !p.Email_available(p.PostFormValue("email")) {
-		delete(p.Data, "email")
 		p.Data["email_error"] = "E-mail address is already in use"
 		return
-	} else if !m.Authenticate(p.PostFormValue("password")) {
+	} else if !p.Authenticate(p.PostFormValue("password")) {
 		p.Data["password_error"] = "Incorrect password"
 		return
 	}
 	p.Form.Add("sent", "true")
-	m.Send_email_verification(p.PostFormValue("email"))
+	member.Send_email_verification(p.PostFormValue("email"), p.Member)
 	return
 }

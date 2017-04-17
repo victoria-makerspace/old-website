@@ -222,31 +222,45 @@ func (m *Member) Send_password_reset() {
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
-func (m *Member) Send_email_verification(email string) {
+func Send_email_verification(email string, m *Member) {
 	token := Rand256()
-	if _, err := m.Exec(
-		"INSERT INTO email_verification_token"+
-			"	(member, email, token) "+
+	var err error
+	if m == nil {
+		_, err = m.Exec(
+			"INSERT INTO email_verification_token"+
+			"	(token, email) "+
+			"VALUES ($1, $2)", token, email)
+	} else {
+		_, err = m.Exec(
+			"INSERT INTO email_verification_token"+
+			"	(token, email, member) "+
 			"VALUES ($1, $2, $3) "+
-			"ON CONFLICT (member) DO UPDATE SET"+
-			"	(email, token, time) = ($2, $3, now())", m.Id, email, token); err != nil {
+			"ON CONFLICT (member) DO UPDATE "+
+			"SET (token, email, time) = ($2, $3, now())", token, email, m.Id)
+	}
+	if err != nil {
 		log.Panic("Failed to set email verification token: ", err)
 	}
 	msg := message{subject: "Makerspace.ca: e-mail verification"}
 	msg.set_from("Makerspace", "admin@makerspace.ca")
-	msg.add_to(m.Name, email)
-	msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
-		"To sign-in to your Makerspace account, you must first verify that " +
-		"are the owner of this associated e-mail address.\n\n" +
-		"If the above name and username is correct, please verify your " +
-		"e-mail address (" + email + ") by visiting " +
-		//m.Config["url"].(string) +
-		"/sso/verify-email?token=" + token + "\n\n" +
-		"Your verification token will expire in " +
-		m.Config.Email_verification_window + ", you can request " +
-		"a new token at " + //m.Config["url"].(string) +
-		"/sso/verify-email?username=" + url.QueryEscape(m.Username) +
-		"&email=" + url.QueryEscape(email) + ".\n\n"
+	if m != nil {
+		msg.add_to(m.Name, email)
+		msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
+			"To sign-in to your Makerspace account, you must first verify that " +
+			"are the owner of this associated e-mail address.\n\n" +
+			"If the above name and username is correct, please verify your " +
+			"e-mail address (" + email + ") by visiting " +
+			//m.Config["url"].(string) +
+			"/sso/verify-email?token=" + token + "\n\n"
+	} else {
+		msg.add_to("", email)
+		msg.body = "Hello,\n\n" +
+			"To register for a Makerspace account, you must first verify that " +
+			"are the owner of this e-mail address.\n\n" +
+			"Please verify your e-mail address (" + email + ") by visiting " +
+			//m.Config["url"].(string) +
+			"/sso/verify-email?token=" + token + "\n\n"
+	}
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 

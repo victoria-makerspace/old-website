@@ -28,7 +28,7 @@
           <button type="submit" name="sign-in" class="btn btn-primary">Sign in</button>
           <div class="d-flex flex-column align-items-end">
             <label class="custom-control custom-checkbox">
-              <input type="checkbox" name="save-session" class="custom-control-input" checked>
+              <input type="checkbox" name="save-session" class="custom-control-input" {{if or (not .PostFormValue.username) (index .PostFormValue "save-session")}}checked{{end}}>
               <span class="custom-control-indicator"></span>
               <span class="custom-control-description">Remember me</span>
             </label>

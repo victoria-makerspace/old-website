@@ -16,7 +16,6 @@ import (
 type Config struct {
 	Reserved_usernames        []string
 	Password_reset_window     string
-	Email_verification_window string
 	Smtp                      struct {
 		Address  string
 		Port     int
@@ -193,32 +192,18 @@ func (ms *Members) Get_member_from_reset_token(token string) (*Member, error) {
 	return ms.Get_member_by_id(member_id), nil
 }
 
-func (ms *Members) Get_member_from_verification_token(token string) (*Member, string, error) {
+func (ms *Members) Verify_email_token(token string) (email string, m *Member) {
 	var (
 		member_id int
-		email     string
-		t         time.Time
 	)
 	if err := ms.QueryRow(
-		"SELECT member, email, time "+
+		"SELECT member, email "+
 			"FROM email_verification_token "+
-			"WHERE token = $1", token).Scan(&member_id, &email, &t); err != nil {
+			"WHERE token = $1", token).Scan(&member_id, &email); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, "", fmt.Errorf("Verification token does not exist")
+			return "", nil
 		}
 		log.Panic(err)
 	}
-	duration, err := parse_duration(
-		ms.Config.Email_verification_window)
-	if err != nil {
-		log.Panic(err)
-	}
-	if time.Now().After(t.Add(duration)) {
-		if _, err := ms.Exec("DELETE FROM email_verification_token "+
-			"WHERE token = $1", token); err != nil {
-			log.Panic(err)
-		}
-		return nil, "", fmt.Errorf("Verification token is expired")
-	}
-	return ms.Get_member_by_id(member_id), email, nil
+	return email, ms.Get_member_by_id(member_id)
 }

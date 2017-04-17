@@ -15,23 +15,28 @@ func join_handler(p *page) {
 		p.http_error(403)
 		return
 	}
+	if t := p.FormValue("token"); t != "" {
+		if email, member := p.Verify_email_token(t); email != "" {
+			if member != nil {
+				p.http_error(400)
+				return
+			}
+			p.Data["email"] = email
+			return
+		}
+		p.Data["token_error"] = "Invalid verification token"
+		return
+	}
 	if _, ok := p.PostForm["join"]; !ok {
 		return
 	}
-	username := p.PostFormValue("username")
-	email := p.PostFormValue("email")
-	name := p.PostFormValue("name")
-	p.Data["username"] = username
-	p.Data["email"] = email
-	p.Data["name"] = name
-	m, err := p.New_member(username, email, name)
+	m, err := p.New_member(p.PostFormValue("username"), p.PostFormValue("name"),
+		p.PostFormValue("email"))
 	if err != nil {
-		log.Printf("Failed to create member @%s <%s>: %s", username, email, err)
+		p.Data["join_error"] = err
 		return
 	}
 	m.Set_password(p.PostFormValue("password"))
-	log.Printf("New member: (%d) %s\n", m.Id, username)
-	m.Send_email_verification(email)
-	p.redirect = "/sso/verify-email?sent=true&username=" +
-		url.QueryEscape(username) + "&email=" + url.QueryEscape(email)
+	log.Printf("New member: (%d) %s <%s>\n", m.Id, m.Username, m.Email)
+	p.redirect = "/sso?username=" + url.QueryEscape(m.Username)
 }

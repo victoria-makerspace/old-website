@@ -18,10 +18,10 @@ CREATE TABLE member (
 	password_salt character(64) UNIQUE,
 );
 CREATE TABLE email_verification_token (
-	email text NOT NULL,
 	token character(64) NOT NULL,
+	email text NOT NULL,
 	time timestamp(0) with time zone NOT NULL DEFAULT now(),
-	member integer REFERENCES member
+	member integer UNIQUE REFERENCES member
 );
 CREATE TABLE reset_password_token (
 	member integer PRIMARY KEY REFERENCES member,

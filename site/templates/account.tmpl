@@ -59,7 +59,7 @@
                   <button type="submit" class="btn btn-sm btn-primary" disabled>Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with .Data.username_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{.Data.username_error}}</small>
             </div>
           </form>
           <form action="/sso/verify-email" method="post" class="form-group row">
@@ -84,7 +84,7 @@
                   <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with .Data.name_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{.Data.name_error}}</small>
             </div>
           </form>
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.telephone_error}} has-danger{{end}}">
@@ -97,7 +97,7 @@
                   <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with $.Data.telephone_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{.Data.telephone_error}}</small>
             </div>
           </form>
 {{with .Talk_user}}

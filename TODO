@@ -24,6 +24,7 @@ Site:
     - Add member.json for ajax querying by id, username, or email
         - Member search
     - Storage waitlist
+    - Change link to admin@makerspace.ca to support@makerspace.ca for web-related things
 
 Tool-use hooks:
     - Laser cutter
