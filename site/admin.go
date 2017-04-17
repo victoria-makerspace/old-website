@@ -217,12 +217,7 @@ line_loop:
 		if !nm.date.IsZero() {
 			m.Set_registration_date(nm.date)
 		}
-		if err := m.Verify_email(nm.email); err != nil {
-			line_error[nm.line] = "E-mail verification failed"
-			continue
-		} else {
-			success = append(success, m)
-		}
+		success = append(success, m)
 		if nm.free {
 			p.Member.Approve_free_membership(m)
 		}

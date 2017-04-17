@@ -57,17 +57,20 @@ func (ms *Members) New_member(username, name, email string) (*Member, error) {
 		return nil, fmt.Errorf("E-mail address is already in use")
 	}
 	if err := m.QueryRow(
-		"INSERT INTO member ("+
-			"	username,"+
-			"	name"+
-			"	email"+
-			") "+
+		"INSERT INTO member"+
+			"	(username, name, email) "+
 			"VALUES ($1, $2, $3) "+
 			"RETURNING id, registered",
 		username, name, email).Scan(&m.Id, &m.Registered);
 		err != nil {
 		log.Panic(err)
 	}
+	talk, err := m.Sync(m.Id, m.Username, m.Email, m.Name)
+	if err != nil {
+		return m, err
+	}
+	m.talk = talk
+	m.set_avatar_tmpl(talk.Avatar_tmpl)
 	return m, nil
 }
 
@@ -113,6 +116,22 @@ func (m *Member) Set_name(name string) error {
 		"WHERE id = $2", name, m.Id); err != nil {
 		log.Panic(err)
 	}
+	return nil
+}
+
+func (m *Member) Update_email(email string) error {
+	m.Email = email
+	m.Delete_verification_tokens(email)
+	if _, err := m.Exec("UPDATE member "+
+		"SET email = $1 "+
+		"WHERE id = $2", email, m.Id); err != nil {
+		log.Panic(err)
+	}
+	talk, err := m.Sync(m.Id, m.Username, m.Email, m.Name)
+	if err != nil {
+		return err
+	}
+	m.talk = talk
 	return nil
 }
 
@@ -165,15 +184,6 @@ func (m *Member) Set_telephone(tel string) error {
 	return nil
 }
 
-func (m *Member) set_email(email string) {
-	m.Email = email
-	if _, err := m.Exec("UPDATE member "+
-		"SET email = $1 "+
-		"WHERE id = $2", email, m.Id); err != nil {
-		log.Panic(err)
-	}
-}
-
 func (m *Member) set_avatar_tmpl(avatar_tmpl string) {
 	m.Avatar_tmpl = avatar_tmpl
 	if _, err := m.Exec("UPDATE member "+
@@ -222,21 +232,21 @@ func (m *Member) Send_password_reset() {
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
-func Send_email_verification(email string, m *Member) {
+func (ms *Members) Send_email_verification(email string, m *Member) {
 	token := Rand256()
 	var err error
 	if m == nil {
-		_, err = m.Exec(
+		_, err = ms.Exec(
 			"INSERT INTO email_verification_token"+
 			"	(token, email) "+
 			"VALUES ($1, $2)", token, email)
 	} else {
-		_, err = m.Exec(
+		_, err = ms.Exec(
 			"INSERT INTO email_verification_token"+
 			"	(token, email, member) "+
 			"VALUES ($1, $2, $3) "+
 			"ON CONFLICT (member) DO UPDATE "+
-			"SET (token, email, time) = ($2, $3, now())", token, email, m.Id)
+			"SET (token, email, time) = ($1, $2, now())", token, email, m.Id)
 	}
 	if err != nil {
 		log.Panic("Failed to set email verification token: ", err)
@@ -246,8 +256,8 @@ func Send_email_verification(email string, m *Member) {
 	if m != nil {
 		msg.add_to(m.Name, email)
 		msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
-			"To sign-in to your Makerspace account, you must first verify that " +
-			"are the owner of this associated e-mail address.\n\n" +
+			"To change the e-mail address associated with your Makerspace "+
+			"account, you must first verify that you are its owner.\n\n" +
 			"If the above name and username is correct, please verify your " +
 			"e-mail address (" + email + ") by visiting " +
 			//m.Config["url"].(string) +
@@ -259,27 +269,9 @@ func Send_email_verification(email string, m *Member) {
 			"are the owner of this e-mail address.\n\n" +
 			"Please verify your e-mail address (" + email + ") by visiting " +
 			//m.Config["url"].(string) +
-			"/sso/verify-email?token=" + token + "\n\n"
+			"/join?token=" + token + "\n\n"
 	}
-	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
-}
-
-func (m *Member) Verify_email(email string) error {
-	t, err := m.Sync(m.Id, m.Username, email, m.Name)
-	if err != nil {
-		return err
-	} else {
-		m.talk = t
-		m.set_avatar_tmpl(m.talk.Avatar_tmpl)
-	}
-	m.set_email(email)
-	if _, err = m.Exec(
-		"DELETE FROM email_verification_token "+
-			"WHERE email = $1 "+
-			"	OR member = $2", email, m.Id); err != nil {
-		log.Panic(err)
-	}
-	return nil
+	ms.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
 func (m *Member) Get_pending_subscriptions() []*Pending_subscription {

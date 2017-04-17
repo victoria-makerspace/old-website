@@ -1,9 +1,7 @@
   <div class="container">
     <section class="modal-dialog">
       <h4 class="mb-3">Member sign-in</h4>
-{{if .Data.error_verified}}
-      <p class="alert alert-danger">{{.Data.username}} is an unverified account, please <a href="/sso/verify-email">verify</a> e-mail address.</p>
-{{else if .Data.sso}}
+{{if .Data.sso}}
       <p class="alert alert-info">You will be redirected to the Talk forum on sign-in.</p>
 {{end}}
       <form action="/sso{{if and .Data.sso .Data.sig}}?sso={{.Data.sso}}&sig={{.Data.sig}}{{end}}" method="post">
@@ -12,14 +10,14 @@
             <span class="input-group-addon">@</span>
             <input type="text" class="form-control" name="username" placeholder="Username" {{with .Data.username}}value="{{.}}"{{else}}autofocus{{end}} required>
           </div>
-          <small class="form-control-feedback{{with .Data.error_username}} show">{{.}}{{else}}">{{end}}</small>
+          <small class="form-control-feedback">{{.Data.error_username}}</small>
         </div>
         <div class="form-group{{if .Data.error_password}} has-danger{{end}}">
           <div class="input-group">
             <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
             <input type="password" class="form-control" name="password" placeholder="Password" {{if .Data.username}}autofocus {{end}}required>
           </div>
-          <small class="form-control-feedback{{with .Data.error_password}} show">{{.}}{{else}}">{{end}}</small>
+          <small class="form-control-feedback">{{.Data.error_password}}</small>
         </div>
         <div class="d-flex flex-row-reverse justify-content-between align-items-start">
 {{with .Data.return_path}}
@@ -28,7 +26,7 @@
           <button type="submit" name="sign-in" class="btn btn-primary">Sign in</button>
           <div class="d-flex flex-column align-items-end">
             <label class="custom-control custom-checkbox">
-              <input type="checkbox" name="save-session" class="custom-control-input" {{if or (not .PostFormValue.username) (index .PostFormValue "save-session")}}checked{{end}}>
+              <input type="checkbox" name="save-session" class="custom-control-input" {{if or (not (.PostFormValue "username")) (.PostFormValue "save-session")}}checked{{end}}>
               <span class="custom-control-indicator"></span>
               <span class="custom-control-description">Remember me</span>
             </label>

@@ -130,7 +130,6 @@ func sso_reset_handler(p *page) {
 	p.Data["reset_send_success"] = true
 }
 
-//TODO: Move initial verification to join page
 func sso_verify_email_handler(p *page) {
 	if !p.must_authenticate() {
 		return
@@ -146,14 +145,14 @@ func sso_verify_email_handler(p *page) {
 			p.http_error(403)
 			return
 		}
-		if err := p.Verify_email(email); err != nil {
+		if err := p.Update_email(email); err != nil {
 			//TODO: determine whether the server failed or discourse rejected
 			//	e-mail address
 			p.Data["server_error"] = true
-			log.Println(err)
+			log.Println("Update_email error: ", err)
 			return
 		}
-		p.redirect = "/sso?username=" + url.QueryEscape(p.Username)
+		p.redirect = "/member/account"
 		return
 	}
 	if _, ok := p.PostForm["send-verification-email"]; !ok {
@@ -161,6 +160,9 @@ func sso_verify_email_handler(p *page) {
 	}
 	if p.Email == p.PostFormValue("email") {
 		p.Data["email_error"] = "E-mail address already verified"
+		return
+	} else if err := member.Validate_email(p.PostFormValue("email")); err != nil {
+		p.Data["email_error"] = err
 		return
 	} else if !p.Email_available(p.PostFormValue("email")) {
 		p.Data["email_error"] = "E-mail address is already in use"
@@ -170,6 +172,6 @@ func sso_verify_email_handler(p *page) {
 		return
 	}
 	p.Form.Add("sent", "true")
-	member.Send_email_verification(p.PostFormValue("email"), p.Member)
+	p.Send_email_verification(p.PostFormValue("email"), p.Member)
 	return
 }

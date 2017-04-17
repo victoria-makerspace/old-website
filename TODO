@@ -20,9 +20,7 @@ Site:
         - Set membership fees
             - Changing a plan fee requires deleting the plan first, meaning deleting all associated subscriptions.  Must be able to re-subscribe everyone to the new plan.
     - BUG: changing e-mail will remove talk user assocation
-    - Joining users should only enter their e-mail, upon verification they can fill in username and the like, and it should say which (if any) existing Talk account will get associated
-    - Add member.json for ajax querying by id, username, or email
-        - Member search
+    - Member search
     - Storage waitlist
     - Change link to admin@makerspace.ca to support@makerspace.ca for web-related things
 

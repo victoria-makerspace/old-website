@@ -6,7 +6,7 @@
 {{with .Data.token_error}}
       <p class="alert alert-danger">{{.}}.</p>
 {{end}}
-      <h4 class="mb-3">Re-send verification e-mail</h4>
+      <h4 class="mb-3">Send verification e-mail</h4>
       <form method="post" action="/sso/verify-email">
         <div class="form-group{{if .Data.email_error}} has-danger{{end}}">
           <div class="input-group">

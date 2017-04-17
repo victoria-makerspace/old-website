@@ -1,20 +1,34 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
-        <h2>Join Makerspace</h2>
+        <h2 class="text-center">Join Makerspace</h2>
         <form id="join" method="post" action="/join">
-
-          <div class="form-group row">
+{{with .Data.token_error}}
+          <p class="alert alert-danger">{{.}}</p>
+{{end}}
+{{if not .Data.email}}
+          <p>Once you've verified an e-mail address, you will be prompted to register a username and password.</p>
+  {{if .Data.success}}
+          <p class="alert alert-success">Verification e-mail sent to {{.PostFormValue "email"}}.</p>
+  {{else}}
+          <div class="form-group row{{if .Data.email_error}} has-danger{{end}}">
             <label for="email" class="col-sm-2 col-form-label">E-mail</label>
-            <div class="col-10 col-lg-8">
+            <div class="col-sm-10 col-lg-8">
               <div class="input-group">
                 <span class="input-group-addon glyphicons glyphicons-envelope"></span>
                 <input type="email" class="form-control" name="email" autofocus required>
+                <span class="input-group-btn">
+                  <button type="submit" name="verify-email" class="btn btn-primary">Verify</button>
+                </span>
               </div>
-              <small class="form-control-feedback"></small>
+              <small class="form-control-feedback">{{.Data.email_error}}</small>
             </div>
           </div>
-
+  {{end}}
+{{else}}
+  {{with .Data.join_error}}
+          <p class="alert alert-danger">{{.}}</p>
+  {{end}}
           <div class="form-group row">
             <label for="username" class="col-sm-2 col-form-label">Username</label>
             <div class="col-10 col-lg-8">
@@ -54,11 +68,11 @@
               <small class="form-control-feedback"></small>
             </div>
           </div>
-
-{{with .Form.token}}
-          <input type="hidden" formaction="get" name="token" value="{{.}}">
-{{end}}
           <button type="submit" name="join" class="btn btn-primary">Submit</button>
+{{end}}
+{{with .FormValue "token"}}
+          <input type="hidden" name="token" value="{{.}}">
+{{end}}
         </form>
       </div>
     </div>

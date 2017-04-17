@@ -194,7 +194,7 @@ func (ms *Members) Get_member_from_reset_token(token string) (*Member, error) {
 
 func (ms *Members) Verify_email_token(token string) (email string, m *Member) {
 	var (
-		member_id int
+		member_id sql.NullInt64
 	)
 	if err := ms.QueryRow(
 		"SELECT member, email "+
@@ -205,5 +205,16 @@ func (ms *Members) Verify_email_token(token string) (email string, m *Member) {
 		}
 		log.Panic(err)
 	}
-	return email, ms.Get_member_by_id(member_id)
+	if member_id.Valid {
+		return email, ms.Get_member_by_id(int(member_id.Int64))
+	}
+	return email, nil
+}
+
+func (ms *Members) Delete_verification_tokens(email string) {
+	if _, err := ms.Exec(
+		"DELETE FROM email_verification_token "+
+		"WHERE email = $1", email); err != nil {
+		log.Panic(err)
+	}
 }
