@@ -86,6 +86,22 @@ func (api *Talk_api) Get_user(external_id int) *Talk_user {
 	return nil
 }
 
+func (api *Talk_api) Get_talk_id_by_email(email string) (int, error) {
+	j, _ := api.get_json("/admin/users/list/active.json?filter=" + url.QueryEscape(email), true)
+	if j, ok := j.([]interface{}); ok {
+		if len(j) == 0 {
+			return 0, fmt.Errorf("E-mail address not in use")
+		}
+		if user, ok := j[0].(map[string]interface{}); ok {
+			if id, ok := user["id"].(float64); ok {
+				return int(id), nil
+			}
+		}
+	}
+	log.Println("Get_talk_id_by_email('" + email + "') error: ", j)
+	return 0, fmt.Errorf("Invalid Talk user")
+}
+
 //TODO: grab external_id from posters
 type Message struct {
 	Url             string

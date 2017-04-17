@@ -14,6 +14,7 @@ func init() {
 }
 
 // Search for members by id, username, email, or name
+//	Could probably factor some stuff out here...
 func member_json_handler(p *page) {
 	p.srv_json = true
 	var (
@@ -46,11 +47,6 @@ func member_json_handler(p *page) {
 		}
 	}
 	if es, ok := p.Form["email"]; ok {
-		if p.Session == nil {
-			p.http_error(403)
-			p.Data["error"] = "Must be signed in to query by member e-mails"
-			return
-		}
 		emails = make(map[string]*member.Member)
 		for _, email := range es {
 			if err := member.Validate_email(email); err != nil {
@@ -99,18 +95,22 @@ func member_json_handler(p *page) {
 		if p.Session != nil {
 			data["name"] = m.Name
 			data["email"] = m.Email
-		}
-		if p.Admin != nil {
-			data["key-card"] = m.Key_card
-			data["telephone"] = m.Telephone
-			data["agreed-to-terms"] = m.Agreed_to_terms
-			data["customer-id"] = m.Customer_id
+			if p.Admin != nil {
+				data["key-card"] = m.Key_card
+				data["telephone"] = m.Telephone
+				data["agreed-to-terms"] = m.Agreed_to_terms
+				data["customer-id"] = m.Customer_id
+			}
 		}
 		return data
 	}
 	if ids != nil {
-		id_list := make(map[int]map[string]interface{})
+		id_list := make(map[int]interface{})
 		for i, m := range ids {
+			if m == nil {
+				id_list[i] = "ID does not exist"
+				continue
+			}
 			id_list[i] = populate_json(m)
 		}
 		p.Data["ids"] = id_list
@@ -118,6 +118,10 @@ func member_json_handler(p *page) {
 	if usernames != nil {
 		name_list := make(map[string]map[string]interface{})
 		for u, m := range usernames {
+			if m == nil {
+				name_list[u] = map[string]interface{}{"available": true}
+				continue
+			}
 			name_list[u] = populate_json(m)
 		}
 		p.Data["usernames"] = name_list
@@ -125,6 +129,13 @@ func member_json_handler(p *page) {
 	if emails != nil {
 		email_list := make(map[string]map[string]interface{})
 		for e, m := range emails {
+			if m == nil {
+				email_list[e] = map[string]interface{}{"available": true}
+				if t, err := p.Talk_api.Get_talk_id_by_email(e); err == nil {
+					email_list[e]["talk-id"] = t
+				}
+				continue
+			}
 			email_list[e] = populate_json(m)
 		}
 		p.Data["emails"] = email_list
