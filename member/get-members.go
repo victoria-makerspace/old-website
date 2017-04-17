@@ -135,10 +135,10 @@ func (m member_list) Less(i, j int) bool {
 func (ms *Members) list_members_by_query(less func(m []*Member) func(i, j int) bool, cond string, values ...interface{}) []*Member {
 	members := ms.get_members_by_query(cond, values...)
 	ml := member_list{list: make([]*Member, 0, len(members))}
-	ml.less = less(ml.list)
 	for _, m := range members {
 		ml.list = append(ml.list, m)
 	}
+	ml.less = less(ml.list)
 	sort.Sort(ml)
 	return ml.list
 }
@@ -157,12 +157,13 @@ func (ms *Members) List_members() []*Member {
 func (ms *Members) List_active_members() []*Member {
 	less := func(m []*Member) func(i, j int) bool {
 		return func(i, j int) bool {
-			return m[i].Last_seen().Unix() < m[j].Last_seen().Unix()
+			return m[i].Last_seen().Unix() > m[j].Last_seen().Unix()
 		}
 	}
 	query := "JOIN session_http sh "+
 		"ON m.id = sh.member "+
-		"GROUP BY m.id"
+		"GROUP BY m.id, a.member, s.member "+
+		"ORDER BY max(sh.last_seen)"
 	return ms.list_members_by_query(less, query)
 }
 
@@ -170,7 +171,7 @@ func (ms *Members) List_active_members() []*Member {
 func (ms *Members) List_new_members(limit int) []*Member {
 	less := func(m []*Member) func(i, j int) bool {
 		return func(i, j int) bool {
-			return m[i].Registered.Unix() < m[j].Registered.Unix()
+			return m[i].Registered.Unix() > m[j].Registered.Unix()
 		}
 	}
 	query := "ORDER BY registered DESC " +

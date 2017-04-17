@@ -68,7 +68,7 @@
           </thead>
           <tbody>
   {{range .}}
-            <tr{{if $.Session}}{{if eq .Id $.Member.Id}} class="table-info"{{end}}{{end}}{{if not .Verified_email}} class="text-muted"{{end}}>
+            <tr{{if $.Session}}{{if eq .Id $.Member.Id}} class="table-info"{{end}}{{end}}>
               <td>
                 <a href="/member/{{.Id}}" class="member-icon">
                   {{with .Avatar_url 48}}
