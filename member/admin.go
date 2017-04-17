@@ -2,7 +2,6 @@ package member
 
 import (
 	"database/sql"
-	"github.com/lib/pq"
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/sub"
 	"fmt"
@@ -13,21 +12,6 @@ import (
 
 type Admin struct {
 	privileges []string
-}
-
-func (m *Member) get_admin() {
-	var privileges pq.StringArray
-	if err := m.QueryRow(
-		"SELECT privileges "+
-			"FROM administrator "+
-			"WHERE member = $1", m.Id).
-		Scan(&privileges); err != nil {
-		if err != sql.ErrNoRows {
-			log.Panic(err)
-		}
-		return
-	}
-	m.Admin = &Admin{privileges}
 }
 
 func (ms *Members) Get_all_pending_subscriptions() []*Pending_subscription {
@@ -58,7 +42,7 @@ func (a *Member) Approve_subscription(p *Pending_subscription) error {
 	if !ok {
 		return fmt.Errorf("Invalid plan identifier '%s'", p.Plan_id)
 	}
-	if p.Member.Customer() == nil {
+	if !p.Member.Has_card() {
 		if plan.Amount != 0 {
 			return fmt.Errorf("No valid payment source")
 		} else if err := p.Member.Update_customer("", nil); err != nil {
@@ -66,7 +50,7 @@ func (a *Member) Approve_subscription(p *Pending_subscription) error {
 		}
 	}
 	params := &stripe.SubParams{
-		Customer: p.Member.customer_id,
+		Customer: p.Member.Customer_id,
 		Plan: p.Plan_id}
 	params.Params.Meta = make(map[string]string)
 	params.Meta["member_id"] = fmt.Sprint(p.Member.Id)

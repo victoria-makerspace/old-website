@@ -19,126 +19,64 @@ type Member struct {
 	Name            string
 	Email           string
 	Key_card        string
-	Avatar_tmpl     string
 	Telephone       string
+	Avatar_tmpl     string
 	Agreed_to_terms bool
 	Registered      time.Time
-	*Admin
-	*Student
-	*Members
-	customer_id   string
-	customer      *stripe.Customer
+	Customer_id   string
 	password_key  string
 	password_salt string
 	talk          *talk.Talk_user
+	customer      *stripe.Customer
+	*Admin
+	*Student
+	*Members
 }
 
-//TODO: check corporate account
-func (ms *Members) Get_member_by_id(id int) *Member {
-	m := &Member{Id: id, Members: ms}
-	var (
-		email, key_card, password_key, password_salt, avatar_tmpl,
-		telephone, customer_id sql.NullString
-	)
+// New members are created with an uninitialized password, which must be set via
+//	the reset form.
+func (ms *Members) New_member(username, name, email string) (*Member, error) {
+	m := &Member{
+		Username: username,
+		Name:     name,
+		Email:    email,
+		Members:  ms}
+	if err := ms.Validate_username(username); err != nil {
+		return nil, err
+	}
+	if err := Validate_name(name); err != nil {
+		return nil, err
+	}
+	if err := Validate_email(email); err != nil {
+		return nil, err
+	}
+	if !ms.Username_available(username) {
+		return nil, fmt.Errorf("Username is already in use")
+	}
+	if !ms.Email_available(email) {
+		return nil, fmt.Errorf("E-mail address is already in use")
+	}
 	if err := m.QueryRow(
-		"SELECT"+
+		"INSERT INTO member ("+
 			"	username,"+
-			"	name,"+
-			"	password_key,"+
-			"	password_salt,"+
-			"	email,"+
-			"	key_card,"+
-			"	avatar_tmpl,"+
-			"	telephone,"+
-			"	agreed_to_terms,"+
-			"	registered,"+
-			"	stripe_customer_id "+
-			"FROM member "+
-			"WHERE id = $1",
-		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &email,
-		&key_card, &avatar_tmpl, &telephone, &m.Agreed_to_terms, &m.Registered,
-		&customer_id); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
+			"	name"+
+			"	email"+
+			") "+
+			"VALUES ($1, $2, $3) "+
+			"RETURNING id, registered",
+		username, name, email).Scan(&m.Id, &m.Registered);
+		err != nil {
 		log.Panic(err)
 	}
-	m.password_key = password_key.String
-	m.password_salt = password_salt.String
-	m.Email = email.String
-	m.Key_card = key_card.String
-	m.Avatar_tmpl = avatar_tmpl.String
-	m.Telephone = telephone.String
-	m.customer_id = customer_id.String
-	m.get_student()
-	m.get_admin()
-	return m
-}
-
-func (ms *Members) Get_member_by_username(username string) *Member {
-	var member_id int
-	if err := ms.QueryRow(
-		"SELECT id "+
-			"FROM member "+
-			"WHERE username = $1",
-		username).Scan(&member_id); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		log.Panic(err)
-	}
-	return ms.Get_member_by_id(member_id)
-}
-
-func (ms *Members) Get_member_by_customer_id(customer_id string) *Member {
-	var member_id int
-	if err := ms.QueryRow(
-		"SELECT id "+
-			"FROM member "+
-			"WHERE stripe_customer_id = $1",
-		customer_id).Scan(&member_id); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		log.Panic(err)
-	}
-	return ms.Get_member_by_id(member_id)
+	return m, nil
 }
 
 //TODO: cascade through all tables
-func (m *Member) Delete_member() {
+/*func (m *Member) Delete_member() {
 	if _, err := m.Exec("DELETE FROM member WHERE id = $1", m.Id); err != nil {
 		log.Panic(err)
 	}
-}
-
-func (m *Member) Get_pending_subscriptions() []*Pending_subscription {
-	pending := make([]*Pending_subscription, 0)
-	rows, err := m.Query(
-		"SELECT requested_at, plan_id " +
-		"FROM pending_subscription " +
-		"WHERE member = $1 " +
-		"ORDER BY requested_at DESC", m.Id)
-	defer rows.Close()
-	if err != nil && err != sql.ErrNoRows {
-		log.Panic(err)
-	}
-	for rows.Next() {
-		p := Pending_subscription{Member: m}
-		if err = rows.Scan(&p.Requested_at, &p.Plan_id); err != nil {
-			log.Panic(err)
-		}
-		pending = append(pending, &p)
-	}
-	return pending
-}
-
-func (m *Member) Verified_email() bool {
-	if m.Email != "" {
-		return true
-	}
-	return false
-}
+}*/
 
 func (m *Member) Authenticate(password string) bool {
 	if m.password_key == key(password, m.password_salt) {
@@ -150,20 +88,23 @@ func (m *Member) Authenticate(password string) bool {
 func (m *Member) Set_password(password string) {
 	m.password_salt = Rand256()
 	m.password_key = key(password, m.password_salt)
-	if _, err := m.Exec("UPDATE member "+
-		"SET password_key = $1, password_salt = $2 "+
+	if _, err := m.Exec(
+		"UPDATE member "+
+		"SET password_key = $1,"+
+		"	password_salt = $2 "+
 		"WHERE id = $3",
 		m.password_key, m.password_salt, m.Id); err != nil {
 		log.Panic(err)
 	}
-	if _, err := m.Exec("DELETE FROM reset_password_token "+
+	if _, err := m.Exec(
+		"DELETE FROM reset_password_token "+
 		"WHERE member = $1", m.Id); err != nil {
 		log.Panic(err)
 	}
 }
 
 func (m *Member) Set_name(name string) error {
-	if _, err := validate_name(name); err != nil {
+	if err := Validate_name(name); err != nil {
 		return err
 	}
 	m.Name = name
@@ -247,9 +188,6 @@ func (m *Member) Avatar_url(size int) string {
 }
 
 func (m *Member) create_reset_token() string {
-	if !m.Verified_email() {
-		return ""
-	}
 	token := Rand256()
 	if _, err := m.Exec("INSERT INTO reset_password_token (member, token) "+
 		"VALUES ($1, $2) "+
@@ -312,15 +250,15 @@ func (m *Member) Send_email_verification(email string) {
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
-func (m *Member) Verify_email(email string) (err error) {
-	m.talk, err = m.Sync(m.Id, m.Username, email, m.Name)
+func (m *Member) Verify_email(email string) error {
+	t, err := m.Sync(m.Id, m.Username, email, m.Name)
 	if err != nil {
 		return err
 	} else {
+		m.talk = t
 		m.set_avatar_tmpl(m.talk.Avatar_tmpl)
 	}
 	m.set_email(email)
-	//TODO: delete unverified members with this pending verification
 	if _, err = m.Exec(
 		"DELETE FROM email_verification_token "+
 			"WHERE email = $1 "+
@@ -330,10 +268,29 @@ func (m *Member) Verify_email(email string) (err error) {
 	return nil
 }
 
+func (m *Member) Get_pending_subscriptions() []*Pending_subscription {
+	pending := make([]*Pending_subscription, 0)
+	rows, err := m.Query(
+		"SELECT requested_at, plan_id " +
+		"FROM pending_subscription " +
+		"WHERE member = $1 " +
+		"ORDER BY requested_at DESC", m.Id)
+	defer rows.Close()
+	if err != nil && err != sql.ErrNoRows {
+		log.Panic(err)
+	}
+	for rows.Next() {
+		p := Pending_subscription{Member: m}
+		if err = rows.Scan(&p.Requested_at, &p.Plan_id); err != nil {
+			log.Panic(err)
+		}
+		pending = append(pending, &p)
+	}
+	return pending
+}
+
 func (m *Member) Talk_user() *talk.Talk_user {
-	if !m.Verified_email() {
-		return nil
-	} else if m.talk == nil {
+	if m.talk == nil {
 		m.talk = m.Talk_api.Get_user(m.Id)
 		if m.talk != nil && m.Avatar_tmpl != m.talk.Avatar_tmpl {
 			m.set_avatar_tmpl(m.talk.Avatar_tmpl)

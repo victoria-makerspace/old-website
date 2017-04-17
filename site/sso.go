@@ -10,8 +10,6 @@ import (
 func init() {
 	init_handler("sso", sso_handler, "/sso")
 	init_handler("sign-out", sso_sign_out_handler, "/sso/sign-out")
-	init_handler("check-availability", sso_availability_handler,
-		"/sso/check-availability.json")
 	init_handler("reset-password", sso_reset_handler, "/sso/reset")
 	init_handler("verify-email", sso_verify_email_handler, "/sso/verify-email")
 }
@@ -55,10 +53,6 @@ func sso_handler(p *page) {
 			p.Data["username"] = m.Username
 			p.Data["error_password"] = "Incorrect password"
 			return
-		} else if !m.Verified_email() {
-			p.Data["username"] = m.Username
-			p.Data["error_verified"] = true
-			return
 		}
 		p.new_session(m, !(p.PostFormValue("save-session") == "on"))
 		if p.Session == nil {
@@ -98,19 +92,6 @@ func sso_sign_out_handler(p *page) {
 	p.redirect = return_path
 }
 
-func sso_availability_handler(p *page) {
-	if u := p.FormValue("username"); u != "" {
-		available, err := p.Check_username_availability(u)
-		p.Data["username"] = available
-		p.Data["username_error"] = err
-	}
-	if e := p.FormValue("email"); e != "" {
-		available, err := p.Check_email_availability(e)
-		p.Data["email"] = available
-		p.Data["email_error"] = err
-	}
-}
-
 func sso_reset_handler(p *page) {
 	p.Title = "Reset password"
 	if p.Session != nil {
@@ -148,6 +129,7 @@ func sso_reset_handler(p *page) {
 	p.Data["reset_send_success"] = true
 }
 
+//TODO: Move initial verification to join page
 func sso_verify_email_handler(p *page) {
 	p.Title = "Verify e-mail address"
 	p.Data["username"] = p.FormValue("username")
@@ -186,9 +168,9 @@ func sso_verify_email_handler(p *page) {
 		delete(p.Data, "email")
 		p.Data["email_error"] = "E-mail address already verified"
 		return
-	} else if available, err := p.Check_email_availability(p.PostFormValue("email")); !available {
+	} else if !p.Email_available(p.PostFormValue("email")) {
 		delete(p.Data, "email")
-		p.Data["email_error"] = err
+		p.Data["email_error"] = "E-mail address is already in use"
 		return
 	} else if !m.Authenticate(p.PostFormValue("password")) {
 		p.Data["password_error"] = "Incorrect password"

@@ -24,15 +24,9 @@ func join_handler(p *page) {
 	p.Data["username"] = username
 	p.Data["email"] = email
 	p.Data["name"] = name
-	//TODO: don't create talk user until email has
-	//	been verified, and delete all accounts with pending e-mail verifications
-	//	for the same e-mail when one account verifies that e-mail address.
 	m, err := p.New_member(username, email, name)
-	for k, v := range err {
-		p.Data[k] = v
-	}
-	if m == nil {
-		log.Printf("Failed to create member: %s <%s>\n", username, email)
+	if err != nil {
+		log.Printf("Failed to create member @%s <%s>: %s", username, email, err)
 		return
 	}
 	m.Set_password(p.PostFormValue("password"))

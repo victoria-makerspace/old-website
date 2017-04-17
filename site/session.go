@@ -41,15 +41,9 @@ type Session struct {
 	token string
 }
 
-// new_session fails silently on unverified accounts
 func (p *page) new_session(m *member.Member, expires bool) {
-	if !m.Verified_email() {
-		return
-	}
 	token := member.Rand256()
 	query := "INSERT INTO session_http (token, member, expires) VALUES ($1, $2, "
-	// TODO: purge null expiries from database occasionally, since browsers don't
-	//	open forever..
 	if expires {
 		query += "null)"
 	} else {
@@ -87,9 +81,6 @@ func (p *page) authenticate() {
 	p.Session = &Session{
 		Member: p.Get_member_by_id(member_id),
 		token: cookie.Value}
-	if !p.Session.Member.Verified_email() {
-		log.Panic("Invalid session found from unverified member.")
-	}
 	if _, err := p.db.Exec(
 		"UPDATE session_http "+
 		"SET last_seen = now() "+

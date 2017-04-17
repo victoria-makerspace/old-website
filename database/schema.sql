@@ -7,23 +7,21 @@ CREATE TABLE member (
 	id serial PRIMARY KEY,
 	username text NOT NULL UNIQUE,
 	name text NOT NULL,
-	password_key character(64),
-	password_salt character(64) UNIQUE,
-	-- NULL indicates unverified e-mail
-	-- TODO: e-mail uniqueness requires case-insensitive check
-	email text UNIQUE,
+	email text NOT NULL UNIQUE,
 	key_card character(8) UNIQUE,
-	avatar_tmpl text,
 	telephone text,
+	avatar_tmpl text,
 	agreed_to_terms boolean NOT NULL DEFAULT false,
 	registered timestamp(0) with time zone NOT NULL DEFAULT now(),
 	stripe_customer_id text
+	password_key character(64),
+	password_salt character(64) UNIQUE,
 );
 CREATE TABLE email_verification_token (
-	member integer PRIMARY KEY REFERENCES member,
 	email text NOT NULL,
 	token character(64) NOT NULL,
-	time timestamp(0) with time zone NOT NULL DEFAULT now()
+	time timestamp(0) with time zone NOT NULL DEFAULT now(),
+	member integer REFERENCES member
 );
 CREATE TABLE reset_password_token (
 	member integer PRIMARY KEY REFERENCES member,
@@ -68,6 +66,7 @@ CREATE TABLE sent_emails (
 	from_address text,
 	to_address text[],
 	body text
+	--TODO error text
 );
 CREATE TABLE storage (
 	number integer NOT NULL,

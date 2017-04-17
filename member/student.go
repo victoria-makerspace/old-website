@@ -1,9 +1,7 @@
 package member
 
 import (
-	"database/sql"
 	"fmt"
-	"github.com/lib/pq"
 	"github.com/stripe/stripe-go"
 	"log"
 	"time"
@@ -13,20 +11,6 @@ type Student struct {
 	Institution     string
 	Email           string
 	Graduation_date time.Time
-}
-
-func (m *Member) get_student() {
-	var institution, email sql.NullString
-	var grad_date pq.NullTime
-	if err := m.QueryRow("SELECT institution, student_email, "+
-		"graduation_date FROM student WHERE member = $1", m.Id).
-		Scan(&institution, &email, &grad_date); err != nil {
-		if err != sql.ErrNoRows {
-			log.Panic(err)
-		}
-		return
-	}
-	m.Student = &Student{institution.String, email.String, grad_date.Time}
 }
 
 //TODO: verify student email

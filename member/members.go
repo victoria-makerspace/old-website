@@ -71,29 +71,64 @@ var username_last_char_rexp = regexp.MustCompile(`[^A-Za-z0-9]$`)
 var username_double_special_rexp = regexp.MustCompile(`[-_.]{2,}`)
 var username_confusing_suffix_rexp = regexp.MustCompile(`\.(js|json|css|htm|html|xml|jpg|jpeg|png|gif|bmp|ico|tif|tiff|woff)$`)
 
-func (ms *Members) Check_username_availability(username string) (available bool, err string) {
+func (ms *Members) Validate_username(username string) error {
+	var err_string string
 	if username == "" {
-		return false, "Username cannot be blank"
+		err_string = "Username cannot be blank"
 	} else if len(username) < 3 {
-		return false, "Username must be at least 3 characters"
+		err_string = "Username must be at least 3 characters"
 	} else if len(username) > 20 {
-		return false, "Username must be no more than 20 characters"
+		err_string = "Username must be no more than 20 characters"
 	} else if username_chars_rexp.MatchString(username) {
-		return false, "Username must only include numbers, letters, underscores, hyphens, and periods"
+		err_string = "Username must only include numbers, letters, "+
+			"underscores, hyphens, and periods"
 	} else if username_first_char_rexp.MatchString(username) {
-		return false, "Username must begin with an underscore or alphanumeric character"
+		err_string = "Username must begin with an underscore or alphanumeric "+
+			"character"
 	} else if username_last_char_rexp.MatchString(username) {
-		return false, "Username must end with an alphanumeric character"
+		err_string = "Username must end with an alphanumeric character"
 	} else if username_double_special_rexp.MatchString(username) {
-		return false, "Username cannot contain consecutive special characters (underscore, period, or hyphen)"
+		err_string = "Username cannot contain consecutive special characters "+
+			"(underscore, period, or hyphen)"
 	} else if username_confusing_suffix_rexp.MatchString(username) {
-		return false, "Username must not end in a confusing filetype suffix"
+		err_string = "Username must not end in a confusing filetype suffix"
 	}
 	for _, u := range ms.Config.Reserved_usernames {
 		if username == u {
-			return false, "Username reserved"
+			err_string = "Username reserved"
 		}
 	}
+	if err_string != "" {
+		return fmt.Errorf(err_string)
+	}
+	return nil
+}
+
+var name_rexp = regexp.MustCompile(`^([\pL\pN\pM\pP]+ ?)+$`)
+
+func Validate_name(name string) error {
+	if name == "" {
+		return fmt.Errorf("Name cannot be blank")
+	} else if len(name) > 100 {
+		return fmt.Errorf("Name must be no more than 100 characters")
+	} else if !name_rexp.MatchString(name) {
+		return fmt.Errorf("Name contains invalid characters")
+	}
+	return nil
+}
+
+var email_rexp = regexp.MustCompile("^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$")
+
+func Validate_email(email string) error {
+	if email == "" {
+		return fmt.Errorf("E-mail address cannot be blank")
+	} else if !email_rexp.MatchString(email) {
+		return fmt.Errorf("Invalid e-mail address format")
+	}
+	return nil
+}
+
+func (ms *Members) Username_available(username string) bool {
 	var count int
 	if err := ms.QueryRow(
 		"SELECT COUNT(*) "+
@@ -101,21 +136,13 @@ func (ms *Members) Check_username_availability(username string) (available bool,
 			"WHERE username = $1", username).Scan(&count); err != nil {
 		log.Panic(err)
 	}
-	if count == 1 {
-		return false, "Username already in use"
+	if count == 0 {
+		return true
 	}
-	return true, ""
+	return false
 }
 
-var email_rexp = regexp.MustCompile("^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$")
-
-func (ms *Members) Check_email_availability(email string) (available bool, err string) {
-	if email == "" {
-		return false, "E-mail cannot be blank"
-	}
-	if !email_rexp.MatchString(email) {
-		return false, "Invalid E-mail address"
-	}
+func (ms *Members) Email_available(email string) bool {
 	var count int
 	if err := ms.QueryRow(
 		"SELECT COUNT(*) "+
@@ -124,58 +151,9 @@ func (ms *Members) Check_email_availability(email string) (available bool, err s
 		log.Panic(err)
 	}
 	if count == 0 {
-		return true, ""
+		return true
 	}
-	return false, "E-mail already in use"
-}
-
-var name_rexp = regexp.MustCompile(`^([\pL\pN\pM\pP]+ ?)+$`)
-
-func validate_name(name string) (bool, error) {
-	if !name_rexp.MatchString(name) {
-		return false, fmt.Errorf("Invalid characters in name")
-	} else if len(name) > 100 {
-		return false, fmt.Errorf("Name must be no more than 100 characters")
-	}
-	return true, nil
-}
-
-// New creates a new user, returns nil and a set of errors on invalid input.
-//	Only checks for e-mail availability, does not send off a verification e-mail
-//	or otherwise store the e-mail address.  The new member is created with an
-//	uninitialized password, which must be set via the reset form.
-func (ms *Members) New_member(username, email, name string) (m *Member, err map[string]string) {
-	err = make(map[string]string)
-	m = &Member{
-		Username: username,
-		Name:     name,
-		Members:  ms}
-	if ok, e := validate_name(name); !ok {
-		err["name_error"] = e.Error()
-		m = nil
-	}
-	if available, e := ms.Check_username_availability(username); !available {
-		err["username_error"] = e
-		m = nil
-	}
-	if available, e := ms.Check_email_availability(email); !available {
-		err["email_error"] = e
-		m = nil
-	}
-	if m == nil {
-		return
-	}
-	if e := m.QueryRow(
-		"INSERT INTO member ("+
-			"	username,"+
-			"	name"+
-			") "+
-			"VALUES ($1, $2) "+
-			"RETURNING id, registered",
-		username, name).Scan(&m.Id, &m.Registered); e != nil {
-		log.Panic(e)
-	}
-	return m, nil
+	return false
 }
 
 func parse_duration(w string) (time.Duration, error) {
@@ -243,51 +221,4 @@ func (ms *Members) Get_member_from_verification_token(token string) (*Member, st
 		return nil, "", fmt.Errorf("Verification token is expired")
 	}
 	return ms.Get_member_by_id(member_id), email, nil
-}
-
-func (ms *Members) get_members(query string) []*Member {
-	members := make([]*Member, 0)
-	rows, err := ms.Query(query)
-	defer rows.Close()
-	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Panic(err)
-		}
-		return members
-	}
-	for rows.Next() {
-		var member_id int
-		if err = rows.Scan(&member_id); err != nil {
-			log.Panic(err)
-		}
-		members = append(members, ms.Get_member_by_id(member_id))
-	}
-	return members
-}
-
-// Grabs all e-mail-verified members
-func (ms *Members) Get_all_members() []*Member {
-	return ms.get_members(
-		"SELECT id " +
-			"FROM member " +
-			"WHERE email IS NOT NULL " +
-			"ORDER BY username ASC")
-}
-
-func (ms *Members) Get_all_active_members() []*Member {
-	return ms.get_members(
-		"SELECT m.id " +
-			"FROM member m " +
-			"JOIN session_http s " +
-			"ON s.member = m.id " +
-			"GROUP BY m.id " +
-			"ORDER BY max(s.last_seen) DESC")
-}
-
-func (ms *Members) Get_new_members(limit int) []*Member {
-	return ms.get_members(
-		"SELECT id " +
-			"FROM member " +
-			"ORDER BY registered DESC " +
-			"LIMIT " + fmt.Sprint(limit))
 }

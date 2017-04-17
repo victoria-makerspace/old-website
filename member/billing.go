@@ -12,8 +12,8 @@ import (
 )
 
 func (m *Member) Customer() *stripe.Customer {
-	if m.customer_id != "" && m.customer == nil {
-		c, err := customer.Get(m.customer_id, nil)
+	if m.Customer_id != "" && m.customer == nil {
+		c, err := customer.Get(m.Customer_id, nil)
 		if err != nil {
 			return nil
 		}
@@ -35,7 +35,7 @@ func (m *Member) Update_customer(token string, params *stripe.CustomerParams) er
 	params.Email = m.Email
 	var err error
 	var cust *stripe.Customer
-	if m.customer_id == "" {
+	if m.Customer_id == "" {
 		cust, err = customer.New(params)
 	} else {
 		cust, err = customer.Update(m.customer.ID, params)
@@ -44,8 +44,8 @@ func (m *Member) Update_customer(token string, params *stripe.CustomerParams) er
 		return fmt.Errorf(err.(*stripe.Error).Msg)
 	}
 	m.customer = cust
-	if m.customer_id == "" {
-		m.customer_id = m.customer.ID
+	if m.Customer_id == "" {
+		m.Customer_id = m.customer.ID
 		if _, err := m.Exec(
 			"UPDATE member "+
 				"SET stripe_customer_id = $2 "+

@@ -1,14 +1,11 @@
 Site:
     - Projects pages for members
-    - Calendar for priority use of tools
-    - Panic recovery in txn scheduler
-    - Storage waitlist
     - Tool wiki
+    - Calendar for priority use of tools
     - Class booking and calendar
     - Student validation
     - Join page form validation
     - Verify Talk group membership upon login
-    - Member search
     - Fix read/unread flag on private messages
     - Admin panel:
         - Modify admin permissions
@@ -21,9 +18,12 @@ Site:
         - Session & activity log
         - Reset user password, and mass-reset
         - Set membership fees
+            - Changing a plan fee requires deleting the plan first, meaning deleting all associated subscriptions.  Must be able to re-subscribe everyone to the new plan.
     - BUG: changing e-mail will remove talk user assocation
     - Joining users should only enter their e-mail, upon verification they can fill in username and the like, and it should say which (if any) existing Talk account will get associated
-    - Use recurring billing API, get rid of custom missed-txn and txn scheduling
+    - Add member.json for ajax querying by id, username, or email
+        - Member search
+    - Storage waitlist
 
 Tool-use hooks:
     - Laser cutter

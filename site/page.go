@@ -45,6 +45,7 @@ func (p *page) http_error(code int) {
 	p.Name = "error"
 	p.Title = fmt.Sprint(code)
 	p.Status = code
+	p.Data["status"] = code
 	p.Data["error"] = http.StatusText(code)
 	p.redirect = "" // Cancel any pending redirect
 }
@@ -63,7 +64,7 @@ func (p *page) write_response() {
 	if p.srv_json {
 		j := json.NewEncoder(p.ResponseWriter)
 		///TODO: remove after testing, or don't, who cares
-		//j.SetIndent("", "    ")
+		j.SetIndent("", "    ")
 		p.ResponseWriter.Header().Set("Content-Type", "application/json")
 		p.WriteHeader(p.Status)
 		if err := j.Encode(p.Data); err != nil {

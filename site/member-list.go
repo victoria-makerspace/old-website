@@ -16,11 +16,11 @@ func member_list_handler(p *page) {
 	case "/member/list":
 		p.Title = "All members"
 		p.Data["member_group"] = "all"
-		p.Data["member_list"] = p.Get_all_members()
+		p.Data["member_list"] = p.List_members()
 	case "/member/list/active":
 		p.Title = "Active members"
 		p.Data["member_group"] = "active"
-		p.Data["member_list"] = p.Get_all_active_members()
+		p.Data["member_list"] = p.List_active_members()
 	case "/member/list/new":
 		p.Title = "New members"
 		p.Data["member_group"] = "new"
@@ -30,6 +30,6 @@ func member_list_handler(p *page) {
 				limit = lim
 			}
 		}
-		p.Data["member_list"] = p.Get_new_members(limit)
+		p.Data["member_list"] = p.List_new_members(limit)
 	}
 }

@@ -170,8 +170,9 @@ func member_upload_handler(p *page) {
 	}
 	new_members := make([]new_member, 0)
 	lines := strings.Split(p.PostFormValue("member-upload"), "\n")
-	line_error := make([][]string, len(lines))
+	line_error := make([]string, len(lines))
 	line_success := make([]*member.Member, len(lines))
+line_loop:
 	for i, line := range lines {
 		line := strings.TrimSpace(line)
 		if len(line) == 0 {
@@ -179,7 +180,7 @@ func member_upload_handler(p *page) {
 		}
 		fields := strings.Split(line, ",")
 		if len(fields) < 3 {
-			line_error[i] = []string{"Invalid: not enough fields"}
+			line_error[i] = "Invalid: not enough fields"
 			continue
 		}
 		nm := new_member{
@@ -199,9 +200,9 @@ func member_upload_handler(p *page) {
 				time.Local); err == nil {
 				nm.date = t
 			} else {
-				line_error[i] = []string{"Field " + fmt.Sprint(j+4) +
-					" invalid: '" + field + "'"}
-				break
+				line_error[i] = "Field " + fmt.Sprint(j+4) + " invalid: '" +
+					field + "'"
+				continue line_loop
 			}
 		}
 		new_members = append(new_members, nm)
@@ -209,32 +210,26 @@ func member_upload_handler(p *page) {
 	success := make([]*member.Member, 0)
 	for _, nm := range new_members {
 		m, err := p.New_member(nm.username, nm.email, nm.name)
-		if m == nil {
-			line_error[nm.line] = make([]string, 0)
-			for _, v := range err {
-				line_error[nm.line] = append(line_error[nm.line], v)
-			}
+		if err != nil {
+			line_error[nm.line] = err.Error()
 			continue
 		}
 		if !nm.date.IsZero() {
 			m.Set_registration_date(nm.date)
 		}
 		if err := m.Verify_email(nm.email); err != nil {
-			line_error[nm.line] = []string{"E-mail verification failed"}
+			line_error[nm.line] = "E-mail verification failed"
+			continue
 		} else {
 			success = append(success, m)
 		}
 		if nm.free {
-			p.Member.Approve_membership(m)
+			p.Member.Approve_free_membership(m)
 		}
 		if nm.key_card != "" {
 			if err := m.Set_key_card(nm.key_card); err != nil {
-				e := []string{err.Error()}
-				if line_error[nm.line] == nil {
-					line_error[nm.line] = e
-				} else {
-					line_error[nm.line] = append(line_error[nm.line], e...)
-				}
+				line_error[nm.line] = err.Error()
+				continue
 			}
 		}
 		line_success[nm.line] = m
