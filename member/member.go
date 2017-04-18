@@ -65,13 +65,20 @@ func (ms *Members) New_member(username, name, email string) (*Member, error) {
 		err != nil {
 		log.Panic(err)
 	}
-	talk, err := m.Sync(m.Id, m.Username, m.Email, m.Name)
-	if err != nil {
+	if err := m.sync_talk_user(); err != nil {
 		return m, err
 	}
-	m.talk = talk
-	m.set_avatar_tmpl(talk.Avatar_tmpl)
 	return m, nil
+}
+
+func (m *Member) sync_talk_user() error {
+	talk, err := m.Sync(m.Id, m.Username, m.Email, m.Name)
+	if err != nil {
+		return err
+	}
+	m.talk = talk
+	m.Update_avatar_tmpl(talk.Avatar_tmpl)
+	return nil
 }
 
 //TODO: cascade through all tables
@@ -80,13 +87,6 @@ func (ms *Members) New_member(username, name, email string) (*Member, error) {
 		log.Panic(err)
 	}
 }*/
-
-func (m *Member) Authenticate(password string) bool {
-	if m.password_key == key(password, m.password_salt) {
-		return true
-	}
-	return false
-}
 
 func (m *Member) Set_password(password string) {
 	m.password_salt = Rand256()
@@ -106,7 +106,23 @@ func (m *Member) Set_password(password string) {
 	}
 }
 
-func (m *Member) Set_name(name string) error {
+func (m *Member) Update_username(username string) error {
+	if err := m.Validate_username(username); err != nil {
+		return err
+	}
+	if !m.Username_available(username) {
+		return fmt.Errorf("Username is already in use")
+	}
+	m.Username = username
+	if _, err := m.Exec("UPDATE member "+
+		"SET username = $1 "+
+		"WHERE id = $2", username, m.Id); err != nil {
+		log.Panic(err)
+	}
+	return m.sync_talk_user()
+}
+
+func (m *Member) Update_name(name string) error {
 	if err := Validate_name(name); err != nil {
 		return err
 	}
@@ -116,10 +132,16 @@ func (m *Member) Set_name(name string) error {
 		"WHERE id = $2", name, m.Id); err != nil {
 		log.Panic(err)
 	}
-	return nil
+	return m.sync_talk_user()
 }
 
 func (m *Member) Update_email(email string) error {
+	if err := Validate_email(email); err != nil {
+		return err
+	}
+	if !m.Email_available(email) {
+		return fmt.Errorf("E-mail address is already in use")
+	}
 	m.Email = email
 	m.Delete_verification_tokens(email)
 	if _, err := m.Exec("UPDATE member "+
@@ -127,12 +149,7 @@ func (m *Member) Update_email(email string) error {
 		"WHERE id = $2", email, m.Id); err != nil {
 		log.Panic(err)
 	}
-	talk, err := m.Sync(m.Id, m.Username, m.Email, m.Name)
-	if err != nil {
-		return err
-	}
-	m.talk = talk
-	return nil
+	return m.sync_talk_user()
 }
 
 func (m *Member) Set_registration_date(date time.Time) {
@@ -184,13 +201,23 @@ func (m *Member) Set_telephone(tel string) error {
 	return nil
 }
 
-func (m *Member) set_avatar_tmpl(avatar_tmpl string) {
+func (m *Member) Update_avatar_tmpl(avatar_tmpl string) {
+	if m.Avatar_tmpl == avatar_tmpl {
+		return
+	}
 	m.Avatar_tmpl = avatar_tmpl
 	if _, err := m.Exec("UPDATE member "+
 		"SET avatar_tmpl = $1 "+
 		"WHERE id = $2", avatar_tmpl, m.Id); err != nil {
 		log.Panic(err)
 	}
+}
+
+func (m *Member) Authenticate(password string) bool {
+	if m.password_key == key(password, m.password_salt) {
+		return true
+	}
+	return false
 }
 
 func (m *Member) Avatar_url(size int) string {
@@ -299,7 +326,7 @@ func (m *Member) Talk_user() *talk.Talk_user {
 	if m.talk == nil {
 		m.talk = m.Talk_api.Get_user(m.Id)
 		if m.talk != nil && m.Avatar_tmpl != m.talk.Avatar_tmpl {
-			m.set_avatar_tmpl(m.talk.Avatar_tmpl)
+			m.Update_avatar_tmpl(m.talk.Avatar_tmpl)
 		}
 	}
 	return m.talk

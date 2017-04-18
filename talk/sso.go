@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"net/url"
 )
 
@@ -22,16 +23,19 @@ func (api *Talk_api) Sync(external_id int, username, email, name string) (*Talk_
 	values.Set("sig", sig)
 	data, err := api.do_form("POST", "/admin/users/sync_sso", values)
 	if err != nil {
-		return nil, fmt.Errorf(err_string + ": %s", err.Error())
+		log.Println(err_string + ": %s", err.Error())
+		return nil, fmt.Errorf("Talk server error")
 	}
 	if u, ok := data.(map[string]interface{}); ok {
 		if e, ok := u["failed"].(string); ok {
-			return nil, fmt.Errorf(err_string + ": " + e)
+			log.Println(err_string + ": " + e)
+			return nil, fmt.Errorf(e)
 		}
 		//TODO: check for errors
 		return api.parse_user(external_id, u), nil
 	}
-	return nil, fmt.Errorf(err_string)
+	log.Println(err_string + ": ", data)
+	return nil, fmt.Errorf("Talk server error")
 }
 
 func (api *Talk_api) Parse_sso_req(q url.Values) (payload url.Values) {

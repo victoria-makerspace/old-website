@@ -19,10 +19,9 @@ Site:
         - Reset user password, and mass-reset
         - Set membership fees
             - Changing a plan fee requires deleting the plan first, meaning deleting all associated subscriptions.  Must be able to re-subscribe everyone to the new plan.
-    - BUG: changing e-mail will remove talk user assocation
+    - BUG: changing e-mail will remove talk user assocation?
     - Member search
     - Storage waitlist
-    - Change link to admin@makerspace.ca to support@makerspace.ca for web-related things
 
 Tool-use hooks:
     - Laser cutter

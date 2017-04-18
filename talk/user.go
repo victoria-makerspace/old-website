@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+/*
 func (api *Talk_api) Check_username(username string) (available bool, err string) {
 	j, e := api.get_json("/users/check_username.json?username="+
 		url.QueryEscape(username), false)
@@ -31,7 +32,7 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 	log.Panicf("Talk server parsing error during Check_username: %s\n",
 		username)
 	return
-}
+}*/
 
 type Talk_user struct {
 	external_id    int

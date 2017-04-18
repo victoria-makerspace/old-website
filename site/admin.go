@@ -142,7 +142,7 @@ func manage_account_handler(p *page) {
 			m.Set_registration_date(registered)
 		}
 	} else if name := p.PostFormValue("name"); name != "" {
-		if err := m.Set_name(name); err != nil {
+		if err := m.Update_name(name); err != nil {
 			p.Data["name_error"] = err
 		}
 	} else if p.PostFormValue("key-card") != "" {

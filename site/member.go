@@ -177,7 +177,7 @@ func account_handler(p *page) {
 		p.Data["update_password_success"] = "Successfully updated password"
 		return
 	} else if name := p.PostFormValue("name"); name != "" {
-		if err := p.Set_name(name); err != nil {
+		if err := p.Update_name(name); err != nil {
 			p.Data["name_error"] = err
 		}
 	} else if tel := p.PostFormValue("telephone"); tel != "" {

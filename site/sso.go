@@ -2,7 +2,6 @@ package site
 
 import (
 	"fmt"
-	"log"
 	"github.com/vvanpo/makerspace/member"
 	"net/url"
 )
@@ -147,9 +146,8 @@ func sso_verify_email_handler(p *page) {
 		}
 		if err := p.Update_email(email); err != nil {
 			//TODO: determine whether the server failed or discourse rejected
-			//	e-mail address
-			p.Data["server_error"] = true
-			log.Println("Update_email error: ", err)
+			//	the e-mail address
+			p.Data["email_error"] = err
 			return
 		}
 		p.redirect = "/member/account"
