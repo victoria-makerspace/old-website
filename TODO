@@ -4,6 +4,7 @@ Site:
     - Class booking and calendar
     - Student validation
     - Join page form validation
+    - Profile page layout bugs
     - Talk forum integration:
         - Projects pages for members
         - Verify Talk group membership upon login
@@ -25,6 +26,9 @@ Site:
         - Reset user password, and mass-reset
         - Set membership fees
             - Changing a plan fee requires deleting the plan first, meaning deleting all associated subscriptions.  Must be able to re-subscribe everyone to the new plan.
+            - Add trial periods so everyone starts on the first of the month
+        - Send notice on failed payments
+        - Failed payment list in admin panel and member billing page
     - Member search
     - Storage waitlist
 
