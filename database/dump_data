@@ -1,1 +1,2 @@
-pg_dump -C -O -a makerspace > dump.sql
+pg_dump -O -s makerspace > $(date +schema-%T-%F-%Z.sql)
+pg_dump -C -O -a makerspace > $(date +data-%T-%F-%Z.sql)
