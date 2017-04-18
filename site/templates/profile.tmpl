@@ -28,7 +28,7 @@
             </h4>
   {{end}}
   {{if .Talk_user}}
-            <a href="{{$.Talk_api.Path}}/u/{{urlquery .Talk_user.Username}}" class="profile-username d-flex h5 mb-1 text-muted">
+            <a href="{{$.Talk.Path}}/u/{{urlquery .Talk_user.Username}}" class="profile-username d-flex h5 mb-1 text-muted">
               @{{.Username}}
     {{if $.Session}}
               <div class="glyphicons glyphicons-envelope mx-2"></div>

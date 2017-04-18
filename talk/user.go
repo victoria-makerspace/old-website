@@ -5,11 +5,12 @@ import (
 	"log"
 	"net/url"
 	"strings"
+	"strconv"
 	"time"
 )
 
 /*
-func (api *Talk_api) Check_username(username string) (available bool, err string) {
+func (api *Api) Check_username(username string) (available bool, err string) {
 	j, e := api.get_json("/users/check_username.json?username="+
 		url.QueryEscape(username), false)
 	if e != nil {
@@ -34,8 +35,8 @@ func (api *Talk_api) Check_username(username string) (available bool, err string
 	return
 }*/
 
-type Talk_user struct {
-	external_id    int
+type User struct {
+	External_id    int
 	Id             int
 	Username       string
 	Admin          bool
@@ -48,11 +49,11 @@ type Talk_user struct {
 	Location       string
 	Card_bg_url    string
 	Profile_bg_url string
-	*Talk_api
+	*Api
 }
 
-func (api *Talk_api) parse_user(external_id int, u map[string]interface{}) *Talk_user {
-	t := &Talk_user{external_id: external_id, Talk_api: api}
+func (api *Api) parse_user(u map[string]interface{}) *User {
+	t := &User{Api: api}
 	t.Id = int(u["id"].(float64))
 	t.Username = u["username"].(string)
 	t.Admin = u["admin"].(bool)
@@ -67,40 +68,71 @@ func (api *Talk_api) parse_user(external_id int, u map[string]interface{}) *Talk
 	t.Website_url, _ = u["website"].(string)
 	t.Website_name, _ = u["website_name"].(string)
 	t.Location, _ = u["location"].(string)
-	if card, ok := u["card_background"].(string); ok {
-		t.Card_bg_url = card
-	}
-	if profile, ok := u["profile_background"].(string); ok {
-		t.Profile_bg_url = profile
+	t.Card_bg_url, _ = u["card_background"].(string)
+	t.Profile_bg_url, _ = u["profile_background"].(string)
+	if sso, ok := u["single_sign_on_record"].(map[string]interface{}); ok {
+		if external_id, ok := sso["external_id"].(string); ok {
+			t.External_id, _ = strconv.Atoi(external_id)
+		}
 	}
 	return t
 }
 
-func (api *Talk_api) Get_user(external_id int) *Talk_user {
-	j, _ := api.get_json("/users/by-external/"+fmt.Sprint(external_id)+".json",
-		true)
+func (api *Api) Get_user(id int) (*User, error) {
+	j, err := api.get_json("/admin/users/" + fmt.Sprint(id) + ".json", true)
+	if err != nil {
+		log.Printf("Talk error fetching user <%d>: %q", id, err)
+		return nil, fmt.Errorf("Server error")
+	}
 	if j, ok := j.(map[string]interface{}); ok {
-		if u, ok := j["user"].(map[string]interface{}); ok {
-			return api.parse_user(external_id, u)
+		if user := api.parse_user(j); user != nil {
+			return user, nil
 		}
 	}
-	return nil
+	log.Printf("Talk error fetching user <%d>: %q", id, err)
+	return nil, fmt.Errorf("Invalid Talk user")
 }
 
-func (api *Talk_api) Get_talk_id_by_email(email string) (int, error) {
-	j, _ := api.get_json("/admin/users/list/active.json?filter=" + url.QueryEscape(email), true)
-	if j, ok := j.([]interface{}); ok {
-		if len(j) == 0 {
-			return 0, fmt.Errorf("E-mail address not in use")
-		}
-		if user, ok := j[0].(map[string]interface{}); ok {
-			if id, ok := user["id"].(float64); ok {
-				return int(id), nil
+func (api *Api) Get_user_by_external_id(external_id int) (*User, error) {
+	j, err := api.get_json("/users/by-external/"+fmt.Sprint(external_id)+
+		".json", true)
+	if err != nil {
+		log.Println("Talk error fetching user by external id <%d>: %q",
+			external_id, err)
+		return nil, fmt.Errorf("Server error")
+	}
+	if j, ok := j.(map[string]interface{}); ok {
+		if u, ok := j["user"].(map[string]interface{}); ok {
+			user := api.parse_user(u)
+			if user != nil {
+				user.External_id = external_id
+				return user, nil
 			}
 		}
 	}
-	log.Println("Get_talk_id_by_email('" + email + "') error: ", j)
-	return 0, fmt.Errorf("Invalid Talk user")
+	log.Printf("Talk error fetching user by external id <%d>: %q",
+		external_id, err)
+	return nil, fmt.Errorf("Invalid Talk user")
+}
+
+func (api *Api) Get_user_by_email(email string) (*User, error) {
+	j, err := api.get_json("/admin/users.json?filter=" + url.QueryEscape(email), true)
+	if err != nil {
+		log.Println("Talk error fetching user by e-mail <" + email + ">:", err)
+		return nil, fmt.Errorf("Server error")
+	}
+	if j, ok := j.([]interface{}); ok {
+		if len(j) == 0 {
+			return nil, fmt.Errorf("E-mail address not in use")
+		}
+		if user, ok := j[0].(map[string]interface{}); ok {
+			if id, ok := user["id"].(float64); ok {
+				return api.Get_user(int(id))
+			}
+		}
+	}
+	log.Println("Talk error fetching user <" + email + ">:", j)
+	return nil, fmt.Errorf("Invalid Talk user")
 }
 
 //TODO: grab external_id from posters
@@ -116,7 +148,7 @@ type Message struct {
 	Original_poster string
 }
 
-func (t *Talk_user) Get_messages(limit int) []*Message {
+func (t *User) Get_messages(limit int) []*Message {
 	msgs := make([]*Message, 0)
 	usernames := make(map[int]string)
 	avatars := make(map[int]string)
@@ -174,15 +206,15 @@ func (t *Talk_user) Get_messages(limit int) []*Message {
 	return msgs
 }
 
-func (t *Talk_user) Add_to_group(group string) error {
-	err := t.Talk_api.Add_to_group(group, t)
+func (t *User) Add_to_group(group string) error {
+	err := t.Api.Add_to_group(group, t)
 	if err == nil {
 		t.Groups[group] = t.All_groups()[group]
 	}
 	return err
 }
 
-func (t *Talk_user) Remove_from_group(group string) {
+func (t *User) Remove_from_group(group string) {
 	//TODO propagate errors
 	if _, ok := t.Groups[group]; !ok {
 		// Not in group

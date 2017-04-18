@@ -15,8 +15,8 @@ func (p *page) set_session_cookie(value string, expires bool) {
 		Name:     "session",
 		Value:    value,
 		Path:     "/",
-		Domain:   p.config["domain"].(string),
-		Secure:   p.config["tls"].(bool),
+		Domain:   p.Config.Domain,
+		Secure:   p.Config.Tls,
 		HttpOnly: true}
 	// If not set to expire, set expiry date for a year from now.
 	if !expires {
@@ -30,7 +30,6 @@ func (p *page) unset_session_cookie() {
 		Name:     "session",
 		Value:    " ",
 		Path:     "/",
-		Domain:   p.config["domain"].(string),
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HttpOnly: true}

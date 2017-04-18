@@ -1,12 +1,18 @@
 Site:
-    - Projects pages for members
     - Tool wiki
     - Calendar for priority use of tools
     - Class booking and calendar
     - Student validation
     - Join page form validation
-    - Verify Talk group membership upon login
-    - Fix read/unread flag on private messages
+    - Talk forum integration:
+        - Projects pages for members
+        - Verify Talk group membership upon login
+        - Fix read/unread flag on private messages
+            - use both private-messages and private-messages-unread endpoints
+        - Only attempt changing custom groups, not automatic
+        - On e-mail change, ensure no Talk users use the same e-mail
+        - On username change, ensure no other Talk users have the same username
+            - Call /talk/u/check_username.json
     - Admin panel:
         - Modify admin permissions
         - Make automatically sent-out e-mails more explicit and with options
@@ -15,11 +21,10 @@ Site:
         - Storage and invoice management
         - Deactivate accounts (also in Talk)
         - Force e-mail through Talk API on system/admin notices
-        - Session & activity log
+        - Session & activity log (IP address?)
         - Reset user password, and mass-reset
         - Set membership fees
             - Changing a plan fee requires deleting the plan first, meaning deleting all associated subscriptions.  Must be able to re-subscribe everyone to the new plan.
-    - BUG: changing e-mail will remove talk user assocation?
     - Member search
     - Storage waitlist
 
@@ -43,6 +48,6 @@ Payment:
     - Membership termination notification and VITP card cancel
 
 Makerspace computers:
-    - NFS
-    - LDAP
+    - NFS?
+    - Active directory for SSO and boot image management
     - SSO using card reader

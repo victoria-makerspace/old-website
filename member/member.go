@@ -26,7 +26,7 @@ type Member struct {
 	Customer_id   string
 	password_key  string
 	password_salt string
-	talk          *talk.Talk_user
+	talk          *talk.User
 	customer      *stripe.Customer
 	*Admin
 	*Student
@@ -72,7 +72,7 @@ func (ms *Members) New_member(username, name, email string) (*Member, error) {
 }
 
 func (m *Member) sync_talk_user() error {
-	talk, err := m.Sync(m.Id, m.Username, m.Email, m.Name)
+	talk, err := m.Talk.Sync(m.Id, m.Username, m.Email, m.Name)
 	if err != nil {
 		return err
 	}
@@ -259,7 +259,7 @@ func (m *Member) Send_password_reset() {
 	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
 
-func (ms *Members) Send_email_verification(email string, m *Member) {
+func (ms *Members) Send_email_verification(email, body string, m *Member) {
 	token := Rand256()
 	var err error
 	if m == nil {
@@ -278,25 +278,14 @@ func (ms *Members) Send_email_verification(email string, m *Member) {
 	if err != nil {
 		log.Panic("Failed to set email verification token: ", err)
 	}
-	msg := message{subject: "Makerspace.ca: e-mail verification"}
+	msg := message{
+		subject: "[Victoria Makerspace] E-mail verification",
+		body: body + token}
 	msg.set_from("Makerspace", "admin@makerspace.ca")
 	if m != nil {
 		msg.add_to(m.Name, email)
-		msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
-			"To change the e-mail address associated with your Makerspace "+
-			"account, you must first verify that you are its owner.\n\n" +
-			"If the above name and username is correct, please verify your " +
-			"e-mail address (" + email + ") by visiting " +
-			//m.Config["url"].(string) +
-			"/sso/verify-email?token=" + token + "\n\n"
 	} else {
 		msg.add_to("", email)
-		msg.body = "Hello,\n\n" +
-			"To register for a Makerspace account, you must first verify that " +
-			"are the owner of this e-mail address.\n\n" +
-			"Please verify your e-mail address (" + email + ") by visiting " +
-			//m.Config["url"].(string) +
-			"/join?token=" + token + "\n\n"
 	}
 	ms.send_email("admin@makerspace.ca", msg.emails(), msg.format())
 }
@@ -322,9 +311,9 @@ func (m *Member) Get_pending_subscriptions() []*Pending_subscription {
 	return pending
 }
 
-func (m *Member) Talk_user() *talk.Talk_user {
+func (m *Member) Talk_user() *talk.User {
 	if m.talk == nil {
-		m.talk = m.Talk_api.Get_user(m.Id)
+		m.talk, _ = m.Talk.Get_user_by_external_id(m.Id)
 		if m.talk != nil && m.Avatar_tmpl != m.talk.Avatar_tmpl {
 			m.Update_avatar_tmpl(m.talk.Avatar_tmpl)
 		}

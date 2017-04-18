@@ -112,7 +112,7 @@
             </div>
           </form>
           <script>
-            var stripe = Stripe("{{.Config.Billing.Public_key}}");
+            var stripe = Stripe("{{.Members.Config.Billing.Public_key}}");
             var elements = stripe.elements();
             var style = {
               base: {

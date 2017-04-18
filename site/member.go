@@ -131,8 +131,9 @@ func member_json_handler(p *page) {
 		for e, m := range emails {
 			if m == nil {
 				email_list[e] = map[string]interface{}{"available": true}
-				if t, err := p.Talk_api.Get_talk_id_by_email(e); err == nil {
-					email_list[e]["talk-id"] = t
+				if t, err := p.Talk.Get_user_by_email(e); err == nil {
+					email_list[e]["talk-id"] = t.Id
+					email_list[e]["talk-username"] = t.Username
 				}
 				continue
 			}

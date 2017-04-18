@@ -12,11 +12,10 @@ import (
 )
 
 var config struct {
-	Site       map[string]interface{}
+	Site       site.Config
 	Members    member.Config
 	Database   map[string]string
-	Talk       map[string]string
-	Smtp       map[string]string
+	Talk       talk.Api
 }
 
 func init() {
@@ -35,23 +34,16 @@ func init() {
 	if err != nil {
 		log.Fatal("Config file error: ", err)
 	}
-	tls := config.Site["tls"].(bool)
-	url := config.Site["domain"].(string)
-	if tls {
-		url = "https://" + url
+	if config.Site.Talk_proxy != "" {
+		config.Talk.Url = config.Site.Talk_proxy + config.Talk.Path
 	} else {
-		url = "http://" + url
-	}
-	if proxy, ok := config.Site["talk-proxy"].(string); ok {
-		config.Talk["url"] = proxy + config.Talk["path"]
-	} else {
-		config.Talk["url"] = url + config.Talk["path"]
+		config.Talk.Url = config.Site.Url() + config.Talk.Path
 	}
 }
 
 func main() {
 	db := Database(config.Database)
-	talk := talk.New_talk_api(config.Talk)
+	talk := &config.Talk
 	members := member.New(config.Members, db, talk)
-	site.Serve(config.Site, talk, members, db)
+	site.Serve(config.Site, members, db)
 }

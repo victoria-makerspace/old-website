@@ -61,17 +61,19 @@ func sso_handler(p *page) {
 		}
 	}
 	// Won't reach this point without a session
-	req_payload := p.Talk_api.Parse_sso_req(p.URL.Query())
+	req_payload := p.Talk.Parse_sso_req(p.URL.Query())
 	if req_payload != nil {
 		return_path = req_payload.Get("return_sso_url")
 		if return_path == "" {
-			return_path = p.Talk_api.Path + "/session/sso_login"
+			return_path = p.Talk.Path + "/session/sso_login"
 		}
 		values := url.Values{}
 		values.Set("external_id", fmt.Sprint(p.Member.Id))
+		values.Set("username", p.Member.Username)
+		values.Set("name", p.Member.Name)
 		values.Set("email", p.Member.Email)
 		values.Set("nonce", req_payload.Get("nonce"))
-		rsp_payload, rsp_sig := p.Talk_api.Encode_sso_rsp(values)
+		rsp_payload, rsp_sig := p.Talk.Encode_sso_rsp(values)
 		return_path += "?sso=" + rsp_payload + "&sig=" + rsp_sig
 	}
 	p.redirect = return_path
@@ -145,31 +147,37 @@ func sso_verify_email_handler(p *page) {
 			return
 		}
 		if err := p.Update_email(email); err != nil {
-			//TODO: determine whether the server failed or discourse rejected
-			//	the e-mail address
 			p.Data["email_error"] = err
 			return
 		}
 		p.redirect = "/member/account"
 		return
 	}
-	if _, ok := p.PostForm["send-verification-email"]; !ok {
-		return
-	}
-	if p.Email == p.PostFormValue("email") {
+	email := p.FormValue("email")
+	if p.Email == email {
 		p.Data["email_error"] = "E-mail address already verified"
 		return
-	} else if err := member.Validate_email(p.PostFormValue("email")); err != nil {
+	} else if err := member.Validate_email(email); err != nil {
 		p.Data["email_error"] = err
 		return
-	} else if !p.Email_available(p.PostFormValue("email")) {
+	} else if !p.Email_available(email) {
 		p.Data["email_error"] = "E-mail address is already in use"
+		return
+	}
+	if _, ok := p.PostForm["send-verification-email"]; !ok {
 		return
 	} else if !p.Authenticate(p.PostFormValue("password")) {
 		p.Data["password_error"] = "Incorrect password"
 		return
 	}
 	p.Form.Add("sent", "true")
-	p.Send_email_verification(p.PostFormValue("email"), p.Member)
+	message := "Hello " + p.Member.Name + " (@" + p.Member.Username + "),\n\n" +
+		"To change the e-mail address associated with your Makerspace "+
+		"account (" + p.Member.Email + "), you must first verify that you " +
+		"are its owner.\n\n" +
+		"If the above name and username is correct, please verify your " +
+		"e-mail address (" + email + ") by visiting " +
+		p.Config.Url() + "/sso/verify-email?token="
+	p.Send_email_verification(email, message, p.Member)
 	return
 }

@@ -66,7 +66,7 @@ func admin_handler(p *page) {
 		}
 		p.Cancel_pending_subscription(pending)
 		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
-			p.Message_member("Your membership request was declined",
+			p.Talk.Message_user("Your membership request was declined",
 				"Your membership request was declined by @"+p.Member.Username+
 					".", m.Talk_user(), p.Member.Talk_user())
 		}
@@ -112,7 +112,7 @@ func manage_account_handler(p *page) {
 		}
 		//TODO p.Decline_membership
 		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
-			p.Message_member("Your membership request was declined",
+			p.Talk.Message_user("Your membership request was declined",
 				"Your membership request was declined by @"+p.Member.Username+
 					".", m.Talk_user(), p.Member.Talk_user())
 		}
@@ -127,7 +127,7 @@ func manage_account_handler(p *page) {
 		}
 		m.Cancel_membership()
 		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
-			p.Message_member("Your membership has been cancelled",
+			p.Talk.Message_user("Your membership has been cancelled",
 				"Your membership was cancelled by @"+p.Member.Username+
 					".", m.Talk_user(), p.Member.Talk_user())
 		}

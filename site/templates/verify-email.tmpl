@@ -6,19 +6,25 @@
 {{with .Data.token_error}}
       <p class="alert alert-danger">{{.}}.</p>
 {{end}}
-      <h4 class="mb-3">Send verification e-mail</h4>
+      <h4 class="mb-3">
+        {{if .FormValue "sent"}}Re-send{{else}}Send{{end}} verification e-mail
+        <a class="pt-1 small float-right" href="/member/account">
+          Account
+          <span class="glyphicons glyphicons-cogwheel align-text-top"></span>
+        </a>
+      </h4>
       <form method="post" action="/sso/verify-email">
         <div class="form-group{{if .Data.email_error}} has-danger{{end}}">
           <div class="input-group">
             <span class="input-group-addon glyphicons glyphicons-envelope"></span>
-            <input type="email" class="form-control" name="email" placeholder="E-mail" required{{with .FormValue "email"}} value="{{.}}"{{else}} autofocus{{end}}>
+            <input type="email" class="form-control" name="email" placeholder="E-mail" autocomplete="off" {{with .FormValue "email"}}value="{{.}}" {{end}}required {{if or .Data.email_error (not (.FormValue "email"))}} autofocus{{end}}>
           </div>
           <small class="form-control-feedback">{{.Data.email_error}}</small>
         </div>
         <div class="form-group{{if .Data.password_error}} has-danger{{end}}">
           <div class="input-group">
             <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
-            <input type="password" class="form-control" name="password" placeholder="Password" required{{if .FormValue "email"}} autofocus{{end}}>
+            <input type="password" class="form-control" name="password" placeholder="Password" autocomplete="current-password" required{{if and (.FormValue "email") (not .Data.email_error)}} autofocus{{end}}>
           </div>
           <small class="form-control-feedback">{{.Data.password_error}}</small>
         </div>

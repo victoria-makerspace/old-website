@@ -17,14 +17,20 @@ func join_handler(p *page) {
 		return
 	}
 	if _, ok := p.PostForm["verify-email"]; ok {
-		if err := member.Validate_email(p.PostFormValue("email")); err != nil {
+		email := p.PostFormValue("email")
+		if err := member.Validate_email(email); err != nil {
 			p.Data["email_error"] = err
 			return
-		} else if !p.Email_available(p.PostFormValue("email")) {
+		} else if !p.Email_available(email) {
 			p.Data["email_error"] = "E-mail address is already in use"
 			return
 		}
-		p.Send_email_verification(p.PostFormValue("email"), nil)
+		message := "Hello,\n\n" +
+			"To register for a Makerspace account, you must first verify " +
+			"the ownership of this e-mail address.\n\n" +
+			"Please verify your e-mail address (" + email + ") by visiting " +
+			p.Config.Url() + "/join?token="
+		p.Send_email_verification(email, message, nil)
 		p.Data["success"] = true
 		return
 	}

@@ -1,4 +1,3 @@
-{{$talk_url := .Talk_api.Path}}
 {{$ms := .Get_membership}}
   <div class="container">
     <div class="row justify-content-center">
@@ -105,13 +104,13 @@
             <span class="col-4 font-weight-bold">Avatar:</span>
             <div class="d-flex edit-img col justify-content-end justify-content-sm-start">
               <img src="{{$.Member.Avatar_url 48}}" class="rounded-circle">
-              <a href="{{$talk_url}}/u/{{urlquery .Username}}/preferences" class="glyphicons glyphicons-pencil"></a>
+              <a href="{{$.Talk.Path}}/u/{{urlquery .Username}}/preferences" class="glyphicons glyphicons-pencil"></a>
             </div>
           </div>
           <div class="row align-items-end">
             <span class="col-sm-4 font-weight-bold">Talk forum:</span>
             <span class="col-sm-8">
-              <a href="{{$talk_url}}/u/{{urlquery .Username}}/preferences">
+              <a href="{{$.Talk.Path}}/u/{{urlquery .Username}}/preferences">
                 Account preferences
                 <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
               </a>

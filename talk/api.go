@@ -9,25 +9,16 @@ import (
 	"strings"
 )
 
-type Talk_api struct {
+type Api struct {
 	Path       string
 	Url        string
-	admin      string
-	api_key    string
-	sso_secret string
-}
-
-func New_talk_api(config map[string]string) *Talk_api {
-	return &Talk_api{
-		Path:       config["path"],
-		Url:        config["url"],
-		admin:      config["admin"],
-		api_key:    config["api-key"],
-		sso_secret: config["sso-secret"]}
+	Admin      string
+	Api_key    string
+	Sso_secret string
 }
 
 // First argument of query is the api_username
-func (api *Talk_api) get_json(path string, use_key bool) (interface{}, error) {
+func (api *Api) get_json(path string, use_key bool) (interface{}, error) {
 	rel_path, err := url.Parse(path)
 	if err != nil {
 		log.Panicf("get_json input error: path = '%s'\n", path)
@@ -35,9 +26,9 @@ func (api *Talk_api) get_json(path string, use_key bool) (interface{}, error) {
 	URL := api.Url + rel_path.EscapedPath()
 	query := rel_path.Query()
 	if use_key {
-		query.Set("api_key", api.api_key)
+		query.Set("api_key", api.Api_key)
 		if query.Get("api_username") == "" {
-			query.Set("api_username", api.admin)
+			query.Set("api_username", api.Admin)
 		}
 	}
 	encoded := query.Encode()
@@ -63,12 +54,12 @@ func (api *Talk_api) get_json(path string, use_key bool) (interface{}, error) {
 }
 
 //TODO: get rid of redundancy
-func (api *Talk_api) do_form(method, path string, form url.Values) (interface{}, error) {
+func (api *Api) do_form(method, path string, form url.Values) (interface{}, error) {
 	if form == nil {
 		form = url.Values{}
 	}
-	form.Set("api_key", api.api_key)
-	form.Set("api_username", api.admin)
+	form.Set("api_key", api.Api_key)
+	form.Set("api_username", api.Admin)
 	req, err := http.NewRequest(method, api.Url+path,
 		strings.NewReader(form.Encode()))
 	if err != nil {
@@ -98,9 +89,9 @@ func (api *Talk_api) do_form(method, path string, form url.Values) (interface{},
 	return data, nil
 }
 
-func (api *Talk_api) put_json(path string, form url.Values) interface{} {
-	form.Set("api_key", api.api_key)
-	form.Set("api_username", api.admin)
+func (api *Api) put_json(path string, form url.Values) interface{} {
+	form.Set("api_key", api.Api_key)
+	form.Set("api_username", api.Admin)
 	req, err := http.NewRequest("PUT", api.Url+path,
 		strings.NewReader(form.Encode()))
 	if err != nil {
@@ -123,7 +114,7 @@ func (api *Talk_api) put_json(path string, form url.Values) interface{} {
 	return data
 }
 
-func (api *Talk_api) Message_member(title, message string, users ...*Talk_user) {
+func (api *Api) Message_user(title, message string, users ...*User) {
 	values := url.Values{}
 	values.Set("title", title)
 	values.Set("raw", message)
@@ -139,7 +130,7 @@ func (api *Talk_api) Message_member(title, message string, users ...*Talk_user) 
 }
 
 // Discourse groups as groups[name] == id
-func (api *Talk_api) All_groups() map[string]int {
+func (api *Api) All_groups() map[string]int {
 	if data, err := api.get_json("/admin/groups.json", true); err == nil {
 		if j, ok := data.([]interface{}); ok {
 			groups := make(map[string]int)
@@ -154,7 +145,7 @@ func (api *Talk_api) All_groups() map[string]int {
 	return nil
 }
 
-func (api *Talk_api) Add_to_group(group string, users ...*Talk_user) error {
+func (api *Api) Add_to_group(group string, users ...*User) error {
 	gid, ok := api.All_groups()[group]
 	if !ok {
 		return fmt.Errorf("'%s' is not a valid group", group)

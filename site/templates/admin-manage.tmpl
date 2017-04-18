@@ -169,12 +169,13 @@
           <div class="mb-2 row">
             <span class="col-sm-4 font-weight-bold">Talk forum:</span>
             <div class="col-sm-8">
-              <a href="{{.Talk_api.Path}}/u/{{urlquery .Username}}/preferences">
-                Account preferences
-                <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
-              </a><br>
-              <a href="{{.Talk_api.Path}}/admin/users/{{.Id}}/{{urlquery .Username}}">
+              <a href="{{$.Talk.Path}}/admin/users/{{.Id}}/{{urlquery .Username}}">
                 Account management
+                <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
+              </a>
+              <br>
+              <a href="{{$.Talk.Path}}/u/{{urlquery .Username}}/preferences">
+                Account preferences
                 <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
               </a>
             </div>
