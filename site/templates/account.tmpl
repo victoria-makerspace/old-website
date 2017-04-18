@@ -4,13 +4,13 @@
       <div class="col-md-10 col-lg-8 col-xl-7">
 {{if $ms}}
         <div class="row">
-          <h3 id="Membership" class="col col-sm-4">Membership</h3>
+          <h3 id="Membership" class="pb-1 col col-sm-4">Membership</h3>
           <div class="col mt-1">
             <a href="/member/billing#cancel-membership" class="btn btn-sm btn-danger float-right float-sm-none">Cancel</a>
           </div>
         </div>
 {{else}}
-        <h3>Membership</h3>
+        <h3 class="pb-1">Membership</h3>
 {{end}}
         <div class="mx-2">
           <div class="mb-2 row">
@@ -40,7 +40,13 @@
           </div>
 {{end}}
         </div>
-        <h3 class="mt-3">Account information</h3>
+        <h3 class="mt-4 pb-1">
+          Account information
+          <a class="btn btn-sm btn-secondary float-right" href="/member/{{.Member.Id}}">
+            <span class="glyphicons glyphicons-user"></span>
+            Profile
+          </a>
+        </h3>
         <div class="mx-2">
           <div class="mb-2 row">
             <span class="col-sm-4 font-weight-bold">Registered:</span>
@@ -118,7 +124,7 @@
           </div>
 {{end}}
         </div>
-        <h3 class="mt-3">Update password</h3>
+        <h3 class="mt-4 pb-1">Update password</h3>
         <form action="/member/account" method="post" class="mx-2">
           <div class="form-group row{{if .Data.old_password_error}} has-danger{{end}}">
             <label for="old-password" class="col-sm-4 col-form-label">Current password:</label>

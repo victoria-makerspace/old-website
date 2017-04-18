@@ -256,7 +256,7 @@ func (m *Member) Send_password_reset() {
 		"/sso/reset?username=" +
 		url.QueryEscape(m.Username) + "&email=" + url.QueryEscape(m.Email) +
 		".\n\n"
-	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
+	m.send_email("admin@makerspace.ca", msg.emails(), m.format_message(msg))
 }
 
 func (ms *Members) Send_email_verification(email, body string, m *Member) {
@@ -287,7 +287,7 @@ func (ms *Members) Send_email_verification(email, body string, m *Member) {
 	} else {
 		msg.add_to("", email)
 	}
-	ms.send_email("admin@makerspace.ca", msg.emails(), msg.format())
+	ms.send_email("admin@makerspace.ca", msg.emails(), ms.format_message(msg))
 }
 
 func (m *Member) Get_pending_subscriptions() []*Pending_subscription {

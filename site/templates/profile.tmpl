@@ -1,7 +1,7 @@
 {{with .Data.member}}
   {{with .Talk_user}}
     {{with .Profile_bg_url}}
-  <img class="profile-background" src="{{.}}">
+  <div class="profile-background" style="background-image: url({{.}});"></div>
     {{end}}
   {{end}}
   <div class="container">

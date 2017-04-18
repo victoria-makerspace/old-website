@@ -21,6 +21,7 @@ type Config struct {
 		Port     int
 		Username string
 		Password string
+		Subject_prefix string
 	}
 	Billing struct {
 		Private_key string

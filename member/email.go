@@ -41,7 +41,7 @@ func (msg *message) emails() []string {
 	}
 	return emails
 }
-func (msg *message) format() []byte {
+func (ms *Members) format_message(msg message) []byte {
 	enc := func(s string) string {
 		return mime.BEncoding.Encode("utf-8", s)
 	}
@@ -63,7 +63,8 @@ func (msg *message) format() []byte {
 		}
 		body += "\r\n"
 	}
-	body += "Subject: " + enc(msg.subject) + "\r\n"
+	body += "Subject: " + enc(ms.Config.Smtp.Subject_prefix + msg.subject) +
+		"\r\n"
 	body += "Content-Type: text/plain; charset=\"utf-8\"\r\n"
 	body += "Content-Transfer-Encoding: base64\r\n"
 	body += "\r\n" + base64.StdEncoding.EncodeToString([]byte(msg.body))

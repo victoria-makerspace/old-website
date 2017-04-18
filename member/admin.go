@@ -112,6 +112,6 @@ func (a *Member) Send_password_resets(members ...*Member) {
 			", you can request a new reset token at " +
 			URL + "/sso/reset?username=" + url.QueryEscape(m.Username) +
 			"&email=" + url.QueryEscape(m.Email) + ".\n\n"
-		m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
+		m.send_email("admin@makerspace.ca", msg.emails(), a.format_message(msg))
 	}
 }

@@ -173,9 +173,12 @@ img.member-icon-large,
 }
 .profile-background {
     width: 100%;
+    height: calc(3rem + 240px);
     position: absolute;
-    opacity: 0.25;
+    opacity: 0.20;
     box-shadow: 0 2px 4px -1px rgba(0,0,0,0.5);
+    background-size: 100%;
+    background-position: center;
 }
 #ms-menu {
     position: absolute;

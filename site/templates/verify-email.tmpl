@@ -6,13 +6,13 @@
 {{with .Data.token_error}}
       <p class="alert alert-danger">{{.}}.</p>
 {{end}}
-      <h4 class="mb-3">
+      <h3 class="mb-3">
         {{if .FormValue "sent"}}Re-send{{else}}Send{{end}} verification e-mail
-        <a class="pt-1 small float-right" href="/member/account">
+        <a class="btn btn-sm btn-secondary float-right" href="/member/account">
+          <span class="glyphicons glyphicons-cogwheel"></span>
           Account
-          <span class="glyphicons glyphicons-cogwheel align-text-top"></span>
         </a>
-      </h4>
+      </h3>
       <form method="post" action="/sso/verify-email">
         <div class="form-group{{if .Data.email_error}} has-danger{{end}}">
           <div class="input-group">
