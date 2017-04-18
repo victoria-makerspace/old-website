@@ -53,52 +53,51 @@
           </table>
         </form>
         <h4>
-{{if .PostFormValue "member-upload"}}
+{{if and (.PostFormValue "member-upload") .Data.lines}}
           <a href="#upload-members" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
 {{else}}
           <a href="#upload-members" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
 {{end}}
           Upload members
         </h4>
-        <form action="/admin" method="post" id="upload-members" class="{{if not (.PostFormValue "member-upload")}}collapse {{end}}mx-sm-3">
+        <form action="/admin" method="post" id="upload-members" class="collapse {{if and (.PostFormValue "member-upload") .Data.lines}}show {{end}}mx-sm-3">
           <strong>CSV Format:</strong>
           <p class="ml-3 small">
             Username, Name, E-mail <span class="text-muted">{, Registration date = [YYYY-MM-DD], Card # = [XX:XXXXX], [free]}</span>
           </p>
           <p class="alert alert-info mt-1">
-            The fields in braces are optional. Each new user must be input on a separate line.<br>
+            The first 3 required fields must be in the order shown.  The fields in braces are optional and unordered. Each new user must be input on a separate line.<br>
             <strong>Example:</strong><br>
               <small class="ml-3">
                 jsmith01, John Smith, j.smith@gmail.com, 00:00000, free
               </small>
               <br>
-            The above example creates a new user, jsmith01, who is immediately approved as a free account.  Each new user is sent an automatic password-reset e-mail.
+            The above example creates a new user, @jsmith01, who is immediately approved as a free account (due to the "free" flag).  Each new user is sent an automatic password-reset e-mail.
           </p>
           <textarea name="member-upload" class="form-group form-control" rows="5">
 {{- range .Data.lines}}
-{{if .}}{{.}}{{end -}}
+{{. -}}
 {{end -}}
           </textarea>
           <button type="submit" class="btn btn-primary mb-2">Submit</button>
-{{range $i, $e := .Data.line_error}}
-  {{with $e}}
-          <p class="alert alert-danger">
-            <strong>Line {{add 1 $i}}:</strong>
-    {{range .}}
-            <br><span class="ml-2">{{.}}.</span>
-    {{end}}
-          </p>
-  {{end}}
-{{end}}
-{{range $i, $m := .Data.line_success}}
-  {{with $m}}
-          <p class="alert alert-success">
-            <strong>Line {{add 1 $i}}:</strong>
-            <a href="/member/{{.Id}}">@{{.Username}}</a> created.
-          </p>
-  {{end}}
-{{end}}
         </form>
+{{with .Data.line_error}}
+        <p class="alert alert-danger">
+  {{range $i, $e := .}}
+          <strong>Line {{add 1 $i}}:</strong> {{$e}}.<br>
+  {{end}}
+        </p>
+{{end}}
+{{with .Data.line_success}}
+        <p class="alert alert-success">
+  {{range $i, $m := .}}
+          <strong>Line {{add 1 $i}}:</strong>
+          <a href="/member/{{$m.Id}}">@{{$m.Username}}</a> created:
+          {{printf "<%s>, <%s>" $m.Name $m.Email}}
+          <br>
+  {{end}}
+        </p>
+{{end}}
       </div>
     </div>
   </div>

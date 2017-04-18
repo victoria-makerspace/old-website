@@ -127,7 +127,7 @@ func sso_reset_handler(p *page) {
 		delete(p.Data, "email")
 		return
 	}
-	m.Send_password_reset()
+	m.Send_password_reset(p.Config.Url())
 	p.Data["reset_send_success"] = true
 }
 

@@ -66,7 +66,8 @@ func (ms *Members) New_member(username, name, email string) (*Member, error) {
 		log.Panic(err)
 	}
 	if err := m.sync_talk_user(); err != nil {
-		return m, err
+		m.Delete_member()
+		return nil, err
 	}
 	return m, nil
 }
@@ -82,11 +83,11 @@ func (m *Member) sync_talk_user() error {
 }
 
 //TODO: cascade through all tables
-/*func (m *Member) Delete_member() {
+func (m *Member) Delete_member() {
 	if _, err := m.Exec("DELETE FROM member WHERE id = $1", m.Id); err != nil {
 		log.Panic(err)
 	}
-}*/
+}
 
 func (m *Member) Set_password(password string) {
 	m.password_salt = Rand256()
@@ -235,7 +236,7 @@ func (m *Member) create_reset_token() string {
 	return token
 }
 
-func (m *Member) Send_password_reset() {
+func (m *Member) Send_password_reset(domain string) {
 	token := m.create_reset_token()
 	if token == "" {
 		return
@@ -243,17 +244,15 @@ func (m *Member) Send_password_reset() {
 	msg := message{subject: "Makerspace.ca: password reset"}
 	msg.set_from("Makerspace", "admin@makerspace.ca")
 	msg.add_to(m.Name, m.Email)
-	//TODO use config.json value for domain
+	//See TODO in /member/admin.go: Force_password_reset()
 	msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
 		"A password reset has been requested for your account.  " +
 		"If you did not initiate this request, please ignore this e-mail.\n\n" +
 		"Reset your makerspace password by visiting " +
-		//m.Config["url"].(string) +
-		"/sso/reset?token=" + token + ".\n\n" +
+		domain + "/sso/reset?token=" + token + ".\n\n" +
 		"Your password-reset token will expire in " +
 		m.Config.Password_reset_window + ", you can request a new" +
-		"token at " +//+ m.Config["url"].(string)
-		"/sso/reset?username=" +
+		"token at " + domain + "/sso/reset?username=" +
 		url.QueryEscape(m.Username) + "&email=" + url.QueryEscape(m.Email) +
 		".\n\n"
 	m.send_email("admin@makerspace.ca", msg.emails(), m.format_message(msg))
@@ -279,7 +278,7 @@ func (ms *Members) Send_email_verification(email, body string, m *Member) {
 		log.Panic("Failed to set email verification token: ", err)
 	}
 	msg := message{
-		subject: "[Victoria Makerspace] E-mail verification",
+		subject: "E-mail verification",
 		body: body + token}
 	msg.set_from("Makerspace", "admin@makerspace.ca")
 	if m != nil {

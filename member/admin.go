@@ -91,27 +91,35 @@ func (a *Member) Approve_free_membership(m *Member) error {
 	return a.Approve_subscription(p)
 }
 
-func (a *Member) Send_password_resets(members ...*Member) {
-	for _, m := range members {
-		token := m.create_reset_token()
-		if token == "" {
-			continue
-		}
-		msg := message{subject: "Makerspace.ca: password reset"}
-		msg.set_from("Makerspace", "admin@makerspace.ca")
-		msg.add_to(m.Name, m.Email)
-		URL := ""//TODO: m.Config["url"].(string)
-		msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
-			"A password reset has been requested for your " + URL +
-			" account on behalf of an administrator (@" + a.Username +
-			").\n\n" +
-			"Reset your password by visiting " +
-			URL + "/sso/reset?token=" + token + ".\n\n" +
-			"Your password-reset token will expire in " +
-			m.Password_reset_window +
-			", you can request a new reset token at " +
-			URL + "/sso/reset?username=" + url.QueryEscape(m.Username) +
-			"&email=" + url.QueryEscape(m.Email) + ".\n\n"
-		m.send_email("admin@makerspace.ca", msg.emails(), a.format_message(msg))
+func (m *Member) Clear_password() {
+	if _, err := m.Exec(
+		"UPDATE member "+
+		"SET password_key = NULL,"+
+		"	password_salt = NULL "+
+		"WHERE id = $1", m.Id); err != nil {
+		log.Panic(err)
 	}
+}
+
+//TODO: this is messy, passing config values from the site package.  Must be a
+//	cleaner way of doing this... probably by passing back a template (should
+//	then be built into send_email())
+func (a *Member) Force_password_reset(domain string, m *Member) {
+	m.Clear_password()
+	token := m.create_reset_token()
+	msg := message{subject: "Password reset"}
+	msg.set_from("Makerspace", "admin@makerspace.ca")
+	msg.add_to(m.Name, m.Email)
+	msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
+		"A password reset has been requested for your Makerspace " +
+		" account on behalf of an administrator (@" + a.Username +
+		").\n\n" +
+		"Reset your password by visiting " +
+		domain + "/sso/reset?token=" + token + " to gain access to your " +
+		"account.\n\nYour password-reset token will expire in " +
+		m.Password_reset_window +
+		", you can request a new reset token at " +
+		domain + "/sso/reset?username=" + url.QueryEscape(m.Username) +
+		"&email=" + url.QueryEscape(m.Email) + ".\n\n"
+	m.send_email("admin@makerspace.ca", msg.emails(), a.format_message(msg))
 }

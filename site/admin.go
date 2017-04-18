@@ -161,21 +161,19 @@ func member_upload_handler(p *page) {
 		p.http_error(400)
 		return
 	}
-	type new_member struct {
-		line                  int
-		username, name, email string
-		date                  time.Time
-		free                  bool
-		key_card              string
+	input := strings.Split(p.PostFormValue("member-upload"), "\n")
+	lines := make([]string, len(input))
+	copy(lines, input)
+	line_error := make(map[int]string)
+	line_success := make(map[int]*member.Member)
+	rm_line := func(i int) {
+		lines = append(lines[:i], lines[i+1:]...)
 	}
-	new_members := make([]new_member, 0)
-	lines := strings.Split(p.PostFormValue("member-upload"), "\n")
-	line_error := make([]string, len(lines))
-	line_success := make([]*member.Member, len(lines))
 line_loop:
 	for i, line := range lines {
 		line := strings.TrimSpace(line)
 		if len(line) == 0 {
+			rm_line(i)
 			continue
 		}
 		fields := strings.Split(line, ",")
@@ -183,55 +181,56 @@ line_loop:
 			line_error[i] = "Invalid: not enough fields"
 			continue
 		}
-		nm := new_member{
-			line:     i,
-			username: strings.TrimSpace(fields[0]),
-			name:     strings.TrimSpace(fields[1]),
-			email:    strings.TrimSpace(fields[2])}
+		username := strings.TrimSpace(fields[0])
+		name := strings.TrimSpace(fields[1])
+		email := strings.TrimSpace(fields[2])
+		var (
+			free bool
+			key_card string
+			registered time.Time
+		)
 		for j, field := range fields[3:] {
 			field := strings.TrimSpace(field)
 			if field == "" {
 				continue
 			} else if field == "free" {
-				nm.free = true
+				free = true
 			} else if member.Key_card_rexp.MatchString(field) {
-				nm.key_card = field
+				key_card = field
 			} else if t, err := time.ParseInLocation("2006-01-02", field,
 				time.Local); err == nil {
-				nm.date = t
+				registered = t
 			} else {
-				line_error[i] = "Field " + fmt.Sprint(j+4) + " invalid: '" +
-					field + "'"
+				line_error[i] = "Field " + fmt.Sprint(j+4) +
+					" is an invalid format: '" + field + "'"
 				continue line_loop
 			}
 		}
-		new_members = append(new_members, nm)
-	}
-	success := make([]*member.Member, 0)
-	for _, nm := range new_members {
-		m, err := p.New_member(nm.username, nm.email, nm.name)
+		m, err := p.New_member(username, name, email)
 		if err != nil {
-			line_error[nm.line] = err.Error()
+			line_error[i] = err.Error()
 			continue
 		}
-		if !nm.date.IsZero() {
-			m.Set_registration_date(nm.date)
+		line_success[i] = m
+		rm_line(i)
+		if !registered.IsZero() {
+			m.Set_registration_date(registered)
 		}
-		success = append(success, m)
-		if nm.free {
-			p.Member.Approve_free_membership(m)
-		}
-		if nm.key_card != "" {
-			if err := m.Set_key_card(nm.key_card); err != nil {
-				line_error[nm.line] = err.Error()
+		if key_card != "" {
+			if err := m.Set_key_card(key_card); err != nil {
+				line_error[i] = err.Error()
 				continue
 			}
 		}
-		line_success[nm.line] = m
-		lines[nm.line] = ""
+		if free {
+			if err := p.Member.Approve_free_membership(m); err != nil {
+				line_error[i] = err.Error()
+				continue
+			}
+		}
+		p.Member.Force_password_reset(p.Config.Url(), m)
 	}
 	p.Data["lines"] = lines
 	p.Data["line_error"] = line_error
 	p.Data["line_success"] = line_success
-	p.Member.Send_password_resets(success...)
 }

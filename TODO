@@ -31,6 +31,7 @@ Site:
         - Failed payment list in admin panel and member billing page
     - Member search
     - Storage waitlist
+    - Delete user: cascade through schema, and de-associate & deactivate/delete talk account
 
 Tool-use hooks:
     - Laser cutter
