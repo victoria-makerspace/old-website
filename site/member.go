@@ -17,77 +17,21 @@ func init() {
 //	Could probably factor some stuff out here...
 func member_json_handler(p *page) {
 	p.srv_json = true
-	var (
-		ids map[int]*member.Member
-		usernames map[string]*member.Member
-		emails map[string]*member.Member
-		names map[string][]*member.Member
-	)
-	if is, ok := p.Form["id"]; ok {
-		ids = make(map[int]*member.Member)
-		for _, id := range is {
-			i, err := strconv.Atoi(id)
-			if err != nil {
-				p.http_error(400)
-				p.Data["error"] = "Invalid ID format: " + id
-				return
-			}
-			ids[i] = p.Get_member_by_id(i)
-		}
-	}
-	if us, ok := p.Form["username"]; ok {
-		usernames = make(map[string]*member.Member)
-		for _, username := range us {
-			if err := p.Validate_username(username); err != nil {
-				p.http_error(400)
-				p.Data["error"] = err.Error()
-				return
-			}
-			usernames[username] = p.Get_member_by_username(username)
-		}
-	}
-	if es, ok := p.Form["email"]; ok {
-		emails = make(map[string]*member.Member)
-		for _, email := range es {
-			if err := member.Validate_email(email); err != nil {
-				p.http_error(400)
-				p.Data["error"] = err.Error()
-				return
-			}
-			emails[email] = p.Get_member_by_email(email)
-		}
-	}
-	if ns, ok := p.Form["name"]; ok {
-		if p.Session == nil {
-			p.http_error(403)
-			p.Data["error"] = "Must be signed in to query by member names"
-			return
-		}
-		names = make(map[string][]*member.Member)
-		for _, name := range ns {
-			if err := member.Validate_name(name); err != nil {
-				p.http_error(400)
-				p.Data["error"] = err.Error()
-				return
-			}
-			ms := p.Get_members_by_name(name)
-			names[name] = make([]*member.Member, 0, len(ms))
-			for _, m := range ms {
-				names[name] = append(names[name], m)
-			}
-		}
-	}
-	populate_json := func(m *member.Member) map[string]interface{} {
+	ms := make(map[string]interface{})
+	populate_json := func(m *member.Member) {
 		data := make(map[string]interface{})
 		data["id"] = m.Id
-		data["username"] = m.Username
 		data["registered"] = m.Registered
 		data["admin"] = false
 		if m.Admin != nil {
 			data["admin"] = true
 		}
 		if t := m.Talk_user(); t != nil {
-			data["talk-id"] = t.Id
+			user := make(map[string]interface{})
+			user["id"] = t.Id
+			user["username"] = t.Username
+			user["title"] = t.Title
+			data["talk-user"] = user
 		}
 		if a := m.Avatar_url(240); a != "" {
 			data["avatar-url"] = a
@@ -102,55 +46,63 @@ func member_json_handler(p *page) {
 				data["customer-id"] = m.Customer_id
 			}
 		}
-		return data
+		ms[m.Username] = data
 	}
-	if ids != nil {
-		id_list := make(map[int]interface{})
-		for i, m := range ids {
-			if m == nil {
-				id_list[i] = "ID does not exist"
-				continue
+	if ids, ok := p.Form["id"]; ok {
+		for _, id := range ids {
+			i, err := strconv.Atoi(id)
+			if err != nil {
+				p.http_error(400)
+				p.Data["error"] = "Invalid ID format: " + id
+				return
 			}
-			id_list[i] = populate_json(m)
-		}
-		p.Data["ids"] = id_list
-	}
-	if usernames != nil {
-		name_list := make(map[string]map[string]interface{})
-		for u, m := range usernames {
-			if m == nil {
-				name_list[u] = map[string]interface{}{"available": true}
-				continue
-			}
-			name_list[u] = populate_json(m)
-		}
-		p.Data["usernames"] = name_list
-	}
-	if emails != nil {
-		email_list := make(map[string]map[string]interface{})
-		for e, m := range emails {
-			if m == nil {
-				email_list[e] = map[string]interface{}{"available": true}
-				if t, err := p.Talk.Get_user_by_email(e); err == nil {
-					email_list[e]["talk-id"] = t.Id
-					email_list[e]["talk-username"] = t.Username
-				}
-				continue
-			}
-			email_list[e] = populate_json(m)
-		}
-		p.Data["emails"] = email_list
-	}
-	if names != nil {
-		name_list := make(map[string][]map[string]interface{})
-		for n, ms := range names {
-			name_list[n] = make([]map[string]interface{}, len(ms))
-			for i, m := range ms {
-				name_list[n][i] = populate_json(m)
+			if m := p.Get_member_by_id(i); m != nil {
+				populate_json(m)
 			}
 		}
-		p.Data["names"] = name_list
 	}
+	if usernames, ok := p.Form["username"]; ok {
+		for _, username := range usernames {
+			if err := p.Validate_username(username); err != nil {
+				p.http_error(400)
+				p.Data["error"] = err.Error()
+				return
+			}
+			if m := p.Get_member_by_username(username); m != nil {
+				populate_json(m)
+			}
+		}
+	}
+	if emails, ok := p.Form["email"]; ok {
+		for _, email := range emails {
+			if err := member.Validate_email(email); err != nil {
+				p.http_error(400)
+				p.Data["error"] = err.Error()
+				return
+			}
+			if m := p.Get_member_by_email(email); m != nil {
+				populate_json(m)
+			}
+		}
+	}
+	if names, ok := p.Form["name"]; ok {
+		if p.Session == nil {
+			p.http_error(403)
+			p.Data["error"] = "Must be signed in to query by member names"
+			return
+		}
+		for _, name := range names {
+			if err := member.Validate_name(name); err != nil {
+				p.http_error(400)
+				p.Data["error"] = err.Error()
+				return
+			}
+			for _, m := range p.Get_members_by_name(name) {
+				populate_json(m)
+			}
+		}
+	}
+	p.Data = ms
 }
 
 func dashboard_handler(p *page) {
