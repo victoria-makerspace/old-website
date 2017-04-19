@@ -4,7 +4,7 @@ Site:
     - Class booking and calendar
     - Student validation
     - Join page form validation
-    - Profile page layout bugs
+    - Profile page layout bugs (i.e. worst in mobile)
     - Talk forum integration:
         - Projects pages for members
         - Verify Talk group membership upon login
@@ -13,6 +13,8 @@ Site:
         - Only attempt changing custom groups, not automatic
         - On username change, ensure no other Talk users have the same username
             - Call /talk/u/check_username.json
+    - Rewrite schema and packages to make clear distinction between "member" and
+        "user" (this will be a pretty tedious re-factor...)
     - Admin panel:
         - Modify admin permissions
         - Make automatically sent-out e-mails more explicit and with options
@@ -24,13 +26,16 @@ Site:
         - Session & activity log (IP address?)
         - Mass password-reset
         - Set membership fees
-            - Changing a plan fee requires deleting the plan first, meaning deleting all associated subscriptions.  Must be able to re-subscribe everyone to the new plan.
             - Add trial periods so everyone starts on the first of the month
-        - Send notice on failed payments
+        - Send admins notice on failed payments/cancelled subscription
         - Failed payment list in admin panel and member billing page
     - Member search
     - Storage waitlist
-    - Delete user: cascade through schema, and de-associate & deactivate/delete talk account
+    - Delete user: cascade through schema, and de-associate & deactivate/delete
+        talk account
+    - Do proper error handling, using error types so the site handlers know what
+        http error to return
+    - One subscription per interval per customer, add SubItems
 
 Tool-use hooks:
     - Laser cutter
