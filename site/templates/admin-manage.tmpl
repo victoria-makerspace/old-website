@@ -105,25 +105,12 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <span class="input-group-addon">@</span>
-                <input type="text" class="form-control" name="username" minlength="3" maxlength="20" value="{{.Username}}" disabled>
-                <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary" disabled>Update</button>
-                </span>
-              </div>
-              <small class="form-control-feedback{{with $.Data.username_error}} show">{{.}}{{else}}">{{end}}</small>
-            </div>
-          </form>
-          <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.email_error}} has-danger{{end}}">
-            <label for="email" class="col-sm-4 col-form-label">E-mail:</label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <span class="input-group-addon glyphicons glyphicons-envelope"></span>
-                <input type="email" class="form-control" name="email" value="{{.Email}}">
+                <input type="text" class="form-control" name="username" minlength="3" maxlength="20" value="{{.Username}}">
                 <span class="input-group-btn">
                   <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with $.Data.email_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{$.Data.username_error}}</small>
             </div>
           </form>
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.name_error}} has-danger{{end}}">
@@ -136,7 +123,31 @@
                   <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with $.Data.name_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{$.Data.name_error}}</small>
+            </div>
+          </form>
+          <form action="/admin/account/{{.Id}}" method="post" class="form-group row">
+            <label class="col-sm-4 col-form-label">Force password reset:</label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
+                <span class="input-group-btn">
+                  <button type="submit" name="force-password-reset" class="btn btn-warning">Reset</button>
+                </span>
+              </div>
+            </div>
+          </form>
+          <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.email_error}} has-danger{{end}}">
+            <label for="email" class="col-sm-4 col-form-label">E-mail:</label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-envelope"></span>
+                <input type="email" class="form-control" name="email" value="{{.Email}}">
+                <span class="input-group-btn">
+                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                </span>
+              </div>
+              <small class="form-control-feedback">{{$.Data.email_error}}</small>
             </div>
           </form>
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.key_card_error}} has-danger{{end}}">

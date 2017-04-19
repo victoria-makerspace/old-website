@@ -141,10 +141,16 @@ func manage_account_handler(p *page) {
 		} else {
 			m.Set_registration_date(registered)
 		}
+	} else if username := p.PostFormValue("username"); username != "" {
+		if err := m.Update_username(username); err != nil {
+			p.Data["username_error"] = err
+		}
 	} else if name := p.PostFormValue("name"); name != "" {
 		if err := m.Update_name(name); err != nil {
 			p.Data["name_error"] = err
 		}
+	} else if _, ok := p.PostForm["force-password-reset"]; ok {
+		p.Force_password_reset(p.Config.Url(), m)
 	} else if p.PostFormValue("key-card") != "" {
 		if err := m.Set_key_card(p.PostFormValue("key-card")); err != nil {
 			p.Data["key_card_error"] = err

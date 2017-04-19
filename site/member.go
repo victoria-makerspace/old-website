@@ -118,8 +118,8 @@ func account_handler(p *page) {
 		return
 	}
 	if _, ok := p.PostForm["update-password"]; ok {
-		if !p.Member.Authenticate(p.PostFormValue("old-password")) {
-			p.Data["old_password_error"] = "Incorrect password"
+		if !p.Member.Authenticate(p.PostFormValue("current-password")) {
+			p.Data["current_password_error"] = "Incorrect password"
 			return
 		}
 		if p.PostFormValue("new-password") == "" {
@@ -129,6 +129,10 @@ func account_handler(p *page) {
 		p.Set_password(p.PostFormValue("new-password"))
 		p.Data["update_password_success"] = "Successfully updated password"
 		return
+	} else if username:= p.PostFormValue("username"); username != "" {
+		if err := p.Update_username(username); err != nil {
+			p.Data["username_error"] = err
+		}
 	} else if name := p.PostFormValue("name"); name != "" {
 		if err := p.Update_name(name); err != nil {
 			p.Data["name_error"] = err

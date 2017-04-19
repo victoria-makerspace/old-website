@@ -59,24 +59,12 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <span class="input-group-addon">@</span>
-                <input type="text" class="form-control" name="username" minlength="3" maxlength="20" value="{{.Member.Username}}" disabled>
+                <input type="text" class="form-control" name="username" minlength="3" maxlength="20" value="{{.Member.Username}}">
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary" disabled>Update</button>
+                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
               <small class="form-control-feedback">{{.Data.username_error}}</small>
-            </div>
-          </form>
-          <form action="/sso/verify-email" method="post" class="form-group row">
-            <label for="email" class="col-sm-4 col-form-label">E-mail:</label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <span class="input-group-addon glyphicons glyphicons-envelope"></span>
-                <input type="email" class="form-control" name="email" value="{{.Member.Email}}">
-                <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary">Verify</button>
-                </span>
-              </div>
             </div>
           </form>
           <form action="/member/account" method="post" class="form-group row{{if $.Data.name_error}} has-danger{{end}}">
@@ -90,6 +78,18 @@
                 </span>
               </div>
               <small class="form-control-feedback">{{.Data.name_error}}</small>
+            </div>
+          </form>
+          <form action="/sso/verify-email" method="post" class="form-group row">
+            <label for="email" class="col-sm-4 col-form-label">E-mail:</label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-envelope"></span>
+                <input type="email" class="form-control" name="email" value="{{.Member.Email}}">
+                <span class="input-group-btn">
+                  <button type="submit" class="btn btn-sm btn-primary">Verify</button>
+                </span>
+              </div>
             </div>
           </form>
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.telephone_error}} has-danger{{end}}">
@@ -127,13 +127,13 @@
         <h3 class="mt-4 pb-1">Update password</h3>
         <form action="/member/account" method="post" class="mx-2">
           <div class="form-group row{{if .Data.old_password_error}} has-danger{{end}}">
-            <label for="old-password" class="col-sm-4 col-form-label">Current password:</label>
+            <label for="current-password" class="col-sm-4 col-form-label">Current password:</label>
             <div class="col-sm-8">
               <div class="input-group">
                 <span class="input-group-addon glyphicons glyphicons-fingerprint-remove"></span>
-                <input type="password" class="form-control" name="old-password" required>
+                <input type="password" class="form-control" name="current-password" autocomplete="current-password" required>
               </div>
-              <small class="form-control-feedback{{with .Data.old_password_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{.Data.current_password_error}}</small>
             </div>
           </div>
           <div class="form-group row{{if .Data.new_password_error}} has-danger{{end}}">
@@ -143,7 +143,7 @@
                 <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
                 <input type="password" class="form-control" name="new-password" required>
               </div>
-              <small class="form-control-feedback{{with .Data.new_password_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{.Data.new_password_error}}</small>
             </div>
           </div>
           <div class="d-flex align-items-start">

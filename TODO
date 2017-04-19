@@ -11,7 +11,6 @@ Site:
         - Fix read/unread flag on private messages
             - use both private-messages and private-messages-unread endpoints
         - Only attempt changing custom groups, not automatic
-        - On e-mail change, ensure no Talk users use the same e-mail
         - On username change, ensure no other Talk users have the same username
             - Call /talk/u/check_username.json
     - Admin panel:
@@ -23,7 +22,7 @@ Site:
         - Deactivate accounts (also in Talk)
         - Force e-mail through Talk API on system/admin notices
         - Session & activity log (IP address?)
-        - Reset user password, and mass-reset
+        - Mass password-reset
         - Set membership fees
             - Changing a plan fee requires deleting the plan first, meaning deleting all associated subscriptions.  Must be able to re-subscribe everyone to the new plan.
             - Add trial periods so everyone starts on the first of the month

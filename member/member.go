@@ -108,6 +108,9 @@ func (m *Member) Set_password(password string) {
 }
 
 func (m *Member) Update_username(username string) error {
+	if username == m.Username {
+		return nil
+	}
 	if err := m.Validate_username(username); err != nil {
 		return err
 	}
@@ -124,6 +127,9 @@ func (m *Member) Update_username(username string) error {
 }
 
 func (m *Member) Update_name(name string) error {
+	if name == m.Name {
+		return nil
+	}
 	if err := Validate_name(name); err != nil {
 		return err
 	}
@@ -137,11 +143,20 @@ func (m *Member) Update_name(name string) error {
 }
 
 func (m *Member) Update_email(email string) error {
+	if email == m.Email {
+		return nil
+	}
 	if err := Validate_email(email); err != nil {
 		return err
 	}
 	if !m.Email_available(email) {
 		return fmt.Errorf("E-mail address is already in use")
+	}
+	if t, _ := m.Talk.Get_user_by_email(email); t != nil {
+		log.Printf("Talk user re-association attempt failed: @%s <%s> -> <%s>",
+			m.Username, m.Email, email)
+		return fmt.Errorf("E-mail address is already in use by a Talk user, "+
+			"cannot re-associate account")
 	}
 	m.Email = email
 	m.Delete_verification_tokens(email)
