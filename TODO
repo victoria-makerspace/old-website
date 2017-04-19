@@ -25,8 +25,8 @@ Site:
         - Force e-mail through Talk API on system/admin notices
         - Session & activity log (IP address?)
         - Mass password-reset
-        - Set membership fees
-            - Add trial periods so everyone starts on the first of the month
+        - Change plan fees
+        - Set customer credit
         - Send admins notice on failed payments/cancelled subscription
         - Failed payment list in admin panel and member billing page
     - Member search

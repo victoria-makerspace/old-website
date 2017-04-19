@@ -59,3 +59,14 @@ func (m *Member) Has_card() bool {
 	return false
 }
 
+func (m *Member) Active_subscriptions() map[string]*stripe.Sub {
+	subs := make(map[string]*stripe.Sub)
+	if m.Customer() != nil {
+		for _, s := range m.customer.Subs.Values {
+			if s.Ended == 0 {
+				subs[s.ID] = s
+			}
+		}
+	}
+	return subs
+}

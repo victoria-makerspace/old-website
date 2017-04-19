@@ -43,18 +43,6 @@ func (ms *Members) Cancel_pending_subscription(p *Pending_subscription) {
 	}
 }
 
-func (m *Member) Active_subscriptions() map[string]*stripe.Sub {
-	subs := make(map[string]*stripe.Sub)
-	if m.Customer() != nil {
-		for _, s := range m.customer.Subs.Values {
-			if s.Ended == 0 {
-				subs[s.ID] = s
-			}
-		}
-	}
-	return subs
-}
-
 func (m *Member) Cancel_subscription(id string) error {
 	if _, ok := m.Active_subscriptions()[id]; !ok {
 		return fmt.Errorf("Invalid subscription ID")
