@@ -2,6 +2,7 @@ package member
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/sub"
 	"log"
@@ -10,10 +11,37 @@ import (
 
 type Storage struct {
 	Number    int
-	Quantity  uint64
+	Quantity  int
 	Available bool
 	*stripe.Plan
 	*Member
+}
+
+func (ms *Members) get_storage_number(plan_id string, number int) (*Storage, error) {
+	p, ok := ms.Plans[plan_id]
+	if !ok || Plan_category(p.ID) != "storage" {
+		return nil, fmt.Errorf("Invalid storage plan '%s'", plan_id)
+	}
+	s := &Storage{Number: number, Plan: p}
+	var sub_id sql.NullString
+	if err := ms.QueryRow(
+		"SELECT quantity, available, subscription_id "+
+			"FROM storage "+
+			"WHERE plan_id = $1 AND number = $2",
+		plan_id, number).Scan(s.Quantity, s.Available, &sub_id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("Invalid storage number for '%s'", p.Name)
+		}
+		log.Panic(err)
+	}
+	if sub_id.Valid {
+		sb, err := sub.Get(sub_id.String, nil)
+		if err != nil {
+			log.Panic(err)
+		}
+		s.Member = ms.Get_member_by_customer_id(sb.Customer.ID)
+	}
+	return s, nil
 }
 
 func (ms *Members) List_storage_plans() []string {
@@ -56,6 +84,23 @@ func (ms *Members) List_storage(plan_id string) []*Storage {
 }
 
 func (m *Member) New_storage_lease(plan_id string, number int) error {
-
+	s, err := m.get_storage_number(plan_id, number)
+	if err != nil {
+		return err
+	}
+	if s.Member != nil {
+		return fmt.Errorf("%s number %d already has an active lease by member "+
+			"@%s", s.Plan.Name, number, s.Member.Username)
+	}
+	sb, err := m.New_subscription_item(plan_id, s.Quantity)
+	if err != nil {
+		return err
+	}
+	if _, err = m.Exec(
+		"UPDATE storage "+
+			"SET subscription_id = $3 "+
+			"WHERE plan_id = $1 AND number = $2", plan_id, number, sb.ID); err != nil {
+		log.Panic(err)
+	}
 	return nil
 }
