@@ -113,16 +113,16 @@ func (m *Member) New_storage_lease(plan_id string, number int) error {
 	return nil
 }
 
-func (m *Member) Cancel_storage_lease(plan_id, subitem_id string, number int) error {
+func (m *Member) Cancel_storage_lease(plan_id string, number int) error {
 	s, err := m.get_storage_number(plan_id, number)
 	if err != nil {
 		return err
 	}
-	if s.subitem_id != subitem_id {
-		return fmt.Errorf("Invalid subscription item ID for storage '%s', "+
-			"number %d", s.Plan.Name, number)
+	if s.Member == nil || s.Member.Id != m.Id {
+		return fmt.Errorf("%s number %d is not currently leased by @%s",
+			s.Plan.Name, number, m.Id)
 	}
-	if err = m.Cancel_subscription_item(s.sub_id, subitem_id); err != nil {
+	if err = m.Cancel_subscription_item(s.sub_id, s.subitem_id); err != nil {
 		return err
 	}
 	if _, err = m.Exec(

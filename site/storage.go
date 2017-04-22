@@ -28,5 +28,17 @@ func storage_handler(p *page) {
 		} else {
 			p.redirect = "/member/storage"
 		}
+	} else if plan := p.PostFormValue("cancel-storage-plan"); plan != "" {
+		number, err := strconv.Atoi(p.PostFormValue("cancel-storage-number"))
+		if err != nil {
+			p.http_error(400)
+			return
+		}
+		if err := p.Cancel_storage_lease(plan, number); err != nil {
+			p.http_error(500)
+			return
+		} else {
+			p.redirect = "/member/storage"
+		}
 	}
 }

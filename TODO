@@ -5,6 +5,8 @@ Site:
     - Student validation
     - Join page form validation
     - Profile page layout bugs (i.e. worst in mobile)
+    - Format error page to include option error message, and some kind of reload
+        link
     - Talk forum integration:
         - Projects pages for members
         - Verify Talk group membership upon login
@@ -20,7 +22,7 @@ Site:
         - Make automatically sent-out e-mails more explicit and with options
         - Record and list all e-mails sent from server
         - Corporate accounts, link corporate members to corporate membership
-        - Storage and invoice management
+        - Invoice management
         - Deactivate accounts (also in Talk)
         - Force e-mail through Talk API on system/admin notices
         - Session & activity log (IP address?)
@@ -29,8 +31,13 @@ Site:
         - Set customer credit
         - Send admins notice on failed payments/cancelled subscription
         - Failed payment list in admin panel and member billing page
+    - Storage:
+        - Waitlist
+        - Use Cancel_storage_lease method from billing page instead of simply
+            cancelling the subscription
+        - Admin page for management (pricing, numbers) and setting availability/
+            notices
     - Member search
-    - Storage waitlist
     - Delete user: cascade through schema, and de-associate & deactivate/delete
         talk account
     - Do proper error handling, using error types so the site handlers know what

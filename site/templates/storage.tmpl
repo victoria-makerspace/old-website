@@ -60,7 +60,10 @@
                     <button type="button" class="btn btn-sm btn-outline-info" disabled>Available</button>
       {{end}}
     {{else if eq $.Member.Id .Member.Id}}
-                    <a href="/member/billing#Subscriptions" class="btn btn-sm btn-warning">Cancel</a>
+                    <form method="post" action="/member/storage">
+                      <input type="hidden" name="cancel-storage-plan" value="{{.Plan.ID}}">
+                      <button type="submit" name="cancel-storage-number" value="{{.Number}}" class="btn btn-sm btn-warning">Cancel</button>
+                    </form>
     {{else}}
                     <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Waitlist</button>
     {{end}}
