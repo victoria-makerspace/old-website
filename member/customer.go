@@ -9,10 +9,11 @@ import (
 
 type Customer struct {
 	*stripe.Customer
+	// key == subscription ID
 	Subscriptions map[string]*stripe.Sub
 }
 
-func (m *Member) Customer() *Customer {
+func (m *Member) Get_customer() *Customer {
 	if m.Customer_id != "" && m.customer == nil {
 		c, err := customer.Get(m.Customer_id, nil)
 		if err != nil {
@@ -62,7 +63,7 @@ func (m *Member) Update_customer(token string, params *stripe.CustomerParams) er
 }
 
 func (m *Member) Has_card() bool {
-	if c := m.Customer(); c != nil && c.DefaultSource != nil {
+	if c := m.Get_customer(); c != nil && c.DefaultSource != nil {
 		return true
 	}
 	return false

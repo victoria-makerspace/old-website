@@ -38,7 +38,7 @@ func (m *Member) Get_pending_membership() *Pending_subscription {
 }
 
 func (m *Member) Get_membership() *stripe.SubItem {
-	if m.Customer() == nil {
+	if m.Get_customer() == nil {
 		return nil
 	}
 	for _, s := range m.customer.Subscriptions {
