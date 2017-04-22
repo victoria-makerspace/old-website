@@ -108,16 +108,16 @@ func (m *Member) Get_subscription_from_item(item_id string) (*stripe.Sub, error)
 	return nil, fmt.Errorf("Non-existant item ID for @%s", m.Username)
 }
 
-func (m *Member) New_subscription_item(plan_id string, quantity int) (*stripe.Sub, error) {
+func (m *Member) New_subscription_item(plan_id string, quantity int) (*stripe.SubItem, *stripe.Sub, error) {
 	p, ok := m.Plans[plan_id]
 	if !ok {
-		return nil, fmt.Errorf("Invalid plan '%s'", plan_id)
+		return nil, nil, fmt.Errorf("Invalid plan '%s'", plan_id)
 	}
 	if !m.Has_card() {
 		if p.Amount != 0 {
-			return nil, fmt.Errorf("No valid payment source")
+			return nil, nil, fmt.Errorf("No valid payment source")
 		} else if err := m.Update_customer("", nil); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 	s := m.get_subscription_by_interval(Plan_interval(p))
@@ -129,36 +129,49 @@ func (m *Member) New_subscription_item(plan_id string, quantity int) (*stripe.Su
 				Quantity: uint64(quantity)}}}
 		s, err := sub.New(sub_params)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		m.customer.Subscriptions[s.ID] = s
-		return s, nil
+		return s.Items.Values[0], s, nil
 	}
 	//TODO: update m.customer.Subscriptions with new subitem
 	item_params := &stripe.SubItemParams{
 		Sub:      s.ID,
 		Plan:     p.ID,
 		Quantity: uint64(quantity)}
-	if _, err := subitem.New(item_params); err != nil {
-		return nil, err
+	subitem, err := subitem.New(item_params)
+	if err != nil {
+		return nil, nil, err
 	}
-	return s, nil
+	return subitem, s, nil
 }
 
 func (m *Member) Cancel_subscription_item(sub_id, item_id string) error {
 	s, ok := m.customer.Subscriptions[sub_id]
 	if !ok {
-		return fmt.Errorf("Invalid subscription ID")
+		return fmt.Errorf("Invalid subscription ID for @%s", m.Username)
 	}
 	for _, i := range s.Items.Values {
 		if i.ID != item_id {
 			continue
 		}
 		if len(s.Items.Values) == 1 && s.Plan == nil {
-			return m.cancel_subscription(sub_id)
+			if err := m.cancel_subscription(sub_id); err != nil {
+				return err
+			}
+			delete(m.customer.Subscriptions, sub_id)
 		}
-		_, err := subitem.Del(item_id, nil)
-		return err
+		if _, err := subitem.Del(item_id, nil); err != nil {
+			return err
+		}
+		for i, item := range m.customer.Subscriptions[sub_id].Items.Values {
+			if item.ID == item_id {
+				m.customer.Subscriptions[sub_id].Items.Values =
+					append(m.customer.Subscriptions[sub_id].Items.Values[:i],
+						m.customer.Subscriptions[sub_id].Items.Values[i+1:]...)
+			}
+		}
+		return nil
 	}
-	return fmt.Errorf("Non-existant subscription ID for @%s", m.Username)
+	return fmt.Errorf("Invalid subscription item ID for @%s", m.Username)
 }

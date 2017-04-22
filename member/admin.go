@@ -38,7 +38,7 @@ func (a *Member) Approve_subscription(p *Pending_subscription) error {
 	//TODO: notify member if below subscription fails
 	a.Cancel_pending_subscription(p)
 	//TODO: plan quantity
-	_, err := p.Member.New_subscription_item(p.Plan_id, 1)
+	_, _, err := p.Member.New_subscription_item(p.Plan_id, 1)
 	return err
 }
 

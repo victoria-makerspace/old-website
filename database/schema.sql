@@ -76,7 +76,11 @@ CREATE TABLE storage (
 	--	given to the subscription to charge a multiple of base plan amount
 	quantity integer NOT NULL DEFAULT 1,
 	subscription_id text,
-	PRIMARY KEY (number, plan_id)
+	subitem_id text,
+	PRIMARY KEY (number, plan_id),
+	CHECK (CASE WHEN subscription_id IS NOT NULL
+		THEN subitem_id IS NOT NULL END),
+	CHECK (CASE WHEN available = false THEN subscription_id IS NULL END)
 );
 CREATE TABLE storage_waitlist (
 	time timestamp(0) with time zone NOT NULL DEFAULT now(),
