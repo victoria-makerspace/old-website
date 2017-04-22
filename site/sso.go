@@ -172,7 +172,7 @@ func sso_verify_email_handler(p *page) {
 	}
 	p.Form.Add("sent", "true")
 	message := "Hello " + p.Member.Name + " (@" + p.Member.Username + "),\n\n" +
-		"To change the e-mail address associated with your Makerspace "+
+		"To change the e-mail address associated with your Makerspace " +
 		"account (" + p.Member.Email + "), you must first verify that you " +
 		"are its owner.\n\n" +
 		"If the above name and username is correct, please verify your " +

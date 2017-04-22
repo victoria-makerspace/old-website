@@ -14,9 +14,9 @@ import (
 )
 
 type Config struct {
-	Domain string
-	Tls bool
-	Port int
+	Domain     string
+	Tls        bool
+	Port       int
 	Talk_proxy string
 }
 
@@ -46,9 +46,9 @@ type http_server struct {
 //TODO: set h.ErrorLog to a different logger
 func Serve(config Config, members *member.Members, db *sql.DB) {
 	hs := &http_server{
-		Config:   config,
-		db:       db,
-		Members:  members}
+		Config:  config,
+		db:      db,
+		Members: members}
 	hs.Addr = ":" + fmt.Sprint(config.Port)
 	hs.Handler = http.NewServeMux()
 	hs.header_tmpl = template.Must(template.ParseFiles(file_path("templates",

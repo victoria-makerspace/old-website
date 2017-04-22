@@ -26,8 +26,7 @@ func (m *Member) Update_student(institution, email string, grad_date time.Time) 
 		query = "UPDATE student SET institution = $2, student_email = $3, " +
 			"graduation_date = $4 WHERE member = $1"
 	}
-	if _, err := m.Exec(query, m.Id, institution, email, grad_date);
-		err != nil {
+	if _, err := m.Exec(query, m.Id, institution, email, grad_date); err != nil {
 		log.Panic(err)
 	}
 	m.Student = &Student{institution, email, grad_date}

@@ -1,18 +1,19 @@
 package member
 
 import (
+	"database/sql"
+	"fmt"
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/sub"
 	"github.com/stripe/stripe-go/subitem"
 	"log"
-	"fmt"
 	"time"
 )
 
 type Pending_subscription struct {
 	*Member
 	Requested_at time.Time
-	Plan_id string
+	Plan_id      string
 }
 
 func (m *Member) Request_subscription(plan string) error {
@@ -25,20 +26,39 @@ func (m *Member) Request_subscription(plan string) error {
 	}
 	if _, err := m.Exec(
 		"INSERT INTO pending_subscription "+
-		"(member, plan_id) "+
-		"VALUES ($1, $2) "+
-		"ON CONFLICT (member, plan_id) DO NOTHING", m.Id, plan);
-		err != nil {
+			"(member, plan_id) "+
+			"VALUES ($1, $2) "+
+			"ON CONFLICT (member, plan_id) DO NOTHING", m.Id, plan); err != nil {
 		log.Panic(err)
 	}
 	return nil
 }
 
+func (m *Member) Get_pending_subscriptions() []*Pending_subscription {
+	pending := make([]*Pending_subscription, 0)
+	rows, err := m.Query(
+		"SELECT requested_at, plan_id "+
+			"FROM pending_subscription "+
+			"WHERE member = $1 "+
+			"ORDER BY requested_at DESC", m.Id)
+	defer rows.Close()
+	if err != nil && err != sql.ErrNoRows {
+		log.Panic(err)
+	}
+	for rows.Next() {
+		p := Pending_subscription{Member: m}
+		if err = rows.Scan(&p.Requested_at, &p.Plan_id); err != nil {
+			log.Panic(err)
+		}
+		pending = append(pending, &p)
+	}
+	return pending
+}
+
 func (ms *Members) Cancel_pending_subscription(p *Pending_subscription) {
 	if _, err := ms.Exec(
 		"DELETE FROM pending_subscription "+
-		"WHERE member = $1 AND plan_id = $2", p.Member.Id, p.Plan_id);
-		err != nil {
+			"WHERE member = $1 AND plan_id = $2", p.Member.Id, p.Plan_id); err != nil {
 		log.Panic(err)
 	}
 }
@@ -105,21 +125,21 @@ func (m *Member) New_subscription_item(plan_id string, quantity int) error {
 		sub_params := &stripe.SubParams{
 			Customer: m.Customer_id,
 			Items: []*stripe.SubItemsParams{&stripe.SubItemsParams{
-				Plan: p.ID,
+				Plan:     p.ID,
 				Quantity: uint64(quantity)}}}
 		_, err := sub.New(sub_params)
 		return err
 	}
 	item_params := &stripe.SubItemParams{
-		Sub: s.ID,
-		Plan: p.ID,
+		Sub:      s.ID,
+		Plan:     p.ID,
 		Quantity: uint64(quantity)}
 	_, err := subitem.New(item_params)
 	return err
 }
 
 func (m *Member) Cancel_subscription_item(sub_id, item_id string) error {
-	s, ok := m.customer.Subscriptions[sub_id];
+	s, ok := m.customer.Subscriptions[sub_id]
 	if !ok {
 		return fmt.Errorf("Invalid subscription ID")
 	}

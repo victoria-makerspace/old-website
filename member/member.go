@@ -22,11 +22,11 @@ type Member struct {
 	Avatar_tmpl     string
 	Agreed_to_terms bool
 	Registered      time.Time
-	Customer_id   string
-	password_key  string
-	password_salt string
-	talk          *talk.User
-	customer      *Customer
+	Customer_id     string
+	password_key    string
+	password_salt   string
+	talk            *talk.User
+	customer        *Customer
 	*Admin
 	*Student
 	*Members
@@ -60,8 +60,7 @@ func (ms *Members) New_member(username, name, email string) (*Member, error) {
 			"	(username, name, email) "+
 			"VALUES ($1, $2, $3) "+
 			"RETURNING id, registered",
-		username, name, email).Scan(&m.Id, &m.Registered);
-		err != nil {
+		username, name, email).Scan(&m.Id, &m.Registered); err != nil {
 		log.Panic(err)
 	}
 	if err := m.sync_talk_user(); err != nil {
@@ -93,15 +92,15 @@ func (m *Member) Set_password(password string) {
 	m.password_key = key(password, m.password_salt)
 	if _, err := m.Exec(
 		"UPDATE member "+
-		"SET password_key = $1,"+
-		"	password_salt = $2 "+
-		"WHERE id = $3",
+			"SET password_key = $1,"+
+			"	password_salt = $2 "+
+			"WHERE id = $3",
 		m.password_key, m.password_salt, m.Id); err != nil {
 		log.Panic(err)
 	}
 	if _, err := m.Exec(
 		"DELETE FROM reset_password_token "+
-		"WHERE member = $1", m.Id); err != nil {
+			"WHERE member = $1", m.Id); err != nil {
 		log.Panic(err)
 	}
 }
@@ -154,7 +153,7 @@ func (m *Member) Update_email(email string) error {
 	if t, _ := m.Talk.Get_user_by_email(email); t != nil {
 		log.Printf("Talk user re-association attempt failed: @%s <%s> -> <%s>",
 			m.Username, m.Email, email)
-		return fmt.Errorf("E-mail address is already in use by a Talk user, "+
+		return fmt.Errorf("E-mail address is already in use by a Talk user, " +
 			"cannot re-associate account")
 	}
 	m.Email = email
@@ -278,22 +277,22 @@ func (ms *Members) Send_email_verification(email, body string, m *Member) {
 	if m == nil {
 		_, err = ms.Exec(
 			"INSERT INTO email_verification_token"+
-			"	(token, email) "+
-			"VALUES ($1, $2)", token, email)
+				"	(token, email) "+
+				"VALUES ($1, $2)", token, email)
 	} else {
 		_, err = ms.Exec(
 			"INSERT INTO email_verification_token"+
-			"	(token, email, member) "+
-			"VALUES ($1, $2, $3) "+
-			"ON CONFLICT (member) DO UPDATE "+
-			"SET (token, email, time) = ($1, $2, now())", token, email, m.Id)
+				"	(token, email, member) "+
+				"VALUES ($1, $2, $3) "+
+				"ON CONFLICT (member) DO UPDATE "+
+				"SET (token, email, time) = ($1, $2, now())", token, email, m.Id)
 	}
 	if err != nil {
 		log.Panic("Failed to set email verification token: ", err)
 	}
 	msg := message{
 		subject: "E-mail verification",
-		body: body + token}
+		body:    body + token}
 	msg.set_from("Makerspace", "admin@makerspace.ca")
 	if m != nil {
 		msg.add_to(m.Name, email)
@@ -301,27 +300,6 @@ func (ms *Members) Send_email_verification(email, body string, m *Member) {
 		msg.add_to("", email)
 	}
 	ms.send_email("admin@makerspace.ca", msg.emails(), ms.format_message(msg))
-}
-
-func (m *Member) Get_pending_subscriptions() []*Pending_subscription {
-	pending := make([]*Pending_subscription, 0)
-	rows, err := m.Query(
-		"SELECT requested_at, plan_id " +
-		"FROM pending_subscription " +
-		"WHERE member = $1 " +
-		"ORDER BY requested_at DESC", m.Id)
-	defer rows.Close()
-	if err != nil && err != sql.ErrNoRows {
-		log.Panic(err)
-	}
-	for rows.Next() {
-		p := Pending_subscription{Member: m}
-		if err = rows.Scan(&p.Requested_at, &p.Plan_id); err != nil {
-			log.Panic(err)
-		}
-		pending = append(pending, &p)
-	}
-	return pending
 }
 
 func (m *Member) Talk_user() *talk.User {

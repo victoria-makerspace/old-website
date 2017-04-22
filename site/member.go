@@ -129,7 +129,7 @@ func account_handler(p *page) {
 		p.Set_password(p.PostFormValue("new-password"))
 		p.Data["update_password_success"] = "Successfully updated password"
 		return
-	} else if username:= p.PostFormValue("username"); username != "" {
+	} else if username := p.PostFormValue("username"); username != "" {
 		if err := p.Update_username(username); err != nil {
 			p.Data["username_error"] = err
 		}

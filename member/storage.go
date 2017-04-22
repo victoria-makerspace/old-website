@@ -31,7 +31,7 @@ func (ms *Members) List_storage(plan_id string) []*Storage {
 	storage := make([]*Storage, 0)
 	rows, err := ms.Query(
 		"SELECT number, quantity, available, subscription_id "+
-		"FROM storage WHERE plan_id = $1 ORDER BY number ASC", plan_id)
+			"FROM storage WHERE plan_id = $1 ORDER BY number ASC", plan_id)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -39,8 +39,7 @@ func (ms *Members) List_storage(plan_id string) []*Storage {
 	for rows.Next() {
 		var s Storage
 		var sub_id sql.NullString
-		if err = rows.Scan(&s.Number, &s.Quantity, &s.Available, &sub_id);
-			err != nil {
+		if err = rows.Scan(&s.Number, &s.Quantity, &s.Available, &sub_id); err != nil {
 			log.Panic(err)
 		}
 		s.Plan = ms.Plans[plan_id]
@@ -55,8 +54,6 @@ func (ms *Members) List_storage(plan_id string) []*Storage {
 	}
 	return storage
 }
-
-
 
 func (m *Member) New_storage_lease(plan_id string, number int) error {
 

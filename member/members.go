@@ -14,13 +14,13 @@ import (
 )
 
 type Config struct {
-	Reserved_usernames        []string
-	Password_reset_window     string
-	Smtp                      struct {
-		Address  string
-		Port     int
-		Username string
-		Password string
+	Reserved_usernames    []string
+	Password_reset_window string
+	Smtp                  struct {
+		Address        string
+		Port           int
+		Username       string
+		Password       string
 		Subject_prefix string
 	}
 	Billing struct {
@@ -32,7 +32,7 @@ type Config struct {
 type Members struct {
 	Config
 	*sql.DB
-	Talk *talk.Api
+	Talk  *talk.Api
 	Plans map[string]*stripe.Plan
 }
 
@@ -80,15 +80,15 @@ func (ms *Members) Validate_username(username string) error {
 	} else if len(username) > 20 {
 		err_string = "Username must be no more than 20 characters"
 	} else if username_chars_rexp.MatchString(username) {
-		err_string = "Username must only include numbers, letters, "+
+		err_string = "Username must only include numbers, letters, " +
 			"underscores, hyphens, and periods"
 	} else if username_first_char_rexp.MatchString(username) {
-		err_string = "Username must begin with an underscore or alphanumeric "+
+		err_string = "Username must begin with an underscore or alphanumeric " +
 			"character"
 	} else if username_last_char_rexp.MatchString(username) {
 		err_string = "Username must end with an alphanumeric character"
 	} else if username_double_special_rexp.MatchString(username) {
-		err_string = "Username cannot contain consecutive special characters "+
+		err_string = "Username cannot contain consecutive special characters " +
 			"(underscore, period, or hyphen)"
 	} else if username_confusing_suffix_rexp.MatchString(username) {
 		err_string = "Username must not end in a confusing filetype suffix"
@@ -215,7 +215,7 @@ func (ms *Members) Verify_email_token(token string) (email string, m *Member) {
 func (ms *Members) Delete_verification_tokens(email string) {
 	if _, err := ms.Exec(
 		"DELETE FROM email_verification_token "+
-		"WHERE email = $1", email); err != nil {
+			"WHERE email = $1", email); err != nil {
 		log.Panic(err)
 	}
 }

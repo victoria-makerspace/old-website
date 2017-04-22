@@ -66,9 +66,9 @@ func (p *page) authenticate() {
 	// Select non-expired sessions
 	if err := p.db.QueryRow(
 		"SELECT member "+
-		"FROM session_http "+
-		"WHERE token = $1"+
-		"	AND (expires > now() OR expires IS NULL)",
+			"FROM session_http "+
+			"WHERE token = $1"+
+			"	AND (expires > now() OR expires IS NULL)",
 		cookie.Value).Scan(&member_id); err != nil {
 		if err == sql.ErrNoRows {
 			// Invalid session cookie
@@ -79,11 +79,11 @@ func (p *page) authenticate() {
 	}
 	p.Session = &Session{
 		Member: p.Get_member_by_id(member_id),
-		token: cookie.Value}
+		token:  cookie.Value}
 	if _, err := p.db.Exec(
 		"UPDATE session_http "+
-		"SET last_seen = now() "+
-		"WHERE token = $1", p.Session.token); err != nil {
+			"SET last_seen = now() "+
+			"WHERE token = $1", p.Session.token); err != nil {
 		log.Panic(err)
 	}
 }
@@ -95,8 +95,8 @@ func (p *page) destroy_session() {
 	}
 	if _, err := p.db.Exec(
 		"UPDATE session_http "+
-		"SET expires = 'epoch' "+
-		"WHERE token = $1", p.Session.token); err != nil {
+			"SET expires = 'epoch' "+
+			"WHERE token = $1", p.Session.token); err != nil {
 		log.Panic(err)
 	}
 	p.unset_session_cookie()

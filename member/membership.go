@@ -2,19 +2,19 @@ package member
 
 import (
 	"fmt"
-	"strings"
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/subitem"
 	"log"
+	"strings"
 )
 
 func (m *Member) Request_membership(rate string) error {
-	p, ok := m.Plans["membership-" + rate]
+	p, ok := m.Plans["membership-"+rate]
 	if !ok {
 		return fmt.Errorf("Invalid membership rate")
 	}
 	if rate == "student" && m.Student == nil {
-		return fmt.Errorf("Non-students cannot apply for a student membership "+
+		return fmt.Errorf("Non-students cannot apply for a student membership " +
 			"rate")
 	}
 	if mp := m.Get_membership(); mp != nil {

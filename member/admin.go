@@ -16,8 +16,8 @@ func (ms *Members) Get_all_pending_subscriptions() []*Pending_subscription {
 	pending := make([]*Pending_subscription, 0)
 	rows, err := ms.Query(
 		"SELECT member, requested_at, plan_id " +
-		"FROM pending_subscription " +
-		"ORDER BY requested_at DESC")
+			"FROM pending_subscription " +
+			"ORDER BY requested_at DESC")
 	defer rows.Close()
 	if err != nil && err != sql.ErrNoRows {
 		log.Panic(err)
@@ -25,8 +25,7 @@ func (ms *Members) Get_all_pending_subscriptions() []*Pending_subscription {
 	for rows.Next() {
 		var p Pending_subscription
 		var member_id int
-		if err = rows.Scan(&member_id, &p.Requested_at, &p.Plan_id);
-			err != nil {
+		if err = rows.Scan(&member_id, &p.Requested_at, &p.Plan_id); err != nil {
 			log.Panic(err)
 		}
 		p.Member = ms.Get_member_by_id(member_id)
@@ -74,9 +73,9 @@ func (a *Member) Approve_free_membership(m *Member) error {
 func (m *Member) Clear_password() {
 	if _, err := m.Exec(
 		"UPDATE member "+
-		"SET password_key = NULL,"+
-		"	password_salt = NULL "+
-		"WHERE id = $1", m.Id); err != nil {
+			"SET password_key = NULL,"+
+			"	password_salt = NULL "+
+			"WHERE id = $1", m.Id); err != nil {
 		log.Panic(err)
 	}
 }

@@ -1,10 +1,10 @@
 package member
 
 import (
+	"fmt"
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/customer"
 	"log"
-	"fmt"
 )
 
 type Customer struct {

@@ -63,7 +63,7 @@ func (ms *Members) format_message(msg message) []byte {
 		}
 		body += "\r\n"
 	}
-	body += "Subject: " + enc(ms.Config.Smtp.Subject_prefix + msg.subject) +
+	body += "Subject: " + enc(ms.Config.Smtp.Subject_prefix+msg.subject) +
 		"\r\n"
 	body += "Content-Type: text/plain; charset=\"utf-8\"\r\n"
 	body += "Content-Transfer-Encoding: base64\r\n"

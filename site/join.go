@@ -1,9 +1,9 @@
 package site
 
 import (
+	"github.com/vvanpo/makerspace/member"
 	"log"
 	"net/url"
-	"github.com/vvanpo/makerspace/member"
 )
 
 func init() {

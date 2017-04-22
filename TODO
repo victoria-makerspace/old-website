@@ -34,8 +34,7 @@ Site:
     - Delete user: cascade through schema, and de-associate & deactivate/delete
         talk account
     - Do proper error handling, using error types so the site handlers know what
-        http error to return
-    - One subscription per interval per customer, add SubItems
+        http status code to return
 
 Tool-use hooks:
     - Laser cutter

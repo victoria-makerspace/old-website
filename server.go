@@ -12,10 +12,10 @@ import (
 )
 
 var config struct {
-	Site       site.Config
-	Members    member.Config
-	Database   map[string]string
-	Talk       talk.Api
+	Site     site.Config
+	Members  member.Config
+	Database map[string]string
+	Talk     talk.Api
 }
 
 func init() {

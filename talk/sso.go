@@ -23,7 +23,7 @@ func (api *Api) Sync(external_id int, username, email, name string) (*User, erro
 	values.Set("sig", sig)
 	data, err := api.do_form("POST", "/admin/users/sync_sso", values)
 	if err != nil {
-		log.Println(err_string + ": ", err)
+		log.Println(err_string+": ", err)
 		return nil, fmt.Errorf("Talk server error")
 	}
 	if u, ok := data.(map[string]interface{}); ok {
@@ -37,7 +37,7 @@ func (api *Api) Sync(external_id int, username, email, name string) (*User, erro
 			return user, nil
 		}
 	}
-	log.Println(err_string + ": ", data)
+	log.Println(err_string+": ", data)
 	return nil, fmt.Errorf("Talk server error")
 }
 

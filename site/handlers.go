@@ -2,12 +2,12 @@ package site
 
 import (
 	"fmt"
+	"github.com/vvanpo/makerspace/member"
 	"html/template"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-	"github.com/vvanpo/makerspace/member"
 )
 
 type handler struct {
@@ -62,7 +62,7 @@ var tmpl_funcmap = template.FuncMap{
 		return fmt.Sprintf("$%.2f", float64(amount)/100)
 	},
 	"Plan_identifier": member.Plan_identifier,
-	"Plan_interval": member.Plan_interval,
+	"Plan_interval":   member.Plan_interval,
 }
 
 // tmpl_name is the basename (i.e. minus the ".tmpl") of the template file

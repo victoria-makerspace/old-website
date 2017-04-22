@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -79,7 +79,7 @@ func (api *Api) parse_user(u map[string]interface{}) *User {
 }
 
 func (api *Api) Get_user(id int) (*User, error) {
-	j, err := api.get_json("/admin/users/" + fmt.Sprint(id) + ".json", true)
+	j, err := api.get_json("/admin/users/"+fmt.Sprint(id)+".json", true)
 	if err != nil {
 		log.Printf("Talk error fetching user <%d>: %q", id, err)
 		return nil, fmt.Errorf("Server error")
@@ -116,9 +116,9 @@ func (api *Api) Get_user_by_external_id(external_id int) (*User, error) {
 }
 
 func (api *Api) Get_user_by_email(email string) (*User, error) {
-	j, err := api.get_json("/admin/users.json?filter=" + url.QueryEscape(email), true)
+	j, err := api.get_json("/admin/users.json?filter="+url.QueryEscape(email), true)
 	if err != nil {
-		log.Println("Talk error fetching user by e-mail <" + email + ">:", err)
+		log.Println("Talk error fetching user by e-mail <"+email+">:", err)
 		return nil, fmt.Errorf("Server error")
 	}
 	if j, ok := j.([]interface{}); ok {
@@ -131,7 +131,7 @@ func (api *Api) Get_user_by_email(email string) (*User, error) {
 			}
 		}
 	}
-	log.Println("Talk error fetching user <" + email + ">:", j)
+	log.Println("Talk error fetching user <"+email+">:", j)
 	return nil, fmt.Errorf("Invalid Talk user")
 }
 

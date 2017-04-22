@@ -35,8 +35,7 @@ func admin_handler(p *page) {
 			p.http_error(400)
 			return
 		}
-		if m := p.Get_member_by_id(member_id);
-			m == nil || m.Get_pending_membership() == nil {
+		if m := p.Get_member_by_id(member_id); m == nil || m.Get_pending_membership() == nil {
 			p.http_error(400)
 		} else {
 			if err := p.Approve_membership(m); err != nil {
@@ -191,8 +190,8 @@ line_loop:
 		name := strings.TrimSpace(fields[1])
 		email := strings.TrimSpace(fields[2])
 		var (
-			free bool
-			key_card string
+			free       bool
+			key_card   string
 			registered time.Time
 		)
 		for j, field := range fields[3:] {

@@ -44,15 +44,14 @@ func billing_handler(p *page) {
 				return
 			}
 			if err := p.Update_student(p.PostFormValue("institution"),
-				p.PostFormValue("student-email"), graduation);
-				err != nil {
+				p.PostFormValue("student-email"), graduation); err != nil {
 				p.Data["membership_registration_error"] = err
 				return
 			}
 		}
 		membership := p.Member.Get_membership()
 		if rate == "" || membership != nil && rate == membership.Plan.ID {
-			p.Data["membership_registration_error"] = "Already registered for "+
+			p.Data["membership_registration_error"] = "Already registered for " +
 				membership.Plan.Name
 			return
 		}
@@ -68,8 +67,7 @@ func billing_handler(p *page) {
 			return
 		}
 		p.Cancel_pending_subscription(pending)
-	} else if subitem_id := p.PostFormValue("cancel-subscription");
-		subitem_id != "" {
+	} else if subitem_id := p.PostFormValue("cancel-subscription"); subitem_id != "" {
 		if subitem_id == p.Membership_id() {
 			p.http_error(403)
 			return
