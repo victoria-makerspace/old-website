@@ -1,4 +1,3 @@
-
 DROP SCHEMA IF EXISTS makerspace CASCADE;
 CREATE SCHEMA makerspace;
 ALTER DATABASE makerspace SET search_path TO makerspace, pg_catalog;
@@ -54,6 +53,7 @@ CREATE TABLE pending_subscription (
 	member integer NOT NULL REFERENCES member,
 	requested_at timestamp(0) with time zone NOT NULL DEFAULT now(),
 	plan_id text NOT NULL,
+	quantity integer DEFAULT 1,
 	UNIQUE (member, plan_id)
 );
 CREATE TABLE membership_cancellation (
@@ -65,8 +65,8 @@ CREATE TABLE sent_emails (
 	time timestamp(0) with time zone NOT NULL DEFAULT now(),
 	from_address text,
 	to_address text[],
-	body text
-	--TODO error text
+	body text,
+	error text
 );
 CREATE TABLE storage (
 	number integer NOT NULL,
@@ -75,6 +75,7 @@ CREATE TABLE storage (
 	-- For variable-size storage, <quantity> defines the multiplication factor
 	--	given to the subscription to charge a multiple of base plan amount
 	quantity integer NOT NULL DEFAULT 1,
+	subscription_id text,
 	PRIMARY KEY (number, plan_id)
 );
 CREATE TABLE storage_waitlist (

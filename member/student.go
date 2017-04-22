@@ -2,7 +2,6 @@ package member
 
 import (
 	"fmt"
-	"github.com/stripe/stripe-go"
 	"log"
 	"time"
 )
@@ -40,9 +39,9 @@ func (m *Member) Delete_student() {
 		return
 	}
 	m.Student = nil
-	if ms := m.Get_membership(); ms != nil && ms.Plan.ID == "membership-student" {
-		m.Update_membership(&stripe.SubParams{
-			Plan: m.Plans["membership-regular"].ID})
+	if mp := m.Get_membership(); mp != nil &&
+		mp.Plan.ID == "membership-student" {
+		m.Update_membership("membership-regular")
 	}
 	if _, err := m.Exec("DELETE FROM student WHERE member = $1",
 		m.Id); err != nil {

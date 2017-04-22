@@ -8,7 +8,7 @@
         </h3>
         <h6 class="text-center">
           <span class="text-muted">Last seen</span>
-          {{fmt_last_seen .Last_seen}}
+          {{fmt_time .Last_seen}}
         </h6>
         <h4>Membership</h4>
         <form action="/admin/account/{{.Id}}" method="post" class="mx-2 mb-3">
@@ -27,7 +27,7 @@
           </div>
           <div class="collapse" id="modify-membership">
             <div class="mx-2 mb-2 py-2 px-3 card bg-faded">
-  {{if ne .Membership_plan "membership-free"}}
+  {{if or (not $ms) (ne (Plan_identifier $ms.Plan.ID) "free")}}
               <div class="my-1 row">
                 <div class="col">
                   <strong>Approve free membership:</strong>
@@ -69,11 +69,9 @@
           </div>
           <div class="mb-2 row">
   {{with $ms}}
-            <span class="col-sm-4 font-weight-bold">Approved by:</span>
+            <span class="col-sm-4 font-weight-bold">Approved on:</span>
             <div class="col-sm-8">
-              <a href="/member/{{with $.Approved_by .}}{{.Id}}{{end}}">
-                @{{with $.Approved_by .}}{{.Username}}{{end}}</a>
-                on {{with $.Created_at .}}{{.Format "January 2, 2006"}}{{end}}
+                {{fmt_time (timestamp .Created)}}
             </div>
   {{else}}
     {{with .Get_pending_membership}}

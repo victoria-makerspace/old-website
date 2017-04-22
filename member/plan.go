@@ -1,9 +1,10 @@
 package member
 
 import (
-	_ "github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/plan"
 	"regexp"
+	"fmt"
 )
 
 var plan_rexp = regexp.MustCompile(`^([\w]+)-([\w]+)-([0-9]+)-([0-9]*)(day|week|month|year)$`)
@@ -20,6 +21,14 @@ func Plan_identifier(plan_id string) string {
 		return m[2]
 	}
 	return ""
+}
+
+func Plan_interval(p *stripe.Plan) string {
+	interval := string(p.Interval)
+	if c := p.IntervalCount; c != 1 {
+		interval = fmt.Sprint(c) + " " + interval + "s"
+	}
+	return interval
 }
 
 func (ms *Members) load_plans() {

@@ -31,6 +31,14 @@
           </div>
 {{with $ms}}
           <div class="mb-2 row">
+            <span class="col col-sm-4 font-weight-bold">Approved on:</span>
+            <div class="col col-sm-8">
+                {{fmt_time (timestamp .Created)}}
+            </div>
+          </div>
+{{end}}
+{{/*with $ms}}
+          <div class="mb-2 row">
             <span class="col col-sm-4 font-weight-bold">Approved by:</span>
             <div class="col col-sm-8">
               <a href="/member/{{with $.Approved_by .}}{{.Id}}{{end}}">
@@ -38,7 +46,7 @@
                 on {{with $.Created_at .}}{{.Format "January 2, 2006"}}{{end}}
             </div>
           </div>
-{{end}}
+{{end*/}}
         </div>
         <h3 class="mt-4 pb-1">
           Account information

@@ -89,12 +89,12 @@
     {{if eq $.Data.member_group "active"}}
               <td>
                 <small class="text-muted">
-                  {{fmt_last_seen .Last_seen}}
+                  {{fmt_time .Last_seen}}
                 </small>
               </td>
     {{end}}
     {{if eq $.Data.member_group "new"}}
-              <td>{{fmt_last_seen .Registered}}</td>
+              <td>{{fmt_time .Registered}}</td>
     {{else}}
               <td>{{.Registered.Format "Jan 02, 2006"}}</td>
     {{end}}

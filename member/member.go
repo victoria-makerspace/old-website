@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
-	"github.com/stripe/stripe-go"
 	"github.com/vvanpo/makerspace/talk"
 	"log"
 	"net/url"
@@ -27,7 +26,7 @@ type Member struct {
 	password_key  string
 	password_salt string
 	talk          *talk.User
-	customer      *stripe.Customer
+	customer      *Customer
 	*Admin
 	*Student
 	*Members

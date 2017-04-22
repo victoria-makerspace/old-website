@@ -7,14 +7,20 @@ import (
 	"fmt"
 )
 
-func (m *Member) Customer() *stripe.Customer {
+type Customer struct {
+	*stripe.Customer
+	Subscriptions map[string]*stripe.Sub
+}
+
+func (m *Member) Customer() *Customer {
 	if m.Customer_id != "" && m.customer == nil {
 		c, err := customer.Get(m.Customer_id, nil)
 		if err != nil {
 			return nil
 		}
 		if !c.Deleted {
-			m.customer = c
+			m.customer = &Customer{Customer: c}
+			m.get_subscriptions()
 		}
 	}
 	return m.customer
@@ -34,20 +40,23 @@ func (m *Member) Update_customer(token string, params *stripe.CustomerParams) er
 	if m.Customer_id == "" {
 		cust, err = customer.New(params)
 	} else {
-		cust, err = customer.Update(m.customer.ID, params)
+		cust, err = customer.Update(m.Customer_id, params)
 	}
 	if err != nil {
 		return fmt.Errorf(err.(*stripe.Error).Msg)
 	}
-	m.customer = cust
 	if m.Customer_id == "" {
-		m.Customer_id = m.customer.ID
 		if _, err := m.Exec(
 			"UPDATE member "+
 				"SET stripe_customer_id = $2 "+
-				"WHERE id = $1", m.Id, m.customer.ID); err != nil {
+				"WHERE id = $1", m.Id, cust.ID); err != nil {
 			log.Panic(err)
 		}
+		m.Customer_id = cust.ID
+		m.customer = &Customer{Customer: cust}
+	} else {
+		m.customer.Customer = cust
+		m.get_subscriptions()
 	}
 	return nil
 }
@@ -57,16 +66,4 @@ func (m *Member) Has_card() bool {
 		return true
 	}
 	return false
-}
-
-func (m *Member) Active_subscriptions() map[string]*stripe.Sub {
-	subs := make(map[string]*stripe.Sub)
-	if m.Customer() != nil {
-		for _, s := range m.customer.Subs.Values {
-			if s.Ended == 0 {
-				subs[s.ID] = s
-			}
-		}
-	}
-	return subs
 }

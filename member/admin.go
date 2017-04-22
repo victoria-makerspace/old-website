@@ -2,8 +2,6 @@ package member
 
 import (
 	"database/sql"
-	"github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/sub"
 	"fmt"
 	"log"
 	"net/url"
@@ -38,26 +36,10 @@ func (ms *Members) Get_all_pending_subscriptions() []*Pending_subscription {
 }
 
 func (a *Member) Approve_subscription(p *Pending_subscription) error {
-	plan, ok := a.Plans[p.Plan_id]
-	if !ok {
-		return fmt.Errorf("Invalid plan identifier '%s'", p.Plan_id)
-	}
-	if !p.Member.Has_card() {
-		if plan.Amount != 0 {
-			return fmt.Errorf("No valid payment source")
-		} else if err := p.Member.Update_customer("", nil); err != nil {
-			return err
-		}
-	}
-	params := &stripe.SubParams{
-		Customer: p.Member.Customer_id,
-		Plan: p.Plan_id}
-	params.Params.Meta = make(map[string]string)
-	params.Meta["member_id"] = fmt.Sprint(p.Member.Id)
-	params.Meta["approved_by"] = fmt.Sprint(a.Id)
+	//TODO: notify member if below subscription fails
 	a.Cancel_pending_subscription(p)
-	_, err := sub.New(params)
-	return err
+	//TODO: plan quantity
+	return p.Member.New_subscription_item(p.Plan_id, 1)
 }
 
 func (a *Member) Approve_membership(m *Member) error {
@@ -66,9 +48,8 @@ func (a *Member) Approve_membership(m *Member) error {
 		return fmt.Errorf("@%s has not requested a membership", m.Username)
 	}
 	if m.Get_membership() != nil {
-		params := &stripe.SubParams{Plan: p.Plan_id}
 		a.Cancel_pending_subscription(p)
-		return m.Update_membership(params)
+		return m.Update_membership(p.Plan_id)
 	}
 	if m.Talk_user() != nil {
 		m.talk.Add_to_group("Members")
@@ -78,8 +59,7 @@ func (a *Member) Approve_membership(m *Member) error {
 
 func (a *Member) Approve_free_membership(m *Member) error {
 	if m.Get_membership() != nil {
-		params := &stripe.SubParams{Plan: "membership-free"}
-		return m.Update_membership(params)
+		return m.Update_membership("membership-free")
 	}
 	if p := m.Get_pending_membership(); p != nil {
 		a.Cancel_pending_subscription(p)

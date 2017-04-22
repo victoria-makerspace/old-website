@@ -1,12 +1,11 @@
 package member
 
 import (
+	"database/sql"
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/sub"
 	"log"
 	"sort"
-	"strconv"
-	"strings"
 )
 
 type Storage struct {
@@ -19,9 +18,9 @@ type Storage struct {
 
 func (ms *Members) List_storage_plans() []string {
 	plans := make([]string, 0)
-	for p, _ := range ms.Plans {
-		if strings.HasPrefix(p, "storage") {
-			plans = append(plans, p)
+	for plan_id, p := range ms.Plans {
+		if Plan_category(p.ID) == "storage" {
+			plans = append(plans, plan_id)
 		}
 	}
 	sort.Strings(plans)
@@ -30,26 +29,8 @@ func (ms *Members) List_storage_plans() []string {
 
 func (ms *Members) List_storage(plan_id string) []*Storage {
 	storage := make([]*Storage, 0)
-	i := sub.List(&stripe.SubListParams{Plan: plan_id})
-	members := make(map[int]*Member)
-	for i.Next() {
-		n, ok := i.Sub().Meta["number"]
-		if !ok {
-			continue
-		}
-		number, err := strconv.Atoi(n)
-		if err != nil {
-			log.Panic(err)
-		}
-		m := ms.Get_member_by_customer_id(i.Sub().Customer.ID)
-		if m != nil {
-			members[number] = m
-		} else {
-			log.Printf("Unregistered customer <%s> subscribed to %s number %d",
-				i.Sub().Customer.ID, plan_id, number)
-		}
-	}
-	rows, err := ms.Query("SELECT number, quantity, available "+
+	rows, err := ms.Query(
+		"SELECT number, quantity, available, subscription_id "+
 		"FROM storage WHERE plan_id = $1 ORDER BY number ASC", plan_id)
 	if err != nil {
 		log.Panic(err)
@@ -57,14 +38,27 @@ func (ms *Members) List_storage(plan_id string) []*Storage {
 	defer rows.Close()
 	for rows.Next() {
 		var s Storage
-		if err = rows.Scan(&s.Number, &s.Quantity, &s.Available); err != nil {
+		var sub_id sql.NullString
+		if err = rows.Scan(&s.Number, &s.Quantity, &s.Available, &sub_id);
+			err != nil {
 			log.Panic(err)
 		}
 		s.Plan = ms.Plans[plan_id]
-		if m, ok := members[s.Number]; ok {
-			s.Member = m
+		if sub_id.Valid {
+			sb, err := sub.Get(sub_id.String, nil)
+			if err != nil {
+				log.Panic(err)
+			}
+			s.Member = ms.Get_member_by_customer_id(sb.Customer.ID)
 		}
 		storage = append(storage, &s)
 	}
 	return storage
+}
+
+
+
+func (m *Member) New_storage_lease(plan_id string, number int) error {
+
+	return nil
 }
