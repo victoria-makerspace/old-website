@@ -220,14 +220,12 @@
                 <span class="custom-control-description"><b>Student</b> ({{fmt_money .Amount}}/{{Plan_interval .}})</span>
   {{end}}
               </label>
-  {{with $ms}}
-    {{if eq (Plan_identifier .ID) "free"}}
+  {{if eq .Membership_rate "free"}}
               <label class="custom-control custom-radio">
                 <input type="radio" class="custom-control-input" name="rate" checked>
                 <span class="custom-control-indicator"></span>
                 <span class="custom-control-description"><b>Free</b></span>
               </label>
-    {{end}}
   {{end}}
             </fieldset>
   {{if $ms}}

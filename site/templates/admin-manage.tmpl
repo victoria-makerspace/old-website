@@ -27,7 +27,7 @@
           </div>
           <div class="collapse" id="modify-membership">
             <div class="mx-2 mb-2 py-2 px-3 card bg-faded">
-  {{if or (not $ms) (ne (Plan_identifier $ms.Plan.ID) "free")}}
+  {{if ne .Membership_rate "free"}}
               <div class="my-1 row">
                 <div class="col">
                   <strong>Approve free membership:</strong>
@@ -67,22 +67,30 @@
   {{end}}
             </div>
           </div>
-          <div class="mb-2 row">
   {{with $ms}}
+          <div class="mb-2 row">
             <span class="col-sm-4 font-weight-bold">Approved on:</span>
             <div class="col-sm-8">
                 {{fmt_time (timestamp .Created)}}
             </div>
-  {{else}}
-    {{with .Get_pending_membership}}
+          </div>
+  {{end}}
+  {{with .Get_pending_membership}}
+          <div class="mb-2 row">
             <span class="col-sm-4 font-weight-bold">Pending approval:</span>
             <div class="col-sm-8">
-              <button type="submit" name="approve-membership" value="{{.ID}}" class="btn btn-sm btn-primary">Approve</button>
-              <button type="submit" name="decline-membership" value="{{.ID}}" class="btn btn-sm btn-warning">Decline</button>
+              {{(index $.Plans .Plan_id).Name}}
+              <button type="submit" name="approve-membership" value="{{.ID}}" class="ml-1 btn btn-sm btn-primary">Approve</button>
+              <button type="submit" name="decline-membership" value="{{.ID}}" class="ml-1 btn btn-sm btn-warning">Decline</button>
             </div>
-    {{end}}
-  {{end}}
           </div>
+  {{end}}
+  {{if $ms}}
+          <a target="_blank" href="https://dashboard.stripe.com/subscriptions/{{(.Get_subscription_from_item $ms.ID).ID}}">
+            Subscription administration
+            <span class="glyphicons glyphicons-link" style="font-size: 1rem;"></span>
+          </a>
+  {{end}}
         </form>
         <h4>Account information</h4>
         <div class="mx-2">
@@ -158,7 +166,7 @@
                   <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with $.Data.key_card_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{$.Data.key_card_error}}</small>
             </div>
           </form>
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.telephone_error}} has-danger{{end}}">
@@ -171,21 +179,21 @@
                   <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with $.Data.telephone_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{$.Data.telephone_error}}</small>
             </div>
           </form>
   {{with .Talk_user}}
           <div class="mb-2 row">
             <span class="col-sm-4 font-weight-bold">Talk forum:</span>
             <div class="col-sm-8">
-              <a href="{{$.Talk.Path}}/admin/users/{{.Id}}/{{urlquery .Username}}">
+              <a target="_blank" href="{{$.Talk.Path}}/admin/users/{{.Id}}/{{urlquery .Username}}">
                 Account management
-                <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
+                <span class="glyphicons glyphicons-link" style="font-size: 1rem;"></span>
               </a>
               <br>
               <a href="{{$.Talk.Path}}/u/{{urlquery .Username}}/preferences">
                 Account preferences
-                <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
+                <span class="glyphicons glyphicons-link" style="font-size: 1rem;"></span>
               </a>
             </div>
           </div>
