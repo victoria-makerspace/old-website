@@ -2,6 +2,8 @@ package site
 
 import (
 	"time"
+	"github.com/stripe/stripe-go"
+	"github.com/vvanpo/makerspace/member"
 )
 
 func init() {
@@ -51,7 +53,7 @@ func billing_handler(p *page) {
 		}
 		membership := p.Member.Get_membership()
 		if rate == "" || membership != nil && rate == membership.Plan.ID {
-			p.Data["membership_registration_error"] = "Already registered for " +
+			p.Data["membership_registration_error"] = "Already registered for "+
 				membership.Plan.Name
 			return
 		}
@@ -67,17 +69,39 @@ func billing_handler(p *page) {
 			return
 		}
 		p.Cancel_pending_subscription(pending)
-	} else if subitem_id := p.PostFormValue("cancel-subscription"); subitem_id != "" {
-		if subitem_id == p.Membership_id() {
+	} else if subitem_id := p.PostFormValue("cancel-subscription-item");
+		subitem_id != "" {
+		s, ok := p.Get_customer().Subscriptions[p.PostFormValue("subscription-id")]
+		if !ok {
+			p.http_error(400)
+			return
+		} else if subitem_id == p.Membership_id() {
 			p.http_error(403)
 			return
 		}
-		s, err := p.Get_subscription_from_item(subitem_id)
-		if err != nil {
-			p.Data["cancel_subscription_error"] = err
+		var subitem *stripe.SubItem
+		for _, i := range s.Items.Values {
+			if i.ID == subitem_id {
+				subitem = i
+				break
+			}
+		}
+		if subitem == nil {
+			p.http_error(400)
 			return
 		}
-		if err := p.Cancel_subscription_item(s.ID, subitem_id); err != nil {
+		if member.Plan_category(subitem.Plan.ID) == "storage" {
+			st, err := p.Get_storage_by_item(subitem_id)
+			if err != nil {
+				p.http_error(400)
+				return
+			}
+			plan_id := "storage-" + member.Plan_identifier(st.Plan.ID)
+			if err = p.Cancel_storage_lease(plan_id, st.Number); err != nil {
+				p.Data["cancel_subscription_error"] = err
+				return
+			}
+		} else if err := p.Cancel_subscription_item(s.ID, subitem_id); err != nil {
 			p.Data["cancel_subscription_error"] = err
 			return
 		}

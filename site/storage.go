@@ -1,6 +1,8 @@
 package site
 
 import (
+	"github.com/vvanpo/makerspace/member"
+	"log"
 	"strconv"
 )
 
@@ -18,12 +20,13 @@ func storage_handler(p *page) {
 			p.http_error(403)
 			return
 		}
+		plan_id := "storage-" + member.Plan_identifier(plan)
 		number, err := strconv.Atoi(p.PostFormValue("register-storage-number"))
 		if err != nil {
 			p.http_error(400)
 			return
 		}
-		if err := p.New_storage_lease(plan, number); err != nil {
+		if err := p.New_storage_lease(plan_id, number); err != nil {
 			p.Data["register_storage_error"] = err
 		} else {
 			p.redirect = "/member/storage"
@@ -34,7 +37,9 @@ func storage_handler(p *page) {
 			p.http_error(400)
 			return
 		}
-		if err := p.Cancel_storage_lease(plan, number); err != nil {
+		plan_id := "storage-" + member.Plan_identifier(plan)
+		if err := p.Cancel_storage_lease(plan_id, number); err != nil {
+			log.Println("Cancel_storage_lease error: ", err)
 			p.http_error(500)
 			return
 		} else {

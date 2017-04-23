@@ -11,7 +11,7 @@ import (
 
 type Storage struct {
 	Number    int
-	Quantity  int
+	Quantity  uint64
 	Available bool
 	*stripe.Plan
 	sub_id string
@@ -19,7 +19,7 @@ type Storage struct {
 	*Member
 }
 
-func (ms *Members) get_storage_number(plan_id string, number int) (*Storage, error) {
+func (ms *Members) get_storage(plan_id string, number int) (*Storage, error) {
 	p, ok := ms.Plans[plan_id]
 	if !ok || Plan_category(p.ID) != "storage" {
 		return nil, fmt.Errorf("Invalid storage plan '%s'", plan_id)
@@ -30,7 +30,7 @@ func (ms *Members) get_storage_number(plan_id string, number int) (*Storage, err
 		"SELECT quantity, available, subscription_id, subitem_id "+
 			"FROM storage "+
 			"WHERE plan_id = $1 AND number = $2",
-		plan_id, number).Scan(s.Quantity, s.Available, &sub_id, &subitem_id);
+		plan_id, number).Scan(&s.Quantity, &s.Available, &sub_id, &subitem_id);
 		err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("Invalid storage number for '%s'", p.Name)
@@ -46,6 +46,34 @@ func (ms *Members) get_storage_number(plan_id string, number int) (*Storage, err
 		s.subitem_id = subitem_id.String
 		s.Member = ms.Get_member_by_customer_id(sb.Customer.ID)
 	}
+	return s, nil
+}
+
+func (m *Member) Get_storage_by_item(subitem_id string) (*Storage, error) {
+	s := &Storage{subitem_id: subitem_id}
+	var sub_id sql.NullString
+	var plan_id string
+	if err := m.QueryRow(
+		"SELECT number, plan_id, quantity, available, subscription_id "+
+			"FROM storage "+
+			"WHERE subitem_id = $1",
+		subitem_id).Scan(&s.Number, &plan_id, &s.Quantity, &s.Available, &sub_id);
+		err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("Invalid storage subscription item")
+		}
+		log.Panic(err)
+	}
+	if !sub_id.Valid {
+		log.Panic("Invalid storage subscription ID for subscription item " + subitem_id)
+	}
+	sb, err := sub.Get(sub_id.String, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	s.Plan = m.Plans[plan_id]
+	s.sub_id = sub_id.String
+	s.Member = m.Get_member_by_customer_id(sb.Customer.ID)
 	return s, nil
 }
 
@@ -91,7 +119,7 @@ func (ms *Members) List_storage(plan_id string) []*Storage {
 }
 
 func (m *Member) New_storage_lease(plan_id string, number int) error {
-	s, err := m.get_storage_number(plan_id, number)
+	s, err := m.get_storage(plan_id, number)
 	if err != nil {
 		return err
 	}
@@ -114,7 +142,7 @@ func (m *Member) New_storage_lease(plan_id string, number int) error {
 }
 
 func (m *Member) Cancel_storage_lease(plan_id string, number int) error {
-	s, err := m.get_storage_number(plan_id, number)
+	s, err := m.get_storage(plan_id, number)
 	if err != nil {
 		return err
 	}
@@ -122,14 +150,14 @@ func (m *Member) Cancel_storage_lease(plan_id string, number int) error {
 		return fmt.Errorf("%s number %d is not currently leased by @%s",
 			s.Plan.Name, number, m.Id)
 	}
-	if err = m.Cancel_subscription_item(s.sub_id, s.subitem_id); err != nil {
-		return err
-	}
 	if _, err = m.Exec(
 		"UPDATE storage "+
 			"SET subscription_id = NULL, subitem_id = NULL "+
 			"WHERE plan_id = $1 AND number = $2", plan_id, number); err != nil {
 		log.Panic(err)
+	}
+	if err = m.Cancel_subscription_item(s.sub_id, s.subitem_id); err != nil {
+		return err
 	}
 	return nil
 }

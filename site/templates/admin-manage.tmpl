@@ -16,7 +16,7 @@
             <span class="col col-sm-4 font-weight-bold">Type:</span>
             <div class="col text-capitalize">
   {{with $ms}}
-              {{.Plan.Name}}
+              <span class="text-capitalize">{{Plan_identifier .Plan.ID}}</span>
   {{else}}
               None
   {{end}}

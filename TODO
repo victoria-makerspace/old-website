@@ -33,8 +33,6 @@ Site:
         - Failed payment list in admin panel and member billing page
     - Storage:
         - Waitlist
-        - Use Cancel_storage_lease method from billing page instead of simply
-            cancelling the subscription
         - Admin page for management (pricing, numbers) and setting availability/
             notices
     - Member search

@@ -50,7 +50,7 @@
   {{with .Subscriptions}}
         <section id="Subscriptions">
           <h4>Subscriptions</h4>
-          <form action="/member/billing" method="post" class="mx-sm-3">
+          <div class="mx-sm-3">
             <table class="table table-sm table-striped table-responsive text-nowrap">
               <thead>
                 <tr>
@@ -61,33 +61,36 @@
                   <th></th>
                 </tr>
               </thead>
-              <tbody>
     {{range $sub := .}}
+              <tbody>
       {{range $i, $v := .Items.Values}}
                 <tr{{if eq .ID $.Membership_id}} class="table-active"{{end}}>
                   <td>{{.Plan.Name}}</td>
                   <td>{{fmt_money (mul .Quantity .Plan.Amount)}}</td>
-        {{if eq (index $sub.Items.Values $i).ID (index $sub.Items.Values 0).ID}}
-                  <td rowspan="{{len $sub.Items.Values}}">
+        {{if eq $i 0}}
+                  <td rowspan="{{len $sub.Items.Values}}" class="align-middle px-2">
                     {{(timestamp $sub.PeriodStart).Format "Jan 02"}}
                     &ndash;
                     {{(timestamp $sub.PeriodEnd).Format "Jan 02"}}
                   </td>
         {{end}}
-                  <td>{{(timestamp .Created).Format "02/01/2006"}}</td>
+                  <td>{{fmt_time (timestamp .Created)}}</td>
                   <td>
         {{if eq .ID $.Membership_id}}
-                    <button type="button" data-toggle="modal" data-target="#cancel-membership" class="btn btn-sm btn-danger">Cancel</button>
+                      <button type="button" data-toggle="modal" data-target="#cancel-membership" class="btn btn-sm btn-danger">Cancel</button>
         {{else}}
-                    <button type="submit" name="cancel-subscription" value="{{.ID}}" class="btn btn-sm btn-danger">Cancel</button>
+                    <form action="/member/billing" method="post">
+                      <input type="hidden" name="subscription-id" value="{{$sub.ID}}">
+                      <button type="submit" name="cancel-subscription-item" value="{{.ID}}" class="btn btn-sm btn-danger">Cancel</button>
+                    </form>
         {{end}}
                   </td>
                 </tr>
       {{end}}
-    {{end}}
               </tbody>
+    {{end}}
             </table>
-          </form>
+          </div>
         </section>
   {{end}}
 {{end}}
@@ -96,13 +99,13 @@
 {{if .Has_card}}
             <a href="#cc-form" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
             Update card
-            <img class="ml-3 mb-2" style="height: 1.5rem" src="/mcvs_acc_hrz.svg">
+            <img class="ml-1 mb-1" style="height: 1.5rem" src="/mcvs_acc_hrz.svg">
           </h4>
           <script src="https://js.stripe.com/v3/"></script>
           <form action="/member/billing" method="post" id="cc-form" class="collapse px-2 px-sm-3">
 {{else}}
             Register card
-            <img class="ml-3 mb-2" style="height: 1.5rem" src="/mcvs_acc_hrz.svg">
+            <img class="ml-1 mb-1" style="height: 1.5rem" src="/mcvs_acc_hrz.svg">
           </h4>
           <script src="https://js.stripe.com/v3/"></script>
           <form action="/member/billing" method="post" id="cc-form" class="collapse show px-2 px-sm-3">
@@ -199,22 +202,14 @@
   {{end}}
             <fieldset class="mb-1"{{if or (not .Member.Agreed_to_terms) (not .Has_card)}} disabled{{end}}>
               <label class="custom-control custom-radio">
-  {{with $ms}}
-                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if eq (Plan_identifier .ID) "regular"}} checked{{end}}>
-  {{else}}
-                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not .Member.Student}} checked{{end}}>
-  {{end}}
+                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if or (eq .Membership_rate "regular") (and (not $ms) (not .Member.Student))}} checked{{end}}>
                 <span class="custom-control-indicator"></span>
   {{with index .Plans "membership-regular"}}
                 <span class="custom-control-description"><b>Regular</b> ({{fmt_money .Amount}}/{{Plan_interval .}})</span>
   {{end}}
               </label>
               <label class="custom-control custom-radio">
-  {{with $ms}}
-                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if eq (Plan_identifier .ID) "student"}} checked{{end}}>
-  {{else}}
-                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if .Member.Student}} checked{{end}}>
-  {{end}}
+                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if or (eq .Membership_rate "student") (and (not $ms) .Member.Student)}} checked{{end}}>
                 <span class="custom-control-indicator"></span>
   {{with index .Plans "membership-student"}}
                 <span class="custom-control-description"><b>Student</b> ({{fmt_money .Amount}}/{{Plan_interval .}})</span>
@@ -228,12 +223,8 @@
               </label>
   {{end}}
             </fieldset>
-  {{if $ms}}
-    {{if eq (Plan_identifier $ms.ID) "student"}}
+  {{if eq .Membership_rate "student"}}
             <fieldset id="student" class="mt-2 collapse show">
-    {{else}}
-            <fieldset id="student" class="mt-2 collapse">
-    {{end}}
   {{else if .Member.Student}}
             <fieldset id="student" class="mt-2 collapse show">
   {{else}}

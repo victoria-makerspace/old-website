@@ -17,7 +17,7 @@
             <span class="col col-sm-4 font-weight-bold">Type:</span>
             <div class="col">
 {{with $ms}}
-              {{.Plan.Name}}
+              <span class="text-capitalize">{{Plan_identifier .Plan.ID}}</span>
 {{else}}
   {{with .Get_pending_membership}}
               <p class="alert alert-info mt-2 mb-2">

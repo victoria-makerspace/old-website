@@ -74,7 +74,7 @@ func (m *Member) get_subscriptions() {
 }
 
 func (m *Member) get_subscription_by_interval(interval string) *stripe.Sub {
-	for _, s := range m.customer.Subscriptions {
+	for _, s := range m.Get_customer().Subscriptions {
 		if Subscription_interval(s) == interval {
 			return s
 		}
@@ -90,7 +90,7 @@ func Subscription_interval(s *stripe.Sub) string {
 }
 
 func (m *Member) cancel_subscription(id string) error {
-	if _, ok := m.customer.Subscriptions[id]; !ok {
+	if _, ok := m.Get_customer().Subscriptions[id]; !ok {
 		return fmt.Errorf("Non-existant subscription ID for @%s", m.Username)
 	}
 	_, err := sub.Cancel(id, nil)
@@ -98,7 +98,7 @@ func (m *Member) cancel_subscription(id string) error {
 }
 
 func (m *Member) Get_subscription_from_item(item_id string) (*stripe.Sub, error) {
-	for _, s := range m.customer.Subscriptions {
+	for _, s := range m.Get_customer().Subscriptions {
 		for _, item := range s.Items.Values {
 			if item.ID == item_id {
 				return s, nil
@@ -108,7 +108,7 @@ func (m *Member) Get_subscription_from_item(item_id string) (*stripe.Sub, error)
 	return nil, fmt.Errorf("Non-existant item ID for @%s", m.Username)
 }
 
-func (m *Member) New_subscription_item(plan_id string, quantity int) (*stripe.SubItem, *stripe.Sub, error) {
+func (m *Member) New_subscription_item(plan_id string, quantity uint64) (*stripe.SubItem, *stripe.Sub, error) {
 	p, ok := m.Plans[plan_id]
 	if !ok {
 		return nil, nil, fmt.Errorf("Invalid plan '%s'", plan_id)
@@ -126,19 +126,19 @@ func (m *Member) New_subscription_item(plan_id string, quantity int) (*stripe.Su
 			Customer: m.Customer_id,
 			Items: []*stripe.SubItemsParams{&stripe.SubItemsParams{
 				Plan:     p.ID,
-				Quantity: uint64(quantity)}}}
+				Quantity: quantity}}}
 		s, err := sub.New(sub_params)
 		if err != nil {
 			return nil, nil, err
 		}
-		m.customer.Subscriptions[s.ID] = s
+		m.Get_customer().Subscriptions[s.ID] = s
 		return s.Items.Values[0], s, nil
 	}
-	//TODO: update m.customer.Subscriptions with new subitem
+	//TODO: update m.Get_customer().Subscriptions with new subitem
 	item_params := &stripe.SubItemParams{
 		Sub:      s.ID,
 		Plan:     p.ID,
-		Quantity: uint64(quantity)}
+		Quantity: quantity}
 	subitem, err := subitem.New(item_params)
 	if err != nil {
 		return nil, nil, err
@@ -147,30 +147,25 @@ func (m *Member) New_subscription_item(plan_id string, quantity int) (*stripe.Su
 }
 
 func (m *Member) Cancel_subscription_item(sub_id, item_id string) error {
-	s, ok := m.customer.Subscriptions[sub_id]
+	s, ok := m.Get_customer().Subscriptions[sub_id]
 	if !ok {
 		return fmt.Errorf("Invalid subscription ID for @%s", m.Username)
 	}
-	for _, i := range s.Items.Values {
-		if i.ID != item_id {
+	for i, item := range s.Items.Values {
+		if item.ID != item_id {
 			continue
 		}
-		if len(s.Items.Values) == 1 && s.Plan == nil {
+		if len(s.Items.Values) == 1 {
 			if err := m.cancel_subscription(sub_id); err != nil {
 				return err
 			}
 			delete(m.customer.Subscriptions, sub_id)
+			return nil
 		}
 		if _, err := subitem.Del(item_id, nil); err != nil {
 			return err
 		}
-		for i, item := range m.customer.Subscriptions[sub_id].Items.Values {
-			if item.ID == item_id {
-				m.customer.Subscriptions[sub_id].Items.Values =
-					append(m.customer.Subscriptions[sub_id].Items.Values[:i],
-						m.customer.Subscriptions[sub_id].Items.Values[i+1:]...)
-			}
-		}
+		s.Items.Values = append(s.Items.Values[:i], s.Items.Values[i+1:]...)
 		return nil
 	}
 	return fmt.Errorf("Invalid subscription item ID for @%s", m.Username)
