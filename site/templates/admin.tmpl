@@ -6,13 +6,17 @@
           <a href="/member/{{.Id}}">@{{.Username}}</a>'s membership approved.
         </p>
 {{end}}
-        <h5 class="text-right">
+        <div class="float-right">
           <a class="btn btn-secondary" href="https://dashboard.stripe.com" target="_blank">
             Stripe dashboard
             <span class="title-link"></span>
           </a>
           <a class="btn btn-secondary" href="/admin/list/approved">List memberships</a>
-        </h5>
+        </div>
+        <h4 class="my-2">
+          Administrator panel
+        </h4>
+        <hr>
 {{with .Get_all_pending_subscriptions}}
         <h4>
           <a href="#pending-subscriptions" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>

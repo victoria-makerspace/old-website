@@ -10,7 +10,15 @@
           <span class="text-muted">Last seen</span>
           {{fmt_time .Last_seen}}
         </h6>
-        <h4>Membership</h4>
+  {{if $ms}}
+        <a class="btn btn-secondary float-right" target="_blank" href="https://dashboard.stripe.com/subscriptions/{{(.Get_subscription_from_item $ms.ID).ID}}">
+          Subscription
+          <span class="title-link"></span>
+        </a>
+  {{end}}
+        <h4 class="pt-2">
+          Membership
+        </h4>
         <form action="/admin/account/{{.Id}}" method="post" class="mx-2 mb-3">
           <div class="mb-2 row">
             <span class="col col-sm-4 font-weight-bold">Type:</span>
@@ -85,13 +93,8 @@
             </div>
           </div>
   {{end}}
-  {{if $ms}}
-          <a target="_blank" href="https://dashboard.stripe.com/subscriptions/{{(.Get_subscription_from_item $ms.ID).ID}}">
-            Subscription administration
-            <span class="glyphicons glyphicons-link" style="font-size: 1rem;"></span>
-          </a>
-  {{end}}
         </form>
+        <hr>
         <h4>Account information</h4>
         <div class="mx-2">
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.registered_error}} has-danger{{end}}">

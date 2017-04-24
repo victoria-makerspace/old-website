@@ -27,7 +27,7 @@ func (p *page) must_be_admin() bool {
 }
 
 func admin_handler(p *page) {
-	p.Title = "Admin panel"
+	p.Title = "Administrator panel"
 	if !p.must_be_admin() {
 		return
 	}
@@ -108,6 +108,7 @@ func admin_list_handler(p *page) {
 		if p.URL.Path != list.Path {
 			continue
 		}
+		p.Title = "Admin: " + list.Title
 		p.Data["list"] = list
 		return
 	}
@@ -130,7 +131,7 @@ func manage_account_handler(p *page) {
 		p.http_error(404)
 		return
 	}
-	p.Title = "Admin panel - @" + m.Username
+	p.Title = "Admin: @" + m.Username
 	p.Data["member"] = m
 	if p.PostFormValue("approve-membership") != "" {
 		member_id, err := strconv.Atoi(p.PostFormValue("approve-membership"))
