@@ -14,7 +14,6 @@ Site:
             - use both private-messages and private-messages-unread endpoints
         - Only attempt changing custom groups, not automatic
         - On username change, ensure no other Talk users have the same username
-            - Call /talk/u/check_username.json
     - Rewrite schema and packages to make clear distinction between "member" and
         "user" (this will be a pretty tedious re-factor...)
     - Admin panel:
@@ -26,16 +25,27 @@ Site:
         - Deactivate accounts (also in Talk)
         - Force e-mail through Talk API on system/admin notices
         - Session & activity log (IP address?)
-        - Mass password-reset
         - Change plan fees
         - Set customer credit
         - Send admins notice on failed payments/cancelled subscription
         - Failed payment list in admin panel and member billing page
+        - /admin/list select multiple users for updates
+            - password reset
+            - approve free membership
+            - link corporate account
+            - cancel membership
+        - /admin/storage
+            - require approval
+            - cancel lease
+            - set unavailable
+            - update notice
+            - add/remove number
+            - set quantity per number
+            - set price/interval per plan
+            - re-order waitlist
     - Storage:
         - Waitlist
-        - Admin page for management (pricing, numbers) and setting availability/
-            notices
-        - Require approval flag
+        - view waitlist position
     - Member search
     - Delete user: cascade through schema, and de-associate & deactivate/delete
         talk account
