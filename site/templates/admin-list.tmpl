@@ -35,10 +35,11 @@
         <table class="table table-responsive table-hover text-nowrap member-list">
           <thead>
             <tr>
+              <th></th>
   {{with $list.Group}}
     {{if eq . "New"}}
               <th class="w-100 py-1">
-                <form action="/member/list/new" method="get" class="d-flex">
+                <form action="/admin/list/new" method="get" class="d-flex">
                   <div class="input-group" style="width: inherit">
                     <span class="input-group-btn">
                       <button type="submit" class="btn btn-sm btn-secondary">Limit</button>
@@ -66,18 +67,23 @@
   {{range .}}
             <tr{{if eq .Id $.Member.Id}} class="table-info"{{end}}>
               <td>
-                <a href="/member/{{.Id}}" class="member-icon">
-                  {{with .Avatar_url 48}}
-                  <img src="{{.}}">
-                  {{else}}
-                  <div class="glyphicons glyphicons-user"></div>
-                  {{end}}
-                </a>
-                <div class="flex-column mx-3">
-                  <a href="/member/{{.Id}}" class="d-block">
-                    @{{.Username}}
+                <input type="checkbox" name="member" value="{{.Id}}">
+              </td>
+              <td>
+                <div class="d-flex">
+                  <a href="/member/{{.Id}}" class="member-icon">
+                    {{with .Avatar_url 48}}
+                    <img src="{{.}}">
+                    {{else}}
+                    <div class="glyphicons glyphicons-user"></div>
+                    {{end}}
                   </a>
-                  <span class="small">{{.Name}}</span>
+                  <div class="flex-column mx-3">
+                    <a href="/member/{{.Id}}" class="d-block">
+                      @{{.Username}}
+                    </a>
+                    <span class="small">{{.Name}}</span>
+                  </div>
                 </div>
               </td>
     {{if eq $list.Group "Active"}}

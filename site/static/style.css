@@ -152,8 +152,8 @@ img.member-icon-large,
 .member-list-heading ~ .container {
     padding-top: 7rem;
 }
-.member-list td:first-child {
-    display: flex;
+.member-list td {
+    vertical-align: middle;
 }
 .navbar .member-icon {
     position: absolute;
