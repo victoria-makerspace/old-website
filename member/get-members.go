@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
+	"github.com/stripe/stripe-go"
 	"log"
 	"sort"
 )
@@ -183,8 +184,7 @@ func (ms *Members) List_new_members(limit int) []*Member {
 }
 
 // Ordered by membership approval date
-func (ms *Members) List_members_with_memberships() []*Member {
-	subs := ms.List_all_memberships()
+func (ms *Members) order_members_by_customer_subs(subs map[string]*stripe.Sub) []*Member {
 	customer_ids := make([]string, 0, len(subs))
 	for c, _ := range subs {
 		customer_ids = append(customer_ids, c)
@@ -205,4 +205,12 @@ func (ms *Members) List_members_with_memberships() []*Member {
 	}
 	return ms.list_members_by_query(less, "WHERE stripe_customer_id = ANY($1)",
 		pq.StringArray(customer_ids))
+}
+
+func (ms *Members) List_members_with_memberships() []*Member {
+	return ms.order_members_by_customer_subs(ms.List_all_memberships())
+}
+
+func (ms *Members) List_members_with_membership(plan_id string) []*Member {
+	return ms.order_members_by_customer_subs(ms.List_memberships(plan_id))
 }

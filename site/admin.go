@@ -102,6 +102,18 @@ func admin_list_handler(p *page) {
 			}},
 		member_list{"/admin/list/approved", "All memberships", "Approved",
 			p.List_members_with_memberships},
+		member_list{"/admin/list/approved/regular", "Regular memberships",
+			"Approved (regular)", func() []*member.Member {
+				return p.List_members_with_membership("membership-regular")
+			}},
+		member_list{"/admin/list/approved/student", "Student memberships",
+			"Approved (student)", func() []*member.Member {
+				return p.List_members_with_membership("membership-student")
+			}},
+		member_list{"/admin/list/approved/free", "Free memberships",
+			"Approved (free)", func() []*member.Member {
+				return p.List_members_with_membership("membership-free")
+			}},
 	}
 	p.Data["lists"] = lists
 	for _, list := range lists {

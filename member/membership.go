@@ -101,12 +101,26 @@ func (ms *Members) List_all_memberships() map[string]*stripe.Sub {
 		if Plan_category(p.ID) != "membership" {
 			continue
 		}
-		params := &stripe.SubListParams{Plan: p.ID}
-		i := sub.List(params)
+		i := sub.List(&stripe.SubListParams{Plan: p.ID})
 		for i.Next() {
 			s := i.Sub()
 			subs[s.Customer.ID] = s
 		}
+	}
+	return subs
+}
+
+// Indexed by customer ID
+func (ms *Members) List_memberships(plan_id string) map[string]*stripe.Sub {
+	subs := make(map[string]*stripe.Sub)
+	p, ok := ms.Plans[plan_id]
+	if !ok || Plan_category(p.ID) != "membership" {
+		log.Panic("Invalid membership plan")
+	}
+	i := sub.List(&stripe.SubListParams{Plan: p.ID})
+	for i.Next() {
+		s := i.Sub()
+		subs[s.Customer.ID] = s
 	}
 	return subs
 }
