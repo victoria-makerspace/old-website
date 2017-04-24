@@ -1,4 +1,5 @@
 {{$ms := .Get_membership}}
+{{$card := .Get_card}}
 {{if $ms}}
   <div class="modal fade" id="cancel-membership" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -68,7 +69,7 @@
                   <td>{{.Plan.Name}}</td>
                   <td>{{fmt_money (mul .Quantity .Plan.Amount)}}</td>
         {{if eq $i 0}}
-                  <td rowspan="{{len $sub.Items.Values}}" class="align-middle px-2">
+                  <td rowspan="{{len $sub.Items.Values}}" class="align-middle px-2" {{if ne (len $sub.Items.Values) 1}}style="background-color: white"{{end}}>
                     {{(timestamp $sub.PeriodStart).Format "Jan 02"}}
                     &ndash;
                     {{(timestamp $sub.PeriodEnd).Format "Jan 02"}}
@@ -94,21 +95,37 @@
         </section>
   {{end}}
 {{end}}
-        <section>
+        <section id="register-cc">
           <h4>
-{{if .Has_card}}
+{{if or (not $card) .Data.card_error}}
+            <a href="#cc-form" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
+{{else}}
             <a href="#cc-form" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
+{{end}}
+{{if $card}}
             Update card
-            <img class="ml-1 mb-1" style="height: 1.5rem" src="/mcvs_acc_hrz.svg">
-          </h4>
-          <script src="https://js.stripe.com/v3/"></script>
-          <form action="/member/billing" method="post" id="cc-form" class="collapse px-2 px-sm-3">
 {{else}}
             Register card
+{{end}}
             <img class="ml-1 mb-1" style="height: 1.5rem" src="/mcvs_acc_hrz.svg">
           </h4>
           <script src="https://js.stripe.com/v3/"></script>
+{{if or (not $card) .Data.card_error}}
           <form action="/member/billing" method="post" id="cc-form" class="collapse show px-2 px-sm-3">
+{{else}}
+          <form action="/member/billing" method="post" id="cc-form" class="collapse px-2 px-sm-3">
+{{end}}
+{{with $card}}
+            <dl class="row px-2 mb-2">
+              <dt class="col-6 col-sm-3">Number:</strong>
+              <dd class="col-6 col-sm-9">
+                <span class="initialism">{{.Brand}}</span> x-{{.LastFour}}
+              </dd>
+              <dt class="col-6 col-sm-3">Expiration:</dt>
+              <dd class="col-6 col-sm-9">{{.Month}}/{{.Year}}</dd>
+              <dt class="col-6 col-sm-3">Postal code:</dt>
+              <dd class="col-6 col-sm-9">{{.Zip}}</dd>
+            </dl>
 {{end}}
             <div class="row">
               <div class="col-sm-8 form-group">
@@ -116,7 +133,7 @@
                 <div class="text-danger" id="card-errors">{{.Data.card_error}}</div>
               </div>
               <div class="col-sm-4">
-                <button type="submit" class="btn btn-primary">Register card</button>
+                <button type="submit" class="btn btn-primary">Register</button>
               </div>
             </div>
           </form>
@@ -200,7 +217,7 @@
               Before you can become a member, you should attend an open-house.  Open-house nights are on the 2nd and 4th Tuesday of each month, from 7 to 9pm.
             </p>
   {{end}}
-            <fieldset class="mb-1"{{if or (not .Member.Agreed_to_terms) (not .Has_card)}} disabled{{end}}>
+            <fieldset class="mb-1"{{if or (not .Member.Agreed_to_terms) (not .Get_payment_source)}} disabled{{end}}>
               <label class="custom-control custom-radio">
                 <input type="radio" name="rate" class="custom-control-input" value="regular"{{if or (eq .Membership_rate "regular") (and (not $ms) (not .Member.Student))}} checked{{end}}>
                 <span class="custom-control-indicator"></span>
@@ -252,16 +269,16 @@
             </fieldset>
             <div class="d-inline-flex mt-2">
   {{if $ms}}
-              <button type="submit" name="register-membership" class="btn btn-primary"{{if not .Has_card}} disabled{{end}}>Update</button>
+              <button type="submit" name="register-membership" class="btn btn-primary"{{if not .Get_payment_source}} disabled{{end}}>Update</button>
               <button type="button" data-toggle="modal" data-target="#cancel-membership" class="ml-1 btn btn-danger">Cancel</button>
   {{else}}
-              <button type="submit" name="register-membership" class="btn btn-primary"{{if or (not .Member.Agreed_to_terms) (not .Has_card)}} disabled{{end}}>Register</button>
+              <button type="submit" name="register-membership" class="btn btn-primary"{{if or (not .Member.Agreed_to_terms) (not .Get_payment_source)}} disabled{{end}}>Register</button>
   {{end}}
   {{if not .Member.Agreed_to_terms}}
               <p class="alert alert-warning ml-3 mb-0 py-2">
                 You must agree to the <a href="/terms">Terms & Conditions</a> before requesting a membership.
               </p>
-  {{else if not .Has_card}}
+  {{else if not .Get_payment_source}}
               <p class="alert alert-warning ml-3 mb-0 py-2">You must register a credit card before membership registration.</p>
   {{end}}
   {{with .Data.membership_registration_error}}

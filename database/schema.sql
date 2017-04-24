@@ -70,6 +70,7 @@ CREATE TABLE sent_emails (
 );
 CREATE TABLE storage (
 	number integer NOT NULL,
+	require_approval boolean NOT NULL DEFAULT false,
 	plan_id text NOT NULL,
 	available boolean NOT NULL DEFAULT true,
 	-- For variable-size storage, <quantity> defines the multiplication factor

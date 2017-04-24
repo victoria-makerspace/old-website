@@ -4,7 +4,7 @@
         <p class="alert alert-warning">
           The storage waitlist is not currently implemented.  Please <span class="text-nowrap">e-mail</span> <a href="mailto:storage@makerspace.ca">storage@makerspace.ca</a> for information about storage availabilities.
         </p>
-{{if not .Has_card}}
+{{if not .Get_payment_source}}
         <p class="alert alert-warning">
           You must <a href="/member/billing">register</a> a credit card before leasing available storage.
         </p>
@@ -51,7 +51,7 @@
     {{if not .Available}}
                     <small>Unavailable</small>
     {{else if not .Member}}
-      {{if $.Has_card}}
+      {{if $.Get_payment_source}}
                     <form method="post" action="/member/storage">
                       <input type="hidden" name="register-storage-plan" value="{{.Plan.ID}}">
                       <button type="submit" name="register-storage-number" value="{{.Number}}" class="btn btn-sm btn-info">Available</button>

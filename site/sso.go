@@ -17,7 +17,7 @@ func (p *page) must_authenticate() bool {
 	if p.Session == nil {
 		p.tmpl = handlers["sso"].Template
 		p.Title = "Sign-in"
-		p.Status = 403
+		p.Status = 401
 		p.Data["return_path"] = p.URL.String()
 		return false
 	}

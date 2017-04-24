@@ -8,6 +8,7 @@ import (
 	"sort"
 )
 
+//TODO: return slice, map doesn't preserve ordering
 func (ms *Members) get_members_by_query(where_cond string, values ...interface{}) map[int]*Member {
 	members := make(map[int]*Member)
 	rows, err := ms.Query(
@@ -78,6 +79,8 @@ func (ms *Members) get_members_by_query(where_cond string, values ...interface{}
 	return members
 }
 
+//TODO: make all methods "List_members_by", with slice argument
+
 func (ms *Members) Get_member_by_id(id int) *Member {
 	query := "WHERE m.id = $1"
 	for _, m := range ms.get_members_by_query(query, id) {
@@ -111,9 +114,9 @@ func (ms *Members) Get_member_by_customer_id(customer_id string) *Member {
 	return nil
 }
 
-func (ms *Members) Get_members_by_name(name string) map[int]*Member {
-	query := "WHERE m.name = $1"
-	return ms.get_members_by_query(query, name)
+func (ms *Members) List_members_by_name(names []string) map[int]*Member {
+	query := "WHERE m.name IN $1"
+	return ms.get_members_by_query(query, names)
 }
 
 type member_list struct {
@@ -177,4 +180,29 @@ func (ms *Members) List_new_members(limit int) []*Member {
 	query := "ORDER BY registered DESC " +
 		"LIMIT " + fmt.Sprint(limit)
 	return ms.list_members_by_query(less, query)
+}
+
+// Ordered by membership approval date
+func (ms *Members) List_members_with_memberships() []*Member {
+	subs := ms.List_all_memberships()
+	customer_ids := make([]string, 0, len(subs))
+	for c, _ := range subs {
+		customer_ids = append(customer_ids, c)
+	}
+	less := func(m []*Member) func(i, j int) bool {
+		return func(i, j int) bool {
+			si, iok := subs[m[i].Customer_id]
+			sj, jok := subs[m[j].Customer_id]
+			if iok && !jok {
+				return true
+			} else if !iok && jok {
+				return false
+			} else if !iok && !jok {
+				return i < j
+			}
+			return si.Created > sj.Created
+		}
+	}
+	return ms.list_members_by_query(less, "WHERE stripe_customer_id = ANY($1)",
+		pq.StringArray(customer_ids))
 }

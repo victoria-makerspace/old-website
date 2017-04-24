@@ -11,6 +11,8 @@ import (
 
 func init() {
 	init_handler("admin", admin_handler, "/admin")
+	init_handler("admin-list", admin_list_handler, "/admin/list",
+		"/admin/list/")
 	init_handler("admin-manage", manage_account_handler, "/admin/account/")
 }
 
@@ -72,6 +74,44 @@ func admin_handler(p *page) {
 	} else if p.PostFormValue("member-upload") != "" {
 		member_upload_handler(p)
 	}
+}
+
+func admin_list_handler(p *page) {
+	if !p.must_be_admin() {
+		return
+	}
+	type member_list struct{
+		Path string
+		Title string
+		Group string
+		Members func() []*member.Member
+	}
+	lists := []member_list{
+		member_list{"/admin/list", "All members", "All", p.List_members},
+		member_list{"/admin/list/active", "Active members", "Active",
+			p.List_active_members},
+		member_list{"/admin/list/new", "New members", "New",
+			func() []*member.Member {
+				limit := 20
+				if v := p.FormValue("limit"); v != "" {
+					if lim, err := strconv.Atoi(v); err == nil {
+						limit = lim
+					}
+				}
+				return p.List_new_members(limit)
+			}},
+		member_list{"/admin/list/approved", "All memberships", "Approved",
+			p.List_members_with_memberships},
+	}
+	p.Data["lists"] = lists
+	for _, list := range lists {
+		if p.URL.Path != list.Path {
+			continue
+		}
+		p.Data["list"] = list
+		return
+	}
+	p.http_error(404)
 }
 
 var account_path_rexp = regexp.MustCompile(`^/admin/account/[0-9]+$`)

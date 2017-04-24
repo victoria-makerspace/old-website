@@ -16,7 +16,7 @@ func storage_handler(p *page) {
 		return
 	}
 	if plan := p.PostFormValue("register-storage-plan"); plan != "" {
-		if !p.Has_card() {
+		if p.Get_payment_source() == nil {
 			p.http_error(403)
 			return
 		}

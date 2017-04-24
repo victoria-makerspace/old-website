@@ -1,28 +1,19 @@
+{{$list := .Data.list}}
+{{$members := (call $list.Members)}}
   <div class="member-list-heading fixed-top">
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-10 col-xl-8">
           <h4 class="dropdown">
             <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-{{with .Data.member_group}}
-  {{if eq . "all"}}
-              All
-  {{else if eq . "active"}}
-              Active
-  {{else if eq . "new"}}
-              New
-  {{end}}
+              {{$list.Group}}
             </button>
             <div class="dropdown-menu">
-              <a class="dropdown-item{{if eq . "all"}} active{{end}}" href="/member/list">All</a>
-              <a class="dropdown-item{{if eq . "active"}} active{{end}}" href="/member/list/active">Active</a>
-              <a class="dropdown-item{{if eq . "new"}} active{{end}}" href="/member/list/new">New</a>
+{{range .Data.lists}}
+              <a class="dropdown-item{{if eq $list.Group .Group}} active{{end}}" href="{{.Path}}">{{.Group}}</a>
 {{end}}
             </div>
             Members
-{{if $.Admin}}
-            <a href="/admin/list" class="glyphicons glyphicons-wrench float-right p-2"></a>
-{{end}}
           </h4>
         </div>
       </div>
@@ -31,44 +22,49 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-lg-10 col-xl-8">
-{{if ne .Data.member_group "new"}}
-        <span class="text-muted">
-          {{len .Data.member_list}}
-  {{if ne .Data.member_group "all"}}
-          {{.Data.member_group}}
+{{if ne $list.Group "New"}}
+        <span class="text-muted text-lowercase">
+          {{len $members}}
+  {{if ne $list.Group "All"}}
+          {{$list.Group}}
   {{end}}
           members
         </span>
 {{end}}
-{{with .Data.member_list}}
+{{with $members}}
         <table class="table table-responsive table-hover text-nowrap member-list">
           <thead>
             <tr>
-  {{with $.Data.member_group}}
-    {{if eq . "new"}}
+  {{with $list.Group}}
+    {{if eq . "New"}}
               <th class="w-100 py-1">
                 <form action="/member/list/new" method="get" class="d-flex">
                   <div class="input-group" style="width: inherit">
                     <span class="input-group-btn">
                       <button type="submit" class="btn btn-sm btn-secondary">Limit</button>
                     </span>
-                    <input type="number" name="limit" class="form-control" value="{{len $.Data.member_list}}" style="width: 4rem">
+                    <input type="number" name="limit" class="form-control" value="{{len $members}}" style="width: 4rem">
                   </div>
                 </form>
               </th>
     {{else}}
               <th class="w-100"></th>
     {{end}}
-    {{if eq . "active"}}
+    {{if eq . "Active"}}
               <th>Last seen</th>
+    {{end}}
+    {{if eq . "Approved"}}
+              <th>Membership</th>
+              <th>Approved on</th>
     {{end}}
   {{end}}
               <th>Registered</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
   {{range .}}
-            <tr{{if $.Session}}{{if eq .Id $.Member.Id}} class="table-info"{{end}}{{end}}>
+            <tr{{if eq .Id $.Member.Id}} class="table-info"{{end}}>
               <td>
                 <a href="/member/{{.Id}}" class="member-icon">
                   {{with .Avatar_url 48}}
@@ -81,23 +77,28 @@
                   <a href="/member/{{.Id}}" class="d-block">
                     @{{.Username}}
                   </a>
-    {{if $.Session}}
                   <span class="small">{{.Name}}</span>
-    {{end}}
                 </div>
               </td>
-    {{if eq $.Data.member_group "active"}}
+    {{if eq $list.Group "Active"}}
               <td>
                 <small class="text-muted">
                   {{fmt_time .Last_seen}}
                 </small>
               </td>
     {{end}}
-    {{if eq $.Data.member_group "new"}}
+    {{if eq $list.Group "Approved"}}
+              <td class="text-capitalize">{{.Membership_rate}}</td>
+              <td>{{fmt_time (timestamp .Get_membership.Created)}}</td>
+    {{end}}
+    {{if eq $list.Group "New"}}
               <td>{{fmt_time .Registered}}</td>
     {{else}}
               <td>{{.Registered.Format "Jan 02, 2006"}}</td>
     {{end}}
+              <td>
+                <a href="/admin/account/{{.Id}}" class="glyphicons glyphicons-wrench"></a>
+              </td>
             </tr>
   {{end}}
           </tbody>

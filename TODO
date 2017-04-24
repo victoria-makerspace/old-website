@@ -35,6 +35,7 @@ Site:
         - Waitlist
         - Admin page for management (pricing, numbers) and setting availability/
             notices
+        - Require approval flag
     - Member search
     - Delete user: cascade through schema, and de-associate & deactivate/delete
         talk account

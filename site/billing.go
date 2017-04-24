@@ -16,7 +16,10 @@ func billing_handler(p *page) {
 		return
 	}
 	if token := p.PostFormValue("stripeToken"); token != "" {
-		p.Data["card_error"] = p.Update_customer(token, nil)
+		//p.Data["card_error"] = p.Update_customer(token, nil)
+		if err := p.Update_customer(token); err != nil {
+			p.http_error(500)
+		}
 		return
 	}
 	if subitem_id := p.PostFormValue("cancel-membership"); subitem_id != "" {

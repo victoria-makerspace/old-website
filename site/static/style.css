@@ -299,11 +299,14 @@ a:focus .title-link::after {
     vertical-align: baseline;
     font-family: "Glyphicons Regular";
 }
-.dropdown-chevron::before {
+.dropdown-chevron::before, *:target .dropdown-chevron.collapsed::before {
     content: "\E601";
 }
 .dropdown-chevron.collapsed::before {
     content: "\E602";
+}
+*:target .collapse {
+    display: inherit;
 }
 .col-form-label {
     font-weight: bold;

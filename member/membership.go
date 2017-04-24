@@ -3,6 +3,7 @@ package member
 import (
 	"fmt"
 	"github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/sub"
 	"github.com/stripe/stripe-go/subitem"
 	"log"
 	"strings"
@@ -91,4 +92,21 @@ func (m *Member) Cancel_membership() {
 	if m.Talk_user() != nil {
 		m.Talk_user().Remove_from_group("Members")
 	}
+}
+
+// Indexed by customer ID
+func (ms *Members) List_all_memberships() map[string]*stripe.Sub {
+	subs := make(map[string]*stripe.Sub)
+	for _, p := range ms.Plans {
+		if Plan_category(p.ID) != "membership" {
+			continue
+		}
+		params := &stripe.SubListParams{Plan: p.ID}
+		i := sub.List(params)
+		for i.Next() {
+			s := i.Sub()
+			subs[s.Customer.ID] = s
+		}
+	}
+	return subs
 }

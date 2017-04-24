@@ -21,7 +21,7 @@ func (m *Member) Request_subscription(plan string) error {
 	if !ok {
 		return fmt.Errorf("Invalid plan identifier: " + plan)
 	}
-	if !m.Has_card() && p.Amount != 0 {
+	if m.Get_payment_source() == nil && p.Amount != 0 {
 		return fmt.Errorf("No valid payment source")
 	}
 	if _, err := m.Exec(
@@ -113,10 +113,10 @@ func (m *Member) New_subscription_item(plan_id string, quantity uint64) (*stripe
 	if !ok {
 		return nil, nil, fmt.Errorf("Invalid plan '%s'", plan_id)
 	}
-	if !m.Has_card() {
+	if m.Get_payment_source() == nil {
 		if p.Amount != 0 {
 			return nil, nil, fmt.Errorf("No valid payment source")
-		} else if err := m.Update_customer("", nil); err != nil {
+		} else if err := m.Update_customer(""); err != nil {
 			return nil, nil, err
 		}
 	}

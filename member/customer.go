@@ -1,10 +1,12 @@
 package member
 
 import (
-	"fmt"
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/customer"
+	"github.com/stripe/stripe-go/card"
 	"log"
+	"fmt"
+	"strings"
 )
 
 type Customer struct {
@@ -13,6 +15,8 @@ type Customer struct {
 	Subscriptions map[string]*stripe.Sub
 }
 
+//TODO: be explicit throughout member package about calls to Get_customer(),
+//	as they involve a cross-origin request
 func (m *Member) Get_customer() *Customer {
 	if m.Customer_id != "" && m.customer == nil {
 		c, err := customer.Get(m.Customer_id, nil)
@@ -27,26 +31,19 @@ func (m *Member) Get_customer() *Customer {
 	return m.customer
 }
 
-func (m *Member) Update_customer(token string, params *stripe.CustomerParams) error {
-	if params == nil {
-		params = &stripe.CustomerParams{}
-	}
+func (m *Member) Update_customer(token string) error {
+	params := &stripe.CustomerParams{
+		Desc: m.Name + "'s account",
+		Email: m.Email}
+	params.Meta = map[string]string{"member_id": fmt.Sprint(m.Id)}
 	if token != "" {
 		params.SetSource(token)
 	}
-	params.Desc = m.Name + "'s account"
-	params.Email = m.Email
-	var err error
-	var cust *stripe.Customer
 	if m.Customer_id == "" {
-		cust, err = customer.New(params)
-	} else {
-		cust, err = customer.Update(m.Customer_id, params)
-	}
-	if err != nil {
-		return fmt.Errorf(err.(*stripe.Error).Msg)
-	}
-	if m.Customer_id == "" {
+		cust, err := customer.New(params)
+		if err != nil {
+			return err
+		}
 		if _, err := m.Exec(
 			"UPDATE member "+
 				"SET stripe_customer_id = $2 "+
@@ -55,16 +52,30 @@ func (m *Member) Update_customer(token string, params *stripe.CustomerParams) er
 		}
 		m.Customer_id = cust.ID
 		m.customer = &Customer{Customer: cust}
-	} else {
-		m.customer.Customer = cust
-		m.get_subscriptions()
+		return nil
+	}
+	cust, err := customer.Update(m.Customer_id, params)
+	if err != nil {
+		return err
+	}
+	m.customer = &Customer{Customer: cust}
+	m.get_subscriptions()
+	return nil
+}
+
+func (m *Member) Get_payment_source() *stripe.PaymentSource {
+	if c := m.Get_customer(); c != nil {
+		return c.DefaultSource
 	}
 	return nil
 }
 
-func (m *Member) Has_card() bool {
-	if c := m.Get_customer(); c != nil && c.DefaultSource != nil {
-		return true
+func (m *Member) Get_card() *stripe.Card {
+	if cust := m.Get_customer(); cust != nil && cust.DefaultSource != nil &&
+		strings.HasPrefix(cust.DefaultSource.ID, "card") {
+		c, _ := card.Get(cust.DefaultSource.ID, &stripe.CardParams{
+			Customer: cust.ID})
+		return c
 	}
-	return false
+	return nil
 }

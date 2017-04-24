@@ -97,9 +97,9 @@ func member_json_handler(p *page) {
 				p.Data["error"] = err.Error()
 				return
 			}
-			for _, m := range p.Get_members_by_name(name) {
-				populate_json(m)
-			}
+		}
+		for _, m := range p.List_members_by_name(names) {
+			populate_json(m)
 		}
 	}
 	p.Data = ms

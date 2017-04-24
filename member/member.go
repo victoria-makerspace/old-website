@@ -137,6 +137,7 @@ func (m *Member) Update_name(name string) error {
 		"WHERE id = $2", name, m.Id); err != nil {
 		log.Panic(err)
 	}
+	m.Update_customer("")
 	return m.sync_talk_user()
 }
 
@@ -163,6 +164,7 @@ func (m *Member) Update_email(email string) error {
 		"WHERE id = $2", email, m.Id); err != nil {
 		log.Panic(err)
 	}
+	m.Update_customer("")
 	return m.sync_talk_user()
 }
 
