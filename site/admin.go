@@ -81,16 +81,15 @@ func admin_list_handler(p *page) {
 		return
 	}
 	type member_list struct{
-		Path string
 		Title string
 		Group string
+		Subgroups []member_list
 		Members func() []*member.Member
 	}
 	lists := []member_list{
-		member_list{"/admin/list", "All members", "All", p.List_members},
-		member_list{"/admin/list/active", "Active members", "Active",
-			p.List_active_members},
-		member_list{"/admin/list/new", "New members", "New",
+		member_list{"members", "all", nil, p.List_members},
+		member_list{"active members", "active", nil, p.List_active_members},
+		member_list{"new members", "new", nil,
 			func() []*member.Member {
 				limit := 20
 				if v := p.FormValue("limit"); v != "" {
@@ -100,28 +99,38 @@ func admin_list_handler(p *page) {
 				}
 				return p.List_new_members(limit)
 			}},
-		member_list{"/admin/list/approved", "All memberships", "Approved",
-			p.List_members_with_memberships},
-		member_list{"/admin/list/approved/regular", "Regular memberships",
-			"Approved (regular)", func() []*member.Member {
-				return p.List_members_with_membership("membership-regular")
-			}},
-		member_list{"/admin/list/approved/student", "Student memberships",
-			"Approved (student)", func() []*member.Member {
-				return p.List_members_with_membership("membership-student")
-			}},
-		member_list{"/admin/list/approved/free", "Free memberships",
-			"Approved (free)", func() []*member.Member {
-				return p.List_members_with_membership("membership-free")
-			}},
+		member_list{"memberships", "approved", []member_list{
+			member_list{"regular memberships", "regular", nil,
+				func() []*member.Member {
+					return p.List_members_with_membership("membership-regular")
+				}},
+			member_list{"student memberships", "student", nil,
+				func() []*member.Member {
+					return p.List_members_with_membership("membership-student")
+				}},
+			member_list{"free memberships", "free", nil,
+				func() []*member.Member {
+					return p.List_members_with_membership("membership-free")
+				}},
+			}, p.List_members_with_memberships},
 	}
 	p.Data["lists"] = lists
-	for _, list := range lists {
-		if p.URL.Path != list.Path {
+	for _, l := range lists {
+		path := "/admin/list/" + l.Group
+		for _, ls := range l.Subgroups {
+			subpath := path + "/" + ls.Group
+			if p.URL.Path == subpath {
+				l = ls
+				path = subpath
+				break
+			}
+		}
+		if p.URL.Path != path &&
+			!(p.URL.Path == "/admin/list" && l.Group == "all") {
 			continue
 		}
-		p.Title = "Admin: " + list.Title
-		p.Data["list"] = list
+		p.Title = "Admin: " + l.Title
+		p.Data["list"] = l
 		return
 	}
 	p.http_error(404)

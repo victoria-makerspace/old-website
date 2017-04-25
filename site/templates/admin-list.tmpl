@@ -4,17 +4,31 @@
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-10 col-xl-8">
-          <h4 class="dropdown">
-            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              {{$list.Group}}
-            </button>
-            <div class="dropdown-menu">
-{{range .Data.lists}}
-              <a class="dropdown-item{{if eq $list.Group .Group}} active{{end}}" href="{{.Path}}">{{.Group}}</a>
+          <div class="row no-gutters">
+            <div class="col">
+              <h4 class="dropdown">
+                <button class="btn btn-primary dropdown-toggle text-capitalize" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {{$list.Group}}
+                </button>
+                <div class="dropdown-menu">
+{{range $l := .Data.lists}}
+  {{if $l.Subgroups}}
+                  <div class="dropdown-divider"></div>
+  {{end}}
+                  <a class="text-capitalize dropdown-item{{if eq $list.Group $l.Group}} active{{end}}" href="/admin/list/{{$l.Group}}">
+                    {{$l.Group}}
+                  </a>
+  {{range $s := .Subgroups}}
+                  <a class="text-capitalize dropdown-item{{if eq $list.Group $s.Group}} active{{end}}" href="/admin/list/{{$l.Group}}/{{$s.Group}}">
+                    <span class="pl-2">{{$s.Group}}</span>
+                  </a>
+  {{end}}
 {{end}}
+                </div>
+                Members
+              </h4>
             </div>
-            Members
-          </h4>
+          </div>
         </div>
       </div>
     </div>
@@ -22,22 +36,18 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-lg-10 col-xl-8">
-{{if ne $list.Group "New"}}
-        <span class="text-muted text-lowercase">
+{{if ne $list.Group "new"}}
+        <span class="text-muted">
           {{len $members}}
-  {{if ne $list.Group "All"}}
-          {{$list.Group}}
-  {{end}}
-          members
+          {{$list.Title}}
         </span>
 {{end}}
 {{with $members}}
         <table class="table table-responsive table-hover text-nowrap member-list">
           <thead>
             <tr>
-              <th></th>
   {{with $list.Group}}
-    {{if eq . "New"}}
+    {{if eq . "new"}}
               <th class="w-100 py-1">
                 <form action="/admin/list/new" method="get" class="d-flex">
                   <div class="input-group" style="width: inherit">
@@ -51,10 +61,10 @@
     {{else}}
               <th class="w-100"></th>
     {{end}}
-    {{if eq . "Active"}}
+    {{if eq . "active"}}
               <th>Last seen</th>
     {{end}}
-    {{if eq . "Approved"}}
+    {{if eq . "approved"}}
               <th>Membership</th>
               <th>Approved on</th>
     {{end}}
@@ -66,9 +76,6 @@
           <tbody>
   {{range .}}
             <tr{{if eq .Id $.Member.Id}} class="table-info"{{end}}>
-              <td>
-                <input type="checkbox" name="member" value="{{.Id}}">
-              </td>
               <td>
                 <div class="d-flex">
                   <a href="/member/{{.Id}}" class="member-icon">
@@ -86,18 +93,18 @@
                   </div>
                 </div>
               </td>
-    {{if eq $list.Group "Active"}}
+    {{if eq $list.Group "active"}}
               <td>
                 <small class="text-muted">
                   {{fmt_time .Last_seen}}
                 </small>
               </td>
     {{end}}
-    {{if eq $list.Group "Approved"}}
+    {{if eq $list.Group "approved"}}
               <td class="text-capitalize">{{.Membership_rate}}</td>
               <td>{{fmt_time (timestamp .Get_membership.Created)}}</td>
     {{end}}
-    {{if eq $list.Group "New"}}
+    {{if eq $list.Group "new"}}
               <td>{{fmt_time .Registered}}</td>
     {{else}}
               <td>{{.Registered.Format "Jan 02, 2006"}}</td>
