@@ -28,9 +28,9 @@ $(document).ready(function() {
 
 $("#membership-registration input[name=rate]").change(function() {
     if ($("#student-rate").prop("checked")) {
-        $("#student").addClass("show");
+        $("#student").addClass("show").prop("disabled", false);
         $("#institution").focus();
     } else {
-        $("#student").removeClass("show");
+        $("#student").removeClass("show").prop("disabled", true);
     }
 });
