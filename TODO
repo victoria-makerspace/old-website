@@ -17,6 +17,7 @@ Site:
     - Rewrite schema and packages to make clear distinction between "member" and
         "user" (this will be a pretty tedious re-factor...)
     - Admin panel:
+        - Notify administrator Talk group upon pending approval
         - Modify admin permissions
         - Make automatically sent-out e-mails more explicit and with options
         - Record and list all e-mails sent from server

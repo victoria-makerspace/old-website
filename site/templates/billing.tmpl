@@ -79,6 +79,8 @@
                   <td>
         {{if eq .ID $.Membership_id}}
                       <button type="button" data-toggle="modal" data-target="#cancel-membership" class="btn btn-sm btn-danger">Cancel</button>
+        {{else if eq (Plan_category .Plan.ID) "storage"}}
+                      <a class="btn btn-sm btn-warning" href="/member/storage">Cancel</button>
         {{else}}
                     <form action="/member/billing" method="post">
                       <input type="hidden" name="subscription-id" value="{{$sub.ID}}">

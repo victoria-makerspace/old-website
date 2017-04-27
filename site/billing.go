@@ -94,17 +94,10 @@ func billing_handler(p *page) {
 			return
 		}
 		if member.Plan_category(subitem.Plan.ID) == "storage" {
-			st, err := p.Get_storage_by_item(subitem_id)
-			if err != nil {
-				p.http_error(400)
-				return
-			}
-			plan_id := "storage-" + member.Plan_identifier(st.Plan.ID)
-			if err = p.Cancel_storage_lease(plan_id, st.Number); err != nil {
-				p.Data["cancel_subscription_error"] = err
-				return
-			}
-		} else if err := p.Cancel_subscription_item(s.ID, subitem_id); err != nil {
+			p.http_error(403)
+			return
+		} else if err := p.Cancel_subscription_item(s.ID, subitem_id);
+			err != nil {
 			p.Data["cancel_subscription_error"] = err
 			return
 		}

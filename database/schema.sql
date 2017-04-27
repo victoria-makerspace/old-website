@@ -77,7 +77,7 @@ CREATE TABLE storage (
 	--	given to the subscription to charge a multiple of base plan amount
 	quantity integer NOT NULL DEFAULT 1,
 	subscription_id text,
-	subitem_id text UNIQUE,
+	subitem_id text,
 	PRIMARY KEY (number, plan_id),
 	CHECK (CASE WHEN subscription_id IS NOT NULL
 		THEN subitem_id IS NOT NULL END),

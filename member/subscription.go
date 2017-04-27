@@ -146,6 +146,29 @@ func (m *Member) New_subscription_item(plan_id string, quantity uint64) (*stripe
 	return subitem, s, nil
 }
 
+func (m *Member) Update_subscription_item(sub_id, subitem_id string, quantity uint64) error {
+	if quantity == 0 {
+		return m.Cancel_subscription_item(sub_id, subitem_id)
+	}
+	sub, ok := m.Get_customer().Subscriptions[sub_id]
+	if !ok {
+		return fmt.Errorf("Invalid subscription ID for @%s", m.Username)
+	}
+	params := &stripe.SubItemParams{Quantity: quantity}
+	subitem, err := subitem.Update(subitem_id, params)
+	if err != nil {
+		return err
+	}
+	for i, si := range sub.Items.Values {
+		if si.ID != subitem_id {
+			continue
+		}
+		sub.Items.Values[i] = subitem
+		return nil
+	}
+	return fmt.Errorf("Invalid subscription item ID for @%s", m.Username)
+}
+
 func (m *Member) Cancel_subscription_item(sub_id, item_id string) error {
 	s, ok := m.Get_customer().Subscriptions[sub_id]
 	if !ok {

@@ -61,6 +61,7 @@ var tmpl_funcmap = template.FuncMap{
 	"fmt_money": func(amount uint64) string {
 		return fmt.Sprintf("$%.2f", float64(amount)/100)
 	},
+	"Plan_category": member.Plan_category,
 	"Plan_identifier": member.Plan_identifier,
 	"Plan_interval":   member.Plan_interval,
 }

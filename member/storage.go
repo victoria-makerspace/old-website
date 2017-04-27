@@ -14,6 +14,7 @@ type Storage struct {
 	Quantity  uint64
 	Available bool
 	*stripe.Plan
+	require_approval bool
 	sub_id string
 	subitem_id string
 	*Member
@@ -27,11 +28,16 @@ func (ms *Members) get_storage(plan_id string, number int) (*Storage, error) {
 	s := &Storage{Number: number, Plan: p}
 	var sub_id, subitem_id sql.NullString
 	if err := ms.QueryRow(
-		"SELECT quantity, available, subscription_id, subitem_id "+
-			"FROM storage "+
-			"WHERE plan_id = $1 AND number = $2",
-		plan_id, number).Scan(&s.Quantity, &s.Available, &sub_id, &subitem_id);
-		err != nil {
+		"SELECT"+
+		"	require_approval,"+
+		"	available,"+
+		"	quantity,"+
+		"	subscription_id,"+
+		"	subitem_id "+
+		"FROM storage "+
+		"WHERE plan_id = $1 AND number = $2",
+		plan_id, number).Scan(&s.require_approval, &s.Available, &s.Quantity,
+			&sub_id, &subitem_id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("Invalid storage number for '%s'", p.Name)
 		}
@@ -49,34 +55,6 @@ func (ms *Members) get_storage(plan_id string, number int) (*Storage, error) {
 	return s, nil
 }
 
-func (m *Member) Get_storage_by_item(subitem_id string) (*Storage, error) {
-	s := &Storage{subitem_id: subitem_id}
-	var sub_id sql.NullString
-	var plan_id string
-	if err := m.QueryRow(
-		"SELECT number, plan_id, quantity, available, subscription_id "+
-			"FROM storage "+
-			"WHERE subitem_id = $1",
-		subitem_id).Scan(&s.Number, &plan_id, &s.Quantity, &s.Available, &sub_id);
-		err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("Invalid storage subscription item")
-		}
-		log.Panic(err)
-	}
-	if !sub_id.Valid {
-		log.Panic("Invalid storage subscription ID for subscription item " + subitem_id)
-	}
-	sb, err := sub.Get(sub_id.String, nil)
-	if err != nil {
-		log.Panic(err)
-	}
-	s.Plan = m.Plans[plan_id]
-	s.sub_id = sub_id.String
-	s.Member = m.Get_member_by_customer_id(sb.Customer.ID)
-	return s, nil
-}
-
 func (ms *Members) List_storage_plans() []string {
 	plans := make([]string, 0)
 	for plan_id, p := range ms.Plans {
@@ -88,11 +66,19 @@ func (ms *Members) List_storage_plans() []string {
 	return plans
 }
 
-func (ms *Members) List_storage(plan_id string) []*Storage {
+func (ms *Members) List_storage(plan_id string) ([]*Storage, error) {
+	if p, ok := ms.Plans[plan_id]; !ok {
+		return nil, fmt.Errorf("Invalid plan ID")
+	} else if Plan_category(p.ID) != "storage" {
+		return nil, fmt.Errorf("Invalid storage plan ID")
+	}
 	storage := make([]*Storage, 0)
 	rows, err := ms.Query(
-		"SELECT number, quantity, available, subscription_id "+
-			"FROM storage WHERE plan_id = $1 ORDER BY number ASC", plan_id)
+		"SELECT"+
+		"	number, quantity, require_approval, available, subscription_id, subitem_id  "+
+		"FROM storage "+
+		"WHERE plan_id = $1 "+
+		"ORDER BY number ASC", plan_id)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -100,7 +86,8 @@ func (ms *Members) List_storage(plan_id string) []*Storage {
 	for rows.Next() {
 		var s Storage
 		var sub_id, subitem_id sql.NullString
-		if err = rows.Scan(&s.Number, &s.Quantity, &s.Available, &sub_id); err != nil {
+		if err = rows.Scan(&s.Number, &s.Quantity, &s.require_approval,
+			&s.Available, &sub_id, &subitem_id); err != nil {
 			log.Panic(err)
 		}
 		s.Plan = ms.Plans[plan_id]
@@ -115,40 +102,85 @@ func (ms *Members) List_storage(plan_id string) []*Storage {
 		}
 		storage = append(storage, &s)
 	}
-	return storage
+	return storage, nil
+}
+
+func (m *Member) List_storage_leases_by_plan(plan_id string) ([]*Storage, error) {
+	storage := make([]*Storage, 0)
+	st_numbers, err := m.List_storage(plan_id)
+	if err != nil {
+		return nil, err
+	}
+	for _, st := range st_numbers {
+		if st.Member != nil && st.Member.Id == m.Id {
+			st.Member = m
+			storage = append(storage, st)
+		}
+	}
+	return storage, nil
 }
 
 func (m *Member) New_storage_lease(plan_id string, number int) error {
-	s, err := m.get_storage(plan_id, number)
+	st_numbers, err := m.List_storage_leases_by_plan(plan_id)
 	if err != nil {
 		return err
 	}
-	if s.Member != nil {
+	quantity := uint64(0)
+	var sub_id, subitem_id string
+	for _, st := range st_numbers {
+		sub_id = st.sub_id
+		subitem_id = st.subitem_id
+		quantity += st.Quantity
+	}
+	lease, err := m.get_storage(plan_id, number)
+	if err != nil {
+		return err
+	}
+	if lease.Member != nil {
 		return fmt.Errorf("%s number %d already has an active lease by member "+
-			"@%s", s.Plan.Name, number, s.Member.Username)
+			"@%s", lease.Plan.Name, number, lease.Member.Username)
 	}
-	item, sb, err := m.New_subscription_item(plan_id, s.Quantity)
-	if err != nil {
-		return err
+	quantity += lease.Quantity
+	if len(st_numbers) > 0 {
+		if err := m.Update_subscription_item(sub_id, subitem_id, quantity);
+			err != nil {
+			return err
+		}
+	} else {
+		item, sb, err := m.New_subscription_item(plan_id, lease.Quantity)
+		if err != nil {
+			return err
+		}
+		sub_id = sb.ID
+		subitem_id = item.ID
 	}
 	if _, err = m.Exec(
 		"UPDATE storage "+
 			"SET subscription_id = $3, subitem_id = $4 "+
 			"WHERE plan_id = $1 AND number = $2",
-			plan_id, number, sb.ID, item.ID); err != nil {
+			plan_id, number, sub_id, subitem_id); err != nil {
 		log.Panic(err)
 	}
 	return nil
 }
 
 func (m *Member) Cancel_storage_lease(plan_id string, number int) error {
-	s, err := m.get_storage(plan_id, number)
+	st_numbers, err := m.List_storage_leases_by_plan(plan_id)
 	if err != nil {
 		return err
 	}
-	if s.Member == nil || s.Member.Id != m.Id {
+	var lease *Storage
+	quantity := uint64(0)
+	for _, st := range st_numbers {
+		if st.Number == number {
+			lease = st
+			continue
+		}
+		quantity += st.Quantity
+	}
+	if lease == nil {
 		return fmt.Errorf("%s number %d is not currently leased by @%s",
-			s.Plan.Name, number, m.Id)
+			m.Plans[plan_id].Name, number, m.Id)
 	}
 	if _, err = m.Exec(
 		"UPDATE storage "+
@@ -156,8 +188,6 @@ func (m *Member) Cancel_storage_lease(plan_id string, number int) error {
 			"WHERE plan_id = $1 AND number = $2", plan_id, number); err != nil {
 		log.Panic(err)
 	}
-	if err = m.Cancel_subscription_item(s.sub_id, s.subitem_id); err != nil {
-		return err
-	}
-	return nil
+	//TODO: Update_storage_waitlist
+	return m.Update_subscription_item(lease.sub_id, lease.subitem_id, quantity)
 }
