@@ -120,6 +120,7 @@ func admin_list_handler(p *page) {
 		for _, ls := range l.Subgroups {
 			subpath := path + "/" + ls.Group
 			if p.URL.Path == subpath {
+				p.Data["parent_list"] = l
 				l = ls
 				path = subpath
 				break

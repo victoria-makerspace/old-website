@@ -1,5 +1,6 @@
 {{$list := .Data.list}}
 {{$members := (call $list.Members)}}
+{{$parent := .Data.parent_list}}
   <div class="member-list-heading fixed-top">
     <div class="container">
       <div class="row justify-content-center">
@@ -63,10 +64,13 @@
     {{end}}
     {{if eq . "active"}}
               <th>Last seen</th>
-    {{end}}
-    {{if eq . "approved"}}
+    {{else if eq . "approved"}}
               <th>Membership</th>
               <th>Approved on</th>
+    {{else if $parent}}
+      {{if eq $parent.Group "approved"}}
+              <th>Approved on</th>
+      {{end}}
     {{end}}
   {{end}}
               <th>Registered</th>
@@ -103,6 +107,10 @@
     {{if eq $list.Group "approved"}}
               <td class="text-capitalize">{{.Membership_rate}}</td>
               <td>{{fmt_time (timestamp .Get_membership.Created)}}</td>
+    {{else if $parent}}
+      {{if eq $parent.Group "approved"}}
+              <td>{{fmt_time (timestamp .Get_membership.Created)}}</td>
+      {{end}}
     {{end}}
     {{if eq $list.Group "new"}}
               <td>{{fmt_time .Registered}}</td>
