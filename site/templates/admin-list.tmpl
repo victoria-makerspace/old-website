@@ -5,31 +5,28 @@
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-10 col-xl-8">
-          <div class="row no-gutters">
-            <div class="col">
-              <h4 class="dropdown">
-                <button class="btn btn-primary dropdown-toggle text-capitalize" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  {{$list.Group}}
-                </button>
-                <div class="dropdown-menu">
+          <h4 class="dropdown">
+            <button class="btn btn-primary dropdown-toggle text-capitalize" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {{$list.Group}}
+            </button>
+            <div class="dropdown-menu">
 {{range $l := .Data.lists}}
   {{if $l.Subgroups}}
-                  <div class="dropdown-divider"></div>
+              <div class="dropdown-divider"></div>
   {{end}}
-                  <a class="text-capitalize dropdown-item{{if eq $list.Group $l.Group}} active{{end}}" href="/admin/list/{{$l.Group}}">
-                    {{$l.Group}}
-                  </a>
+              <a class="text-capitalize dropdown-item{{if eq $list.Group $l.Group}} active{{end}}" href="/admin/list/{{$l.Group}}">
+                {{$l.Group}}
+              </a>
   {{range $s := .Subgroups}}
-                  <a class="text-capitalize dropdown-item{{if eq $list.Group $s.Group}} active{{end}}" href="/admin/list/{{$l.Group}}/{{$s.Group}}">
-                    <span class="pl-2">{{$s.Group}}</span>
-                  </a>
+              <a class="text-capitalize dropdown-item{{if eq $list.Group $s.Group}} active{{end}}" href="/admin/list/{{$l.Group}}/{{$s.Group}}">
+                <span class="pl-2">{{$s.Group}}</span>
+              </a>
   {{end}}
 {{end}}
-                </div>
-                Members
-              </h4>
             </div>
-          </div>
+            Members
+            <a href="/member/list" class="float-right p-1">&times;</a>
+          </h4>
         </div>
       </div>
     </div>

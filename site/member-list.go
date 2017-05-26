@@ -10,6 +10,9 @@ func init() {
 }
 
 func member_list_handler(p *page) {
+	if !p.must_authenticate() {
+		return
+	}
 	switch p.URL.Path {
 	default:
 		p.http_error(404)

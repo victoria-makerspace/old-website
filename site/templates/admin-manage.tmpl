@@ -23,8 +23,8 @@
           <div class="mb-2 row">
             <span class="col col-sm-4 font-weight-bold">Type:</span>
             <div class="col text-capitalize">
-  {{with $ms}}
-              <span class="text-capitalize">{{Plan_identifier .Plan.ID}}</span>
+  {{if $ms}}
+              <a href="/admin/list/approved/{{.Membership_rate}}" class="text-capitalize">{{.Membership_rate}}</a>
   {{else}}
               None
   {{end}}

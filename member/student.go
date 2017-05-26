@@ -38,9 +38,8 @@ func (m *Member) Delete_student() {
 		return
 	}
 	m.Student = nil
-	if mp := m.Get_membership(); mp != nil &&
-		mp.Plan.ID == "membership-student" {
-		m.Update_membership("membership-regular")
+	if m.Membership_rate() == "student" {
+		m.Update_membership("regular")
 	}
 	if _, err := m.Exec("DELETE FROM student WHERE member = $1",
 		m.Id); err != nil {

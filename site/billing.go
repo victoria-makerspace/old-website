@@ -32,12 +32,12 @@ func billing_handler(p *page) {
 			p.Data["password_error"] = "Incorrect password"
 			return
 		}
-		//TODO: reason for cancellation: PostFormValue("cancellation_reason")
+		//TODO: reason for cancellation: PostFormValue("cancellation-reason")
 		p.Member.Cancel_membership()
 		p.redirect = "/member/billing"
 	} else if _, ok := p.PostForm["register-membership"]; ok {
 		rate := p.PostFormValue("rate")
-		if rate == "membership-student" &&
+		if rate == "student" &&
 			p.PostFormValue("institution") != "" &&
 			p.PostFormValue("student-email") != "" &&
 			p.PostFormValue("graduation-date") != "" {
@@ -53,9 +53,12 @@ func billing_handler(p *page) {
 				p.Data["membership_registration_error"] = err
 				return
 			}
+			if p.Member.Membership_rate() == "student" {
+				return
+			}
 		}
 		membership := p.Member.Get_membership()
-		if rate == "" || membership != nil && rate == membership.Plan.ID {
+		if rate == "" || rate == p.Member.Membership_rate() {
 			p.Data["membership_registration_error"] = "Already registered for "+
 				membership.Plan.Name
 			return

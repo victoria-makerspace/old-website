@@ -49,7 +49,7 @@ func (a *Member) Approve_membership(m *Member) error {
 	}
 	if m.Get_membership() != nil {
 		a.Cancel_pending_subscription(p)
-		return m.Update_membership(p.Plan_id)
+		return m.Update_membership(p.Plan_id[len("membership-"):])
 	}
 	if m.Talk_user() != nil {
 		m.talk.Add_to_group("Members")
@@ -59,7 +59,7 @@ func (a *Member) Approve_membership(m *Member) error {
 
 func (a *Member) Approve_free_membership(m *Member) error {
 	if m.Get_membership() != nil {
-		return m.Update_membership("membership-free")
+		return m.Update_membership("free")
 	}
 	if p := m.Get_pending_membership(); p != nil {
 		a.Cancel_pending_subscription(p)

@@ -15,15 +15,15 @@ func (m *Member) Request_membership(rate string) error {
 		return fmt.Errorf("Invalid membership rate")
 	}
 	if rate == "student" && m.Student == nil {
-		return fmt.Errorf("Non-students cannot apply for a student membership " +
-			"rate")
+		return fmt.Errorf("Non-students cannot apply for a student membership" +
+			" rate")
 	}
 	if mp := m.Get_membership(); mp != nil {
 		if mp.Plan.ID == p.ID {
 			return fmt.Errorf("Cannot duplicate existing membership")
 		}
 		if mp.Plan.Amount < p.Amount {
-			return m.Update_membership("membership-" + rate)
+			return m.Update_membership(rate)
 		}
 	}
 	return m.Request_subscription("membership-" + rate)
@@ -66,10 +66,10 @@ func (m *Member) Membership_id() string {
 	return ""
 }
 
-func (m *Member) Update_membership(plan_base_id string) error {
-	p, ok := m.Plans[plan_base_id]
+func (m *Member) Update_membership(rate string) error {
+	p, ok := m.Plans["membership-" + rate]
 	if !ok {
-		return fmt.Errorf("Invalid plan '%s'", plan_base_id)
+		return fmt.Errorf("Invalid membership rate '%s'", rate)
 	}
 	mp := m.Get_membership()
 	if mp == nil {
