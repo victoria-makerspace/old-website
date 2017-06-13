@@ -88,8 +88,8 @@
             <span class="col-sm-4 font-weight-bold">Pending approval:</span>
             <div class="col-sm-8">
               {{(index $.Plans .Plan_id).Name}}
-              <button type="submit" name="approve-membership" value="{{.ID}}" class="ml-1 btn btn-sm btn-primary">Approve</button>
-              <button type="submit" name="decline-membership" value="{{.ID}}" class="ml-1 btn btn-sm btn-warning">Decline</button>
+              <button type="submit" name="approve-membership" value="{{.Member.Id}}" class="ml-1 btn btn-sm btn-primary">Approve</button>
+              <button type="submit" name="decline-membership" value="{{.Member.Id}}" class="ml-1 btn btn-sm btn-warning">Decline</button>
             </div>
           </div>
   {{end}}

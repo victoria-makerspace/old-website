@@ -51,7 +51,7 @@ func (m *Member) Update_customer(token string) error {
 			log.Panic(err)
 		}
 		m.Customer_id = cust.ID
-		m.customer = &Customer{Customer: cust}
+		m.customer = &Customer{Customer: cust, Subscriptions: make(map[string]*stripe.Sub)}
 		return nil
 	}
 	cust, err := customer.Update(m.Customer_id, params)
