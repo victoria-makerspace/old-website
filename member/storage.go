@@ -14,7 +14,6 @@ type Storage struct {
 	Quantity  uint64
 	Available bool
 	*stripe.Plan
-	require_approval bool
 	sub_id string
 	subitem_id string
 	*Member
@@ -29,14 +28,13 @@ func (ms *Members) get_storage(plan_id string, number int) (*Storage, error) {
 	var sub_id, subitem_id sql.NullString
 	if err := ms.QueryRow(
 		"SELECT"+
-		"	require_approval,"+
 		"	available,"+
 		"	quantity,"+
 		"	subscription_id,"+
 		"	subitem_id "+
 		"FROM storage "+
 		"WHERE plan_id = $1 AND number = $2",
-		plan_id, number).Scan(&s.require_approval, &s.Available, &s.Quantity,
+		plan_id, number).Scan(&s.Available, &s.Quantity,
 			&sub_id, &subitem_id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("Invalid storage number for '%s'", p.Name)
@@ -75,7 +73,7 @@ func (ms *Members) List_storage(plan_id string) ([]*Storage, error) {
 	storage := make([]*Storage, 0)
 	rows, err := ms.Query(
 		"SELECT"+
-		"	number, quantity, require_approval, available, subscription_id, subitem_id  "+
+		"	number, quantity, available, subscription_id, subitem_id  "+
 		"FROM storage "+
 		"WHERE plan_id = $1 "+
 		"ORDER BY number ASC", plan_id)
@@ -86,8 +84,8 @@ func (ms *Members) List_storage(plan_id string) ([]*Storage, error) {
 	for rows.Next() {
 		var s Storage
 		var sub_id, subitem_id sql.NullString
-		if err = rows.Scan(&s.Number, &s.Quantity, &s.require_approval,
-			&s.Available, &sub_id, &subitem_id); err != nil {
+		if err = rows.Scan(&s.Number, &s.Quantity, &s.Available, &sub_id,
+			&subitem_id); err != nil {
 			log.Panic(err)
 		}
 		s.Plan = ms.Plans[plan_id]

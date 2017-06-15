@@ -53,24 +53,10 @@ CREATE TABLE pending_subscription (
 	member integer NOT NULL REFERENCES member,
 	requested_at timestamp(0) with time zone NOT NULL DEFAULT now(),
 	plan_id text NOT NULL,
-	quantity integer DEFAULT 1,
 	UNIQUE (member, plan_id)
-);
-CREATE TABLE membership_cancellation (
-	member integer NOT NULL REFERENCES member,
-	time timestamp(0) with time zone NOT NULL DEFAULT now(),
-	reason text
-);
-CREATE TABLE sent_emails (
-	time timestamp(0) with time zone NOT NULL DEFAULT now(),
-	from_address text,
-	to_address text[],
-	body text,
-	error text
 );
 CREATE TABLE storage (
 	number integer NOT NULL,
-	require_approval boolean NOT NULL DEFAULT false,
 	plan_id text NOT NULL,
 	available boolean NOT NULL DEFAULT true,
 	-- For variable-size storage, <quantity> defines the multiplication factor
@@ -83,11 +69,15 @@ CREATE TABLE storage (
 		THEN subitem_id IS NOT NULL END),
 	CHECK (CASE WHEN available = false THEN subscription_id IS NULL END)
 );
-CREATE TABLE storage_waitlist (
-	time timestamp(0) with time zone NOT NULL DEFAULT now(),
+CREATE TABLE membership_cancellation (
 	member integer NOT NULL REFERENCES member,
-	plan_id text NOT NULL,
-	-- NULL signifies waiting for any number
-	number integer,
-	FOREIGN KEY (number, plan_id) REFERENCES storage
+	time timestamp(0) with time zone NOT NULL DEFAULT now(),
+	reason text
+);
+CREATE TABLE sent_emails (
+	time timestamp(0) with time zone NOT NULL DEFAULT now(),
+	from_address text,
+	to_address text[],
+	body text,
+	error text
 );

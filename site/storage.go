@@ -15,19 +15,14 @@ func storage_handler(p *page) {
 	if !p.must_authenticate() {
 		return
 	}
-	if plan := p.PostFormValue("register-storage-plan"); plan != "" {
+	if plan := p.PostFormValue("request-storage-plan"); plan != "" {
 		if p.Get_payment_source() == nil {
 			p.http_error(403)
 			return
 		}
 		plan_id := "storage-" + member.Plan_identifier(plan)
-		number, err := strconv.Atoi(p.PostFormValue("register-storage-number"))
-		if err != nil {
-			p.http_error(400)
-			return
-		}
-		if err := p.New_storage_lease(plan_id, number); err != nil {
-			p.Data["register_storage_error"] = err
+		if err := p.Request_subscription(plan_id); err != nil {
+			p.Data["request_storage_error"] = err
 		} else {
 			p.redirect = "/member/storage"
 		}

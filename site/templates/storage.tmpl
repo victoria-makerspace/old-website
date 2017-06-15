@@ -9,12 +9,22 @@
           You must <a href="/member/billing">register</a> a credit card before requesting a storage lease.
         </p>
 {{end}}
+{{with .Data.request_storage_error}}
+        <p class="alert alert-danger">
+          {{.}}
+        </p>
+{{end}}
         <div class="row no-gutters justify-content-center">
 {{range .List_storage_plans}}
   {{$storage := $.List_storage .}}
           <div class="col col-lg-auto">
   {{with index $storage 0}}
-            <h5 class="">{{.Plan.Name}}</h5>
+    {{if $.Get_payment_source}}
+            <form method="post" action="/member/storage">
+              <button type="submit" name="request-storage-plan" value="{{.Plan.ID}}" class="float-right mr-2 btn btn-sm btn-primary">Request</button>
+            </form>
+    {{end}}
+            <h5 class="mt-1">{{.Plan.Name}}</h5>
     {{with index .Plan.Meta "notice"}}
             <small class="pl-sm-2 align-top text-muted">{{.}}</small>
     {{end}}
@@ -26,7 +36,7 @@
                   <th class="d-md-none w-100">Owner</th>
                   <th class="d-none d-md-table-cell">Owner</th>
                   <th>Fee <span class="small text-muted">(monthly)</span></th>
-                  <th class="text-center">Waitlist</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -34,8 +44,10 @@
                 <tr{{if not .Available}} class="text-muted"{{else if .Member}}{{if eq .Member.Id $.Member.Id}} class="table-success"{{end}}{{end}}>
                   <th scope="row">{{.Number}}</th>
                   <td class="text-left">
-    {{with .Member}}
-                    <a href="/member/{{.Id}}">@{{.Username}}</a>
+    {{if .Member}}
+                    <a href="/member/{{.Id}}">@{{.Member.Username}}</a>
+    {{else if not .Available}}
+                    <small>Unavailable</small>
     {{else}}
                     <span class="ml-2">-</span>
     {{end}}
@@ -48,24 +60,13 @@
     {{end}}
                   </td>
                   <td>
-    {{if not .Available}}
-                    <small>Unavailable</small>
-    {{else if not .Member}}
-      {{if $.Get_payment_source}}
-                    <form method="post" action="/member/storage">
-                      <input type="hidden" name="register-storage-plan" value="{{.Plan.ID}}">
-                      <button type="submit" name="register-storage-number" value="{{.Number}}" class="btn btn-sm btn-info">Available</button>
-                    </form>
-      {{else}}
-                    <button type="button" class="btn btn-sm btn-outline-info" disabled>Available</button>
-      {{end}}
-    {{else if eq $.Member.Id .Member.Id}}
+    {{if .Member}}
+      {{if eq $.Member.Id .Member.Id}}
                     <form method="post" action="/member/storage">
                       <input type="hidden" name="cancel-storage-plan" value="{{.Plan.ID}}">
                       <button type="submit" name="cancel-storage-number" value="{{.Number}}" class="btn btn-sm btn-warning">Cancel</button>
                     </form>
-    {{else}}
-                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Waitlist</button>
+      {{end}}
     {{end}}
                   </td>
                 </tr>

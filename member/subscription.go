@@ -16,6 +16,7 @@ type Pending_subscription struct {
 	Plan_id      string
 }
 
+//TODO: check for duplicate requests
 func (m *Member) Request_subscription(plan string) error {
 	p, ok := m.Plans[plan]
 	if !ok {
@@ -61,6 +62,16 @@ func (ms *Members) Cancel_pending_subscription(p *Pending_subscription) {
 			"WHERE member = $1 AND plan_id = $2", p.Member.Id, p.Plan_id); err != nil {
 		log.Panic(err)
 	}
+}
+
+func (ms *Members) Number_pending(plan string) int {
+	var num int
+	if err := ms.QueryRow(
+		"SELECT COUNT(*) FROM pending_subscription WHERE plan_id = $1",
+		ms.Plans[plan]).Scan(&num); err != nil {
+		log.Panic(err)
+	}
+	return num
 }
 
 func (m *Member) get_subscriptions() {
