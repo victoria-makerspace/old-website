@@ -129,6 +129,28 @@ func (ms *Members) List_pending_storage_leases() []*Pending_subscription {
 	return pending
 }
 
+func (ms *Members) List_available_storage_numbers(plan_id string) []int {
+	numbers := make([]int, 0)
+	rows, err := ms.Query(
+		"SELECT"+
+		"	number "+
+		"FROM storage "+
+		"WHERE plan_id = $1 AND available = true AND subscription_id IS NULL "+
+		"ORDER BY number ASC", plan_id)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var n int
+		if err = rows.Scan(&n); err != nil {
+			log.Panic(err)
+		}
+		numbers = append(numbers, n)
+	}
+	return numbers
+}
+
 func (m *Member) List_storage_leases_by_plan(plan_id string) ([]*Storage, error) {
 	storage := make([]*Storage, 0)
 	st_numbers, err := m.List_storage(plan_id)

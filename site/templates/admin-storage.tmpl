@@ -30,7 +30,11 @@
                   <div class="input-group">
                     <select class="py-1 custom-select" style="height: inherit; line-height: 1;">
                       <option selected>#</option>
-                      <option value="1">1</option>
+                    {{range $.List_available_storage_numbers .Plan_id}}
+                      <option value="{{.}}">{{.}}</option>
+                    {{else}}
+                      <option>Unavailable</option>
+                    {{end}}
                     </select>
                     <span class="input-group-btn">
                       <button type="submit" name="approve-storage" value="{{.Plan_id}}" class="btn btn-sm btn-primary">Approve</button>
