@@ -12,7 +12,9 @@ type Admin struct {
 	privileges []string
 }
 
-func (ms *Members) Get_all_pending_subscriptions() []*Pending_subscription {
+// List_all_pending_subscriptions lists all pending (waiting approval)
+//	subscriptions
+func (ms *Members) List_all_pending_subscriptions() []*Pending_subscription {
 	pending := make([]*Pending_subscription, 0)
 	rows, err := ms.Query(
 		"SELECT member, requested_at, plan_id " +

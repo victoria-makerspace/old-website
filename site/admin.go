@@ -14,6 +14,7 @@ func init() {
 	init_handler("admin-list", admin_list_handler, "/admin/list",
 		"/admin/list/")
 	init_handler("admin-manage", manage_account_handler, "/admin/account/")
+	init_handler("admin-storage", admin_storage_handler, "/admin/storage")
 }
 
 func (p *page) must_be_admin() bool {
@@ -39,6 +40,7 @@ func admin_handler(p *page) {
 		}
 		if m := p.Get_member_by_id(member_id); m == nil || m.Get_pending_membership() == nil {
 			p.http_error(400)
+			return
 		} else {
 			if err := p.Approve_membership(m); err != nil {
 				p.http_error(500)
@@ -48,7 +50,6 @@ func admin_handler(p *page) {
 				//TODO
 			}
 		}
-		return
 	} else if p.PostFormValue("decline-membership") != "" {
 		member_id, err := strconv.Atoi(p.PostFormValue("decline-membership"))
 		if err != nil {
@@ -74,6 +75,17 @@ func admin_handler(p *page) {
 	} else if p.PostFormValue("member-upload") != "" {
 		member_upload_handler(p)
 	}
+	pending := p.List_all_pending_subscriptions()
+	storage_req := make([]*member.Pending_subscription, 0)
+	for i := 0; i < len(pending); i++ {
+		if strings.HasPrefix(pending[i].Plan_id, "storage-") {
+			storage_req = append(storage_req, pending[i])
+			pending = append(pending[:i], pending[i + 1:]...)
+			i--
+		}
+	}
+	p.Data["pending_subs"] = pending
+	p.Data["storage_requests"] = storage_req
 }
 
 func admin_list_handler(p *page) {
@@ -222,6 +234,21 @@ func manage_account_handler(p *page) {
 			p.Data["telephone_error"] = err
 		}
 	}
+}
+
+func admin_storage_handler(p *page) {
+	if !p.must_be_admin() {
+		return
+	}
+	p.Title = "Admin: Storage"
+	pending := p.List_all_pending_subscriptions()
+	for i := 0; i < len(pending); i++ {
+		if !strings.HasPrefix(pending[i].Plan_id, "storage-") {
+			pending = append(pending[:i], pending[i + 1:]...)
+			i--
+		}
+	}
+	p.Data["storage_requests"] = pending
 }
 
 func member_upload_handler(p *page) {

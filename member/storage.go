@@ -7,6 +7,7 @@ import (
 	"github.com/stripe/stripe-go/sub"
 	"log"
 	"sort"
+	"strings"
 )
 
 type Storage struct {
@@ -101,6 +102,31 @@ func (ms *Members) List_storage(plan_id string) ([]*Storage, error) {
 		storage = append(storage, &s)
 	}
 	return storage, nil
+}
+
+func (ms *Members) List_pending_storage_leases() []*Pending_subscription {
+	pending := make([]*Pending_subscription, 0)
+	rows, err := ms.Query(
+		"SELECT member, requested_at, plan_id " +
+			"FROM pending_subscription " +
+			"ORDER BY requested_at DESC")
+	defer rows.Close()
+	if err != nil && err != sql.ErrNoRows {
+		log.Panic(err)
+	}
+	for rows.Next() {
+		var p Pending_subscription
+		var member_id int
+		if err = rows.Scan(&member_id, &p.Requested_at, &p.Plan_id); err != nil {
+			log.Panic(err)
+		}
+		if !strings.HasPrefix((p.Plan_id), "storage-") {
+			continue
+		}
+		p.Member = ms.Get_member_by_id(member_id)
+		pending = append(pending, &p)
+	}
+	return pending
 }
 
 func (m *Member) List_storage_leases_by_plan(plan_id string) ([]*Storage, error) {

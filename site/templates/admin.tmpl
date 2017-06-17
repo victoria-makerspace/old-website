@@ -17,11 +17,14 @@
           Administrator panel
         </h4>
         <hr>
-{{with .Get_all_pending_subscriptions}}
+{{with .Data.pending_subs}}
         <h4>
           <a href="#pending-subscriptions" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
           Pending subscription requests
         </h4>
+  {{with $.Data.storage_requests}}
+        <a class="mb-2 btn btn-outline-primary" href="/admin/storage">{{len .}} storage requests</a>
+  {{end}}
         <form action="/admin" method="post" class="collapse show mx-sm-3" id="pending-subscriptions">
           <table class="table table-sm table-striped table-responsive text-nowrap">
             <thead>
@@ -53,10 +56,10 @@
                 </td>
               </tr>
   {{end}}
-{{end}}
             </tbody>
           </table>
         </form>
+{{end}}
         <h4>
 {{if and (.PostFormValue "member-upload") .Data.lines}}
           <a href="#upload-members" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
