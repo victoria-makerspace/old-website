@@ -1,6 +1,9 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-xl-10">
+{{with .Data.error}}
+        <p class="alert alert-danger">{{.}}</p>
+{{end}}
 {{with .Data.storage_requests}}
         <h4>
           <a href="#pending-storage" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
@@ -28,7 +31,7 @@
                 <td>{{.Requested_at.Format "2006-01-02"}}</td>
                 <td>
                   <div class="input-group">
-                    <select class="py-1 custom-select" style="height: inherit; line-height: 1;">
+                    <select name="storage-number" class="py-1 custom-select" style="height: inherit; line-height: 1;">
                       <option selected>#</option>
                     {{range $.List_available_storage_numbers .Plan_id}}
                       <option value="{{.}}">{{.}}</option>

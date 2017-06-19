@@ -56,6 +56,21 @@ func (m *Member) Get_pending_subscriptions() []*Pending_subscription {
 	return pending
 }
 
+func (m *Member) Get_pending_subscription_by_plan(plan_id string) *Pending_subscription {
+	pending := &Pending_subscription{Member: m, Plan_id: plan_id}
+	if err := m.QueryRow(
+		"SELECT requested_at "+
+		"FROM pending_subscription "+
+		"WHERE member = $1 AND plan_id = $2", m.Id, plan_id).Scan(
+		&pending.Requested_at); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		log.Panic(err)
+	}
+	return pending
+}
+
 func (ms *Members) Cancel_pending_subscription(p *Pending_subscription) {
 	if _, err := ms.Exec(
 		"DELETE FROM pending_subscription "+

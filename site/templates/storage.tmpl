@@ -12,10 +12,8 @@
           You must <a href="/member/billing">register</a> a credit card before requesting a storage lease.
         </p>
 {{end}}
-{{with .Data.request_storage_error}}
-        <p class="alert alert-danger">
-          {{.}}
-        </p>
+{{with .Data.error}}
+        <p class="alert alert-danger">{{.}}</p>
 {{end}}
         <div class="row no-gutters justify-content-center">
 {{range .List_storage_plans}}
@@ -24,7 +22,11 @@
   {{with index $storage 0}}
     {{if $.Get_payment_source}}
             <form method="post" action="/member/storage">
-              <button type="submit" name="request-storage-plan" value="{{.Plan.ID}}" class="float-right mr-2 btn btn-sm btn-primary">Request</button>
+      {{if $.Get_pending_subscription_by_plan (printf "%s-%s" (Plan_category .Plan.ID) (Plan_identifier .Plan.ID))}}
+              <button type="submit" name="unrequest-storage-plan" value="{{.Plan.ID}}" class="float-right mr-2 btn btn-sm btn-outline-warning active">Requested</button>
+      {{else}}
+              <button type="submit" name="request-storage-plan" value="{{.Plan.ID}}" class="float-right mr-2 btn btn-sm btn-outline-primary">Request</button>
+      {{end}}
             </form>
     {{end}}
             <h5 class="mt-1">{{.Plan.Name}}</h5>

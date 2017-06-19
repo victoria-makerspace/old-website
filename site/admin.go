@@ -241,6 +241,34 @@ func admin_storage_handler(p *page) {
 		return
 	}
 	p.Title = "Admin: Storage"
+	if p.PostFormValue("member") != "" {
+		member_id, err := strconv.Atoi(p.PostFormValue("member"))
+		if err != nil {
+			p.http_error(400)
+			return
+		}
+		m := p.Get_member_by_id(member_id)
+		if m == nil {
+			p.http_error(400)
+			return
+		}
+		var plan_id string
+		if plan_id = p.PostFormValue("approve-storage"); plan_id != "" {
+			number, err := strconv.Atoi(p.PostFormValue("storage-number"))
+			if err != nil {
+				p.http_error(400)
+				return
+			}
+			if m.Get_payment_source() == nil {
+				p.Data["error"] = "No payment information for @" + m.Username
+			} else {
+				p.Data["error"] = m.New_storage_lease(plan_id, number)
+			}
+		} else {
+			plan_id = p.PostFormValue("decline-storage")
+		}
+		p.Cancel_pending_subscription(&member.Pending_subscription{Member: m, Plan_id: plan_id})
+	}
 	pending := p.List_all_pending_subscriptions()
 	for i := 0; i < len(pending); i++ {
 		if !strings.HasPrefix(pending[i].Plan_id, "storage-") {
