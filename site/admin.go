@@ -264,10 +264,22 @@ func admin_storage_handler(p *page) {
 			} else {
 				p.Data["error"] = m.New_storage_lease(plan_id, number)
 			}
-		} else {
-			plan_id = p.PostFormValue("decline-storage")
+			p.Cancel_pending_subscription(&member.Pending_subscription{
+				Member: m, Plan_id: plan_id})
+		} else if plan_id = p.PostFormValue("decline-storage"); plan_id != "" {
+			p.Cancel_pending_subscription(&member.Pending_subscription{
+				Member: m, Plan_id: plan_id})
+		} else if p.PostFormValue("cancel-storage-number") != "" {
+			number, err := strconv.Atoi(p.PostFormValue("cancel-storage-number"))
+			if err != nil {
+				p.http_error(400)
+				return
+			}
+			plan_id := member.Plan_category(
+				p.PostFormValue("cancel-storage-plan")) + "-" +
+				member.Plan_identifier(p.PostFormValue("cancel-storage-plan"))
+			p.Data["error"] = m.Cancel_storage_lease(plan_id, number)
 		}
-		p.Cancel_pending_subscription(&member.Pending_subscription{Member: m, Plan_id: plan_id})
 	}
 	pending := p.List_all_pending_subscriptions()
 	for i := 0; i < len(pending); i++ {

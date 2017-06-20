@@ -97,7 +97,7 @@
                   <td>
     {{if .Member}}
                     <form method="post" action="/admin/storage">
-                      <input type="hidden" name="cancel-storage-member" value="{{.Member.Id}}">
+                      <input type="hidden" name="member" value="{{.Member.Id}}">
                       <input type="hidden" name="cancel-storage-plan" value="{{.Plan.ID}}">
                       <button type="submit" name="cancel-storage-number" value="{{.Number}}" class="btn btn-sm btn-warning">Cancel</button>
                     </form>
