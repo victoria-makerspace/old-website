@@ -22,6 +22,7 @@ type Member struct {
 	Vehicle_model	string
 	License_plate	string
 	Card_request_date	time.Time
+	Open_house_date	time.Time
 	Avatar_tmpl     string
 	Agreed_to_terms bool
 	Registered      time.Time
@@ -247,6 +248,19 @@ func (m *Member) Set_card_request_date(date time.Time) error {
 	m.Card_request_date = date
 	if _, err := m.Exec("UPDATE member "+
 		"SET card_request_date = $1 "+
+		"WHERE id = $2", date, m.Id); err != nil {
+		log.Panic(err)
+	}
+	return nil
+}
+
+func (m *Member) Set_open_house_date(date time.Time) error {
+	if date.IsZero() {
+		date = time.Now()
+	}
+	m.Open_house_date = date
+	if _, err := m.Exec("UPDATE member "+
+		"SET open_house_date = $1 "+
 		"WHERE id = $2", date, m.Id); err != nil {
 		log.Panic(err)
 	}

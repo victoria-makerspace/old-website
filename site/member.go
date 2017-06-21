@@ -169,6 +169,22 @@ func access_form_handler(p *page) {
 	}
 	if _, ok := p.PostForm["request-card"]; ok {
 		var error bool
+		if open_house := p.PostFormValue("open-house"); open_house == "" {
+			p.Data["open_house_error"] = "You must attend an open-house (held"+
+				" on the 2nd and 4th Tuesday's of every month) before"+
+				" requesting Makerspace access"
+			error = true
+		} else if date, err := time.ParseInLocation("2006-01-02", open_house,
+			time.Local); err != nil {
+			p.http_error(400)
+			return
+		} else if date.After(time.Now()) {
+			p.Data["open_house_error"] = "Date cannot be in the future"
+			error = true
+		} else if err := p.Set_open_house_date(date); err != nil {
+			p.Data["open_house_error"] = err
+			error = true
+		}
 		if tel := p.PostFormValue("telephone"); tel == "" {
 			p.Data["telephone_error"] = "Telephone number cannot be blank"
 			error = true

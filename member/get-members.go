@@ -29,6 +29,7 @@ func (ms *Members) get_members_by_query(where_cond string, values ...interface{}
 			"	m.vehicle_model,"+
 			"	m.license_plate,"+
 			"	m.card_request_date,"+
+			"	m.open_house_date,"+
 			"	a.member,"+
 			"	a.privileges,"+
 			"	s.member,"+
@@ -50,7 +51,7 @@ func (ms *Members) get_members_by_query(where_cond string, values ...interface{}
 			m                                             Member
 			key_card, telephone, avatar_tmpl, customer_id, vehicle,
 				license_plate, password_key, password_salt                   sql.NullString
-			card_request_date							 pq.NullTime
+			card_request_date, open_house_date							 pq.NullTime
 			admin, student                                sql.NullInt64
 			privileges                                    pq.StringArray
 			institution, student_email                    sql.NullString
@@ -59,7 +60,7 @@ func (ms *Members) get_members_by_query(where_cond string, values ...interface{}
 		if err := rows.Scan(&m.Id, &m.Username, &m.Name, &m.Email, &key_card,
 			&telephone, &avatar_tmpl, &m.Agreed_to_terms, &m.Registered,
 			&customer_id, &password_key, &password_salt, &vehicle, &license_plate,
-			&card_request_date,
+			&card_request_date, &open_house_date,
 			&admin, &privileges,
 			&student, &institution, &student_email, &graduation_date); err != nil {
 			log.Panic(err)
@@ -73,6 +74,7 @@ func (ms *Members) get_members_by_query(where_cond string, values ...interface{}
 		m.Vehicle_model = vehicle.String
 		m.License_plate = license_plate.String
 		m.Card_request_date = card_request_date.Time
+		m.Open_house_date = open_house_date.Time
 		m.Members = ms
 		if admin.Valid {
 			m.Admin = &Admin{privileges}

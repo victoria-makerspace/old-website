@@ -26,7 +26,7 @@
         <a class="mb-2 btn btn-outline-primary" href="/admin/storage">{{len .}} storage requests</a>
   {{end}}
         <form action="/admin" method="post" class="collapse show mx-sm-3" id="pending-subscriptions">
-          <table class="table table-sm table-striped table-responsive text-nowrap">
+          <table class="table table-sm table-striped text-nowrap">
             <thead>
               <tr>
                 <th>Username</th>
@@ -40,7 +40,28 @@
             <tbody>
   {{range .}}
               <tr>
-                <td><a href="/member/{{.Member.Id}}">@{{.Username}}</a></td>
+                <td class="d-inline-flex">
+                  <a href="/member/{{.Member.Id}}">@{{.Username}}</a>
+                  <div class="dropdown ml-2">
+                    <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-toggle="dropdown"><span style="margin-left: -.3em"></span></button>
+                    <div class="dropdown-menu py-2 px-3" style="width: 28rem">
+                      <dl class="row mb-0">
+                        <dt class="col-6">E-mail:</dt>
+                        <dd class="col-6"><a href="mailto:{{.Email}}">{{.Email}}</a></dd>
+                        <dt class="col-6">Open-house attendance:</dt>
+                        <dd class="col-6">{{.Open_house_date.Format "January 2, 2006"}}</dd>
+                        <dt class="col-6">Telephone:</dt>
+                        <dd class="col-6">{{.Telephone}}</dd>
+    {{if .Vehicle_model}}
+                        <dt class="col-6">Vehicle:</dt>
+                        <dd class="col-6">{{.Vehicle_model}}</dd>
+                        <dt class="col-6">License plate:</dt>
+                        <dd class="col-6">{{.License_plate}}</dd>
+    {{end}}
+                      </dl>
+                    </div>
+                  </div>
+                </td>
                 <td>{{.Member.Name}}</td>
                 <td>{{with index $.Plans .Plan_id}}{{.Name}}{{end}}</td>
                 <td>{{.Requested_at.Format "2006-01-02"}}</td>
@@ -49,10 +70,13 @@
                   <button type="submit" name="decline-membership" value="{{.Id}}" class="btn btn-sm btn-danger">Decline</button>
                 </td>
                 <td>
-                  <label title="Send notification message to @{{.Username}}" class="form-check-label small">
-                    <input type="checkbox" class="form-check-input" name="notify">
-                    Notify
-                  </label>
+                  <div class="form-check">
+                    <label title="Send notification message to @{{.Username}}" class="custom-control custom-checkbox">
+                      <input type="checkbox" name="notify" class="custom-control-input">
+                      <span class="custom-control-indicator"></span>
+                      <span class="custom-control-description">Notify</span>
+                    </label>
+                  </div>
                 </td>
               </tr>
   {{end}}

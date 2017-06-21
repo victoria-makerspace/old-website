@@ -17,7 +17,8 @@ CREATE TABLE member (
 	password_salt character(64) UNIQUE,
 	vehicle_model text,
 	license_plate text,
-	card_request_date date
+	card_request_date date,
+	open_house_date date
 );
 CREATE TABLE email_verification_token (
 	token character(64) NOT NULL,
