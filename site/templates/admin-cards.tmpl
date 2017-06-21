@@ -1,0 +1,50 @@
+  <div class="container">
+    <nav class="breadcrumb">
+      <a class="breadcrumb-item" href="/admin">Admin panel</a>
+      <a class="breadcrumb-item active" href="/admin/access-cards">Access cards</a>
+    </nav>
+{{with .List_members_with_access_card}}
+    <table class="table table-hover text-nowrap text-center member-list">
+      <thead>
+        <tr>
+          <th class="text-muted">{{len .}} Members</th>
+          <th class="text-center">Card #</th>
+          <th class="text-center">Membership</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+  {{range .}}
+        <tr{{if eq .Id $.Member.Id}} class="table-info"{{end}}>
+          <td class="d-flex text-left">
+            <a href="/member/{{.Id}}" class="member-icon">
+              {{with .Avatar_url 48}}
+              <img src="{{.}}">
+              {{else}}
+              <div class="glyphicons glyphicons-user"></div>
+              {{end}}
+            </a>
+            <div class="flex-column mx-3">
+              <a href="/member/{{.Id}}" class="d-block">
+                @{{.Username}}
+              </a>
+              <span class="small">{{.Name}}</span>
+            </div>
+          </td>
+          <td>{{.Key_card}}</td>
+          <td class="text-capitalize">
+    {{with .Membership_rate}}
+            {{.}}
+    {{else}}
+            -
+    {{end}}
+          </td>
+          <td>
+            <a href="/admin/account/{{.Id}}" class="glyphicons glyphicons-wrench"></a>
+          </td>
+        </tr>
+  {{end}}
+      </tbody>
+    </table>
+{{end}}
+  </div>
