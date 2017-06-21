@@ -63,8 +63,6 @@ func (p *page) write_response() {
 	}
 	if p.srv_json {
 		j := json.NewEncoder(p.ResponseWriter)
-		///TODO: remove after testing, or don't, who cares
-		j.SetIndent("", "    ")
 		p.ResponseWriter.Header().Set("Content-Type", "application/json")
 		p.WriteHeader(p.Status)
 		if err := j.Encode(p.Data); err != nil {
