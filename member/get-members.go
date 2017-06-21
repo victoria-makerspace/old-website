@@ -7,6 +7,7 @@ import (
 	"github.com/stripe/stripe-go"
 	"log"
 	"sort"
+	"strings"
 )
 
 //TODO: return slice, map doesn't preserve ordering
@@ -157,12 +158,21 @@ func (ms *Members) list_members_by_query(less func(m []*Member) func(i, j int) b
 	return ml.list
 }
 
+func cmp_username(m []*Member) func(i, j int) bool {
+	return func(i, j int) bool {
+		ui := strings.ToLower(m[i].Username)
+		uj := strings.ToLower(m[j].Username)
+		if ui == uj {
+			return m[i].Id < m[j].Id
+		}
+		return ui < uj
+	}
+}
+
 // Ordered by username
 func (ms *Members) List_members() []*Member {
 	less := func(m []*Member) func(i, j int) bool {
-		return func(i, j int) bool {
-			return m[i].Username < m[j].Username
-		}
+		return cmp_username(m)
 	}
 	return ms.list_members_by_query(less, "")
 }
@@ -195,9 +205,7 @@ func (ms *Members) List_new_members(limit int) []*Member {
 
 func (ms *Members) List_members_with_access_card() []*Member {
 	less := func(m []*Member) func(i, j int) bool {
-		return func(i, j int) bool {
-			return m[i].Username < m[j].Username
-		}
+		return cmp_username(m)
 	}
 	query := "WHERE key_card IS NOT NULL"
 	return ms.list_members_by_query(less, query)
