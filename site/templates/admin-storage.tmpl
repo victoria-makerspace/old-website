@@ -54,10 +54,10 @@
         </form>
 {{end}}
         <hr>
-        <div class="row no-gutters justify-content-center">
+        <div class="row">
 {{range .List_storage_plans}}
   {{$storage := $.List_storage .}}
-          <div class="col col-lg-auto">
+          <div class="col">
   {{with index $storage 0}}
             <h5 class="mt-1">{{.Plan.Name}}</h5>
     {{with index .Plan.Meta "notice"}}
@@ -68,8 +68,7 @@
               <thead>
                 <tr>
                   <th>#</th>
-                  <th class="d-md-none w-100">Owner</th>
-                  <th class="d-none d-md-table-cell">Owner</th>
+                  <th class="w-100">Owner</th>
                   <th>Fee <span class="small text-muted">(monthly)</span></th>
                   <th></th>
                 </tr>
