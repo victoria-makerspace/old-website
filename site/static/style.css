@@ -78,7 +78,6 @@ label {
 
 #ms-header nav {
     position: absolute;
-    display: none;
     top: 3rem;
     right: 0;
     border-radius: 0 0 0.75rem 0.25rem;

@@ -21,7 +21,7 @@
       </a>
 {{if .Session}}
       <a id="talk-link" class="nav-link glyphicons glyphicons-conversation" href="{{.Talk.Path}}" title="Talk forum"></a>
-      <button class="nav-link glyphicons glyphicons-menu-hamburger" type="button" data-toggle="dropdown" data-target="#ms-header nav" aria-expanded="false"></button>
+      <button class="nav-link glyphicons glyphicons-menu-hamburger" type="button" data-toggle="collapse" data-target="#ms-header nav" aria-expanded="false"></button>
       <a class="member-icon nav-link{{if eq .Name "dashboard"}} active{{end}}" href="/member/dashboard" title="Dashboard">
   {{with .Member.Avatar_url 40}}
         <img src="{{.}}">
@@ -35,7 +35,7 @@
       <a class="anon nav-link{{if eq .Name "join"}} active{{end}}" href="/join"><span class="glyphicons glyphicons-user-add"></span>Join</a>
       <a class="anon nav-link{{if eq .Name "sso"}} active{{end}}" href="/sso"><span class="glyphicons glyphicons-log-in"></span>Sign in</a>
 {{if .Session}}
-      <nav class="flex-column">
+      <nav class="flex-column collapse">
   {{if .Member.Admin}}
         <a class="nav-link{{if eq .Name "admin"}} active{{end}}" href="/admin">
           <span class="glyphicons glyphicons-wrench"></span>Admin panel
