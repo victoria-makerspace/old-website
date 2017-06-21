@@ -1,138 +1,134 @@
   <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-xl-10">
-        <p class="alert alert-warning small">
-          Please do not modify plans or remove customers using the Stripe dashboard.  This will result in inconsistencies in our database.
-        </p>
+    <p class="alert alert-warning small">
+      Please do not modify plans or remove customers using the Stripe dashboard.  This will result in inconsistencies in our database.
+    </p>
 {{with .Data.member_approved}}
-        <p class="alert alert-success">
-          <a href="/member/{{.Id}}">@{{.Username}}</a>'s membership approved.
-        </p>
+    <p class="alert alert-success">
+      <a href="/member/{{.Id}}">@{{.Username}}</a>'s membership approved.
+    </p>
 {{end}}
-        <div class="float-right">
-          <a class="btn btn-secondary" href="https://dashboard.stripe.com" target="_blank">
-            Stripe dashboard
-            <span class="title-link"></span>
-          </a>
-          <a class="btn btn-secondary" href="/admin/list/approved">List memberships</a>
-        </div>
-        <h4 class="my-2">
-          Administrator panel
-        </h4>
-        <hr>
+    <div class="nav nav-tabs mb-3 justify-content-lg-between flex-column flex-lg-row">
+      <h3>Administrator panel</h3>
+      <nav class="d-flex">
+        <a class="nav-link" href="https://dashboard.stripe.com" target="_blank">
+          Stripe dashboard
+          <span class="title-link"></span>
+        </a>
+        <a class="nav-link" href="/admin/list/approved">Memberships</a>
+        <a class="nav-link" href="/admin/access-cards">Access cards</a>
+      </nav>
+    </div>
 {{with .Data.pending_subs}}
-        <h4>
-          <a href="#pending-subscriptions" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
-          Pending subscription requests
-        </h4>
+    <h4>
+      <a href="#pending-subscriptions" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
+      Pending subscription requests
+    </h4>
   {{with $.Data.storage_requests}}
-        <a class="mb-2 btn btn-outline-primary" href="/admin/storage">{{len .}} storage requests</a>
+    <a class="mb-2 btn btn-outline-primary" href="/admin/storage">{{len .}} storage requests</a>
   {{end}}
-        <form action="/admin" method="post" class="collapse show mx-sm-3" id="pending-subscriptions">
-          <table class="table table-sm table-striped text-nowrap">
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th class="w-75">Name</th>
-                <th class="w-25">Type</th>
-                <th>Request date</th>
-                <th></th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
+    <form action="/admin" method="post" class="collapse show mx-sm-3" id="pending-subscriptions">
+      <table class="table table-sm table-striped text-nowrap">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th class="w-75">Name</th>
+            <th class="w-25">Type</th>
+            <th>Request date</th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
   {{range .}}
-              <tr>
-                <td class="d-inline-flex">
-                  <a href="/member/{{.Member.Id}}">@{{.Username}}</a>
-                  <div class="dropdown ml-2">
-                    <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-toggle="dropdown"><span style="margin-left: -.3em"></span></button>
-                    <div class="dropdown-menu py-2 px-3" style="width: 28rem">
-                      <dl class="row mb-0">
-                        <dt class="col-6">E-mail:</dt>
-                        <dd class="col-6"><a href="mailto:{{.Email}}">{{.Email}}</a></dd>
-                        <dt class="col-6">Open-house attendance:</dt>
-                        <dd class="col-6">{{.Open_house_date.Format "January 2, 2006"}}</dd>
-                        <dt class="col-6">Telephone:</dt>
-                        <dd class="col-6">{{.Telephone}}</dd>
+          <tr>
+            <td class="d-inline-flex">
+              <a href="/member/{{.Member.Id}}">@{{.Username}}</a>
+              <div class="dropdown ml-2">
+                <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-toggle="dropdown"><span style="margin-left: -.3em"></span></button>
+                <div class="dropdown-menu py-2 px-3" style="width: 28rem">
+                  <dl class="row mb-0">
+                    <dt class="col-6">E-mail:</dt>
+                    <dd class="col-6"><a href="mailto:{{.Email}}">{{.Email}}</a></dd>
+                    <dt class="col-6">Open-house attendance:</dt>
+                    <dd class="col-6">{{.Open_house_date.Format "January 2, 2006"}}</dd>
+                    <dt class="col-6">Telephone:</dt>
+                    <dd class="col-6">{{.Telephone}}</dd>
     {{if .Vehicle_model}}
-                        <dt class="col-6">Vehicle:</dt>
-                        <dd class="col-6">{{.Vehicle_model}}</dd>
-                        <dt class="col-6">License plate:</dt>
-                        <dd class="col-6">{{.License_plate}}</dd>
+                    <dt class="col-6">Vehicle:</dt>
+                    <dd class="col-6">{{.Vehicle_model}}</dd>
+                    <dt class="col-6">License plate:</dt>
+                    <dd class="col-6">{{.License_plate}}</dd>
     {{end}}
-                      </dl>
-                    </div>
-                  </div>
-                </td>
-                <td>{{.Member.Name}}</td>
-                <td>{{with index $.Plans .Plan_id}}{{.Name}}{{end}}</td>
-                <td>{{.Requested_at.Format "2006-01-02"}}</td>
-                <td>
-                  <button type="submit" name="approve-membership" value="{{.Id}}" class="btn btn-sm btn-primary">Approve</button>
-                  <button type="submit" name="decline-membership" value="{{.Id}}" class="btn btn-sm btn-danger">Decline</button>
-                </td>
-                <td>
-                  <div class="form-check">
-                    <label title="Send notification message to @{{.Username}}" class="custom-control custom-checkbox">
-                      <input type="checkbox" name="notify" class="custom-control-input">
-                      <span class="custom-control-indicator"></span>
-                      <span class="custom-control-description">Notify</span>
-                    </label>
-                  </div>
-                </td>
-              </tr>
+                  </dl>
+                </div>
+              </div>
+            </td>
+            <td>{{.Member.Name}}</td>
+            <td>{{with index $.Plans .Plan_id}}{{.Name}}{{end}}</td>
+            <td>{{.Requested_at.Format "2006-01-02"}}</td>
+            <td>
+              <button type="submit" name="approve-membership" value="{{.Id}}" class="btn btn-sm btn-primary">Approve</button>
+              <button type="submit" name="decline-membership" value="{{.Id}}" class="btn btn-sm btn-danger">Decline</button>
+            </td>
+            <td>
+              <div class="form-check">
+                <label title="Send notification message to @{{.Username}}" class="custom-control custom-checkbox">
+                  <input type="checkbox" name="notify" class="custom-control-input">
+                  <span class="custom-control-indicator"></span>
+                  <span class="custom-control-description">Notify</span>
+                </label>
+              </div>
+            </td>
+          </tr>
   {{end}}
-            </tbody>
-          </table>
-        </form>
+        </tbody>
+      </table>
+    </form>
 {{end}}
-        <h4>
+    <h4>
 {{if and (.PostFormValue "member-upload") .Data.lines}}
-          <a href="#upload-members" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
+      <a href="#upload-members" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
 {{else}}
-          <a href="#upload-members" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
+      <a href="#upload-members" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
 {{end}}
-          Upload members
-        </h4>
-        <form action="/admin" method="post" id="upload-members" class="collapse {{if and (.PostFormValue "member-upload") .Data.lines}}show {{end}}mx-sm-3">
-          <strong>CSV Format:</strong>
-          <p class="ml-3 small">
-            Username, Name, E-mail <span class="text-muted">{, Registration date = [YYYY-MM-DD], Card # = [XX:XXXXX], [free]}</span>
-          </p>
-          <p class="alert alert-info mt-1">
-            The first 3 required fields must be in the order shown.  The fields in braces are optional and unordered. Each new user must be input on a separate line.<br>
-            <strong>Example:</strong><br>
-              <small class="ml-3">
-                jsmith01, John Smith, j.smith@gmail.com, 00:00000, free
-              </small>
-              <br>
-            The above example creates a new user, @jsmith01, who is immediately approved as a free account (due to the "free" flag).  Each new user is sent an automatic password-reset e-mail.
-          </p>
-          <textarea name="member-upload" class="form-group form-control" rows="5">
+      Upload members
+    </h4>
+    <form action="/admin" method="post" id="upload-members" class="collapse {{if and (.PostFormValue "member-upload") .Data.lines}}show {{end}}mx-sm-3">
+      <strong>CSV Format:</strong>
+      <p class="ml-3 small">
+        Username, Name, E-mail <span class="text-muted">{, Registration date = [YYYY-MM-DD], Card # = [XX:XXXXX], [free]}</span>
+      </p>
+      <p class="alert alert-info mt-1">
+        The first 3 required fields must be in the order shown.  The fields in braces are optional and unordered. Each new user must be input on a separate line.<br>
+        <strong>Example:</strong><br>
+          <small class="ml-3">
+            jsmith01, John Smith, j.smith@gmail.com, 00:00000, free
+          </small>
+          <br>
+        The above example creates a new user, @jsmith01, who is immediately approved as a free account (due to the "free" flag).  Each new user is sent an automatic password-reset e-mail.
+      </p>
+      <textarea name="member-upload" class="form-group form-control" rows="5">
 {{- range .Data.lines}}
-{{. -}}
+  {{. -}}
 {{end -}}
-          </textarea>
-          <button type="submit" class="btn btn-primary mb-2">Submit</button>
-        </form>
+      </textarea>
+      <button type="submit" class="btn btn-primary mb-2">Submit</button>
+    </form>
 {{with .Data.line_error}}
-        <p class="alert alert-danger">
+    <p class="alert alert-danger">
   {{range $i, $e := .}}
-          <strong>Line {{add 1 $i}}:</strong> {{$e}}.<br>
+      <strong>Line {{add 1 $i}}:</strong> {{$e}}.<br>
   {{end}}
-        </p>
+    </p>
 {{end}}
 {{with .Data.line_success}}
-        <p class="alert alert-success">
+    <p class="alert alert-success">
   {{range $i, $m := .}}
-          <strong>Line {{add 1 $i}}:</strong>
-          <a href="/member/{{$m.Id}}">@{{$m.Username}}</a> created:
-          {{printf "<%s>, <%s>" $m.Name $m.Email}}
-          <br>
+      <strong>Line {{add 1 $i}}:</strong>
+      <a href="/member/{{$m.Id}}">@{{$m.Username}}</a> created:
+      {{printf "<%s>, <%s>" $m.Name $m.Email}}
+      <br>
   {{end}}
-        </p>
+    </p>
 {{end}}
-      </div>
-    </div>
   </div>

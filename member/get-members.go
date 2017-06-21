@@ -193,6 +193,17 @@ func (ms *Members) List_new_members(limit int) []*Member {
 	return ms.list_members_by_query(less, query)
 }
 
+func (ms *Members) List_members_with_access_card() []*Member {
+	less := func(m []*Member) func(i, j int) bool {
+		return func(i, j int) bool {
+			return m[i].Username < m[j].Username
+		}
+	}
+	query := "WHERE key_card IS NOT NULL"
+	return ms.list_members_by_query(less, query)
+}
+
+
 // Ordered by membership approval date
 func (ms *Members) order_members_by_customer_subs(subs map[string]*stripe.Sub) []*Member {
 	customer_ids := make([]string, 0, len(subs))

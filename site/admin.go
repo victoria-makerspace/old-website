@@ -13,8 +13,9 @@ func init() {
 	init_handler("admin", admin_handler, "/admin")
 	init_handler("admin-list", admin_list_handler, "/admin/list",
 		"/admin/list/")
-	init_handler("admin-manage", manage_account_handler, "/admin/account/")
+	init_handler("admin-manage", admin_account_handler, "/admin/account/")
 	init_handler("admin-storage", admin_storage_handler, "/admin/storage")
+	init_handler("admin-cards", admin_cards_handler, "/admin/access-cards")
 }
 
 func (p *page) must_be_admin() bool {
@@ -151,7 +152,7 @@ func admin_list_handler(p *page) {
 
 var account_path_rexp = regexp.MustCompile(`^/admin/account/[0-9]+$`)
 
-func manage_account_handler(p *page) {
+func admin_account_handler(p *page) {
 	if !account_path_rexp.MatchString(p.URL.Path) {
 		p.http_error(404)
 		return
@@ -289,6 +290,12 @@ func admin_storage_handler(p *page) {
 		}
 	}
 	p.Data["storage_requests"] = pending
+}
+
+func admin_cards_handler(p *page) {
+	if !p.must_be_admin() {
+		return
+	}
 }
 
 func member_upload_handler(p *page) {

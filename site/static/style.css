@@ -1,3 +1,7 @@
+html.anon .session,
+html:not(.anon) .anon {
+    display: none !important;
+}
 
 body {
     position: relative;
@@ -14,26 +18,35 @@ label {
     margin: 0;
 }
 
-.navbar {
+/* Makerspace header */
+
+#ms-header {
     background: rgba(247,247,247,0.85);
     padding-bottom: 0;
     box-shadow: 0 2px 4px -1px rgba(0,0,0,0.25);
 }
-.navbar > .container {
+#ms-header > .container {
     height: 3rem;
     padding: 0;
 }
-.navbar-brand {
-    padding: 0;
-    margin: 0 0 0.5rem 0;
+
+#ms-header > .container > .nav-link {
+    margin-top: 0.5rem;
+    border-radius: 0.25rem 0.25rem 0 0;
 }
-.navbar-brand > img {
+
+.logo-large, .logo-small {
     height: 2.5rem;
 }
-.navbar-collapse {
-    padding-top: 0.5rem;
+
+#ms-header .nav-link.member-icon {
+    margin-top: 0;
+    width: 3rem;
+    height: 3rem;
+    padding: 0.25rem;
 }
-.nav-link {
+
+#ms-header .nav-link {
     font-weight: bold;
     line-height: 2rem;
     padding: 0.25rem 0.5rem 0 0.5rem;
@@ -41,67 +54,70 @@ label {
     transition: all 0.2s ease-in-out;
     color: rgba(0,0,0,0.5) !important;
 }
-.navbar-nav .nav-link {
-    padding: 0.25rem 0.5rem 0 0.5rem;
-}
-.nav-link.glyphicons {
-    width: 2.2rem;
-    text-align: center;
-}
-button.nav-link {
+#ms-header button.nav-link {
     background: none;
-    width: 100%;
     border: 0;
-    outline: none;
-    text-align: left;
+    padding-top: 0;
     cursor: pointer;
 }
-.nav-link:hover, .nav-link:focus,
-.nav-link.active:hover, .nav-link.active:focus {
+#ms-header .nav-link:hover, #ms-header .nav-link:focus,
+#ms-header .nav-link.active:hover, #ms-header .nav-link.active:focus {
     color: rgba(0,0,0,0.9) !important;
     background-color: rgba(2,117,216,1.0);
 }
-.nav-link:focus {
+#ms-header .nav-link:focus {
     box-shadow: 0 0 0 2px rgba(2,117,216,0.25);
 }
-.nav-link.active {
+#ms-header .nav-link.active {
     color: rgba(0,0,0,0.7) !important;
     background-color: rgba(2,117,216,0.5);
 }
-#ms-menu .nav-link .glyphicons + span {
-    display: none;
+#ms-header .nav-link .glyphicons {
+    margin-right: 0.5rem;
 }
-.navbar-toggler {
-    border: 0;
-    border-radius: 0.25rem 0.25rem 0 0;
-}
-#navbar-guest .navbar-toggler {
-    margin-top: 0.5rem;
-    right: 0;
-}
-#talk-link {
+
+#ms-header nav {
     position: absolute;
-    top: 0.5rem;
-    right: 5.2rem;
-    border-radius: 0.25rem 0.25rem 0 0;
+    display: none;
+    top: 3rem;
+    right: 0;
+    border-radius: 0 0 0.75rem 0.25rem;
+    border-width: 0 1px 1px;
+    border-style: solid;
+    border-color: rgba(0,0,0,0.2);
+    padding: 0;
+    background: rgba(247,247,247,0.85);
+    min-width: 12rem;
 }
-#ms-menu-toggler {
-    top: 0.5rem;
-    right: 3rem;
-    display: block;
+#ms-header nav.show {
+    display: flex;
 }
-#ms-menu.collapse {
-    display: none !important;
+#sign-out {
+    text-align: right;
 }
-#ms-menu.collapse.show {
-    display: flex !important;
+#sign-out label {
+    cursor: pointer;
+    font-weight: bold;
+    color: rgba(0,0,0,0.3);
+    transition: all 0.2s ease-in-out;
 }
+#sign-out label:hover, #sign-out label:focus {
+    color: rgba(0,0,0,0.7);
+}
+#sign-out .nav-link {
+    display: inline-block;
+    border-radius: 0.75rem 0;
+    height: inherit;
+    padding: 0 0.5rem;
+}
+
+/* Other */
+
 .member-icon {
     position: relative;
-    height: 3rem;
+    display: block;
     width: 3rem;
     padding: 0;
-    display: block;
     line-height: 2rem;
 }
 .member-icon img {
@@ -141,8 +157,7 @@ img.member-icon-large,
     top: 3.5rem;
 }
 .member-list-heading .row {
-    margin-top: 0.25rem;
-    padding: 0.25rem 0;
+    padding: 1rem 0 0.75rem 0;
     background: rgba(255,255,255,0.8);
 }
 .member-list-heading .dropdown {
@@ -150,18 +165,10 @@ img.member-icon-large,
     margin: 0;
 }
 .member-list-heading ~ .container {
-    padding-top: 7rem;
+    padding-top: 7.5rem;
 }
 .member-list td {
     vertical-align: middle;
-}
-.navbar .member-icon {
-    position: absolute;
-    top: 0;
-    right: 0;
-    border: 0;
-    padding: 0.25rem;
-    border-radius: 0.25rem 0.25rem 0 0;
 }
 .profile-username .glyphicons {
     color: #0275d8;
@@ -179,47 +186,6 @@ img.member-icon-large,
     box-shadow: 0 2px 4px -1px rgba(0,0,0,0.5);
     background-size: 100%;
     background-position: center;
-}
-#ms-menu {
-    position: absolute;
-    right: 0;
-    top: 3rem;
-    border-radius: 0 0 0.75rem 0.25rem;
-    border-width: 0 1px 1px;
-    border-style: solid;
-    border-color: rgba(0,0,0,0.2);
-    padding: 0;
-    background: rgba(247,247,247,0.85);
-    width: 16rem;
-}
-#ms-menu .navbar-nav {
-    flex-direction: column;
-    width: 100%;
-}
-#ms-menu .nav-link .glyphicons,
-#navbar-guest .nav-link .glyphicons {
-    margin-right: 0.5rem;
-}
-#ms-menu .nav-link .glyphicons + span {
-    display: inline;
-}
-#sign-out {
-    text-align: right;
-}
-#sign-out label {
-    cursor: pointer;
-    font-weight: bold;
-    color: rgba(0,0,0,0.3);
-    transition: all 0.2s ease-in-out;
-}
-#sign-out label:hover, #sign-out label:focus {
-    color: rgba(0,0,0,0.7);
-}
-#sign-out .nav-link {
-    display: inline-block;
-    border-radius: 0.75rem 0;
-    height: inherit;
-    padding: 0 0.5rem;
 }
 
 .carousel {
@@ -389,15 +355,14 @@ input[type=month] {
     border-color: #5cb85c;
 }
 
-
 @media (max-width: 575px) {
-    .navbar > .container {
+    #ms-header > .container {
         margin: 0;
     }
-    .navbar-brand-large {
+    .logo-large {
         display: none;
     }
-    .navbar-brand-small {
+    .logo-small {
         display: inline-block;
     }
     #notifications a:nth-child(7) ~ a {
@@ -405,10 +370,10 @@ input[type=month] {
     }
 }
 @media (min-width: 576px) {
-    .navbar-brand-large {
+    .logo-large {
         display: inline-block;
     }
-    .navbar-brand-small {
+    .logo-small {
         display: none;
     }
     .carousel + .container {

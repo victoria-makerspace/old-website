@@ -1,8 +1,13 @@
   <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-10 col-lg-8 col-xl-7">
 {{with .Data.member}}
   {{$ms := .Get_membership}}
+    <nav class="breadcrumb">
+      <a class="breadcrumb-item" href="/admin">Admin panel</a>
+      <a class="breadcrumb-item" href="/admin/list">Members</a>
+      <a class="breadcrumb-item active" href="/admin/account/{{.Id}}">@{{.Username}}</a>
+    </nav>
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-8 col-xl-7">
         <h3 class="text-center">
           <a href="/member/{{.Id}}">@{{.Username}}</a>'s profile
         </h3>
@@ -202,7 +207,7 @@
           </div>
   {{end}}
         </div>
-{{end}}
       </div>
     </div>
+{{end}}
   </div>
