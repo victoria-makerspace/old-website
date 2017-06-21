@@ -6,5 +6,7 @@ psql makerspace < "$dir/schema.sql"
 
 if [[ -f "$1" ]]; then
     psql makerspace < "$1"
+else
+    psql makerspace < "$dir/storage.sql"
 fi
 

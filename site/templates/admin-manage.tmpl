@@ -2,124 +2,101 @@
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
 {{with .Data.member}}
+  {{$ms := .Get_membership}}
         <h3 class="text-center">
           <a href="/member/{{.Id}}">@{{.Username}}</a>'s profile
         </h3>
         <h6 class="text-center">
           <span class="text-muted">Last seen</span>
-          {{fmt_last_seen .Last_seen}}
+          {{fmt_time .Last_seen}}
         </h6>
-        <h4>Membership</h4>
+  {{with .Customer_id}}
+        <a class="btn btn-secondary float-right" target="_blank" href="https://dashboard.stripe.com/customers/{{.}}">
+          Customer
+          <span class="title-link"></span>
+        </a>
+  {{end}}
+        <h4 class="pt-2">
+          Membership
+        </h4>
         <form action="/admin/account/{{.Id}}" method="post" class="mx-2 mb-3">
           <div class="mb-2 row">
             <span class="col col-sm-4 font-weight-bold">Type:</span>
             <div class="col text-capitalize">
-  {{if .Gratuitous}}
-              Free
-              <button type="submit" name="terminate_membership" value="{{.Id}}" class="ml-1 btn btn-sm btn-danger">Cancel</button>
-  {{else if .Membership_invoice}}
-              {{.Membership_invoice.Fee.Identifier}}
+  {{if $ms}}
+              <a href="/admin/list/approved/{{.Membership_rate}}" class="text-capitalize">{{.Membership_rate}}</a>
   {{else}}
               None
   {{end}}
+              <button type="button" data-toggle="collapse" data-target="#modify-membership" class="ml-1 btn btn-sm btn-secondary dropdown-toggle">
+                Modify
+              </button>
             </div>
           </div>
-          <div class="mb-2 row">
-  {{if .Approved}}
-            <span class="col-sm-4 font-weight-bold">Approved by:</span>
-            <div class="col-sm-8">
-              <a href="/member/{{.Approved_by.Id}}">@{{.Approved_by.Username}}</a> on {{.Approved_on.Format "January 2, 2006"}}
-            </div>
-  {{else if .Membership_invoice}}
-            <span class="col-sm-4 font-weight-bold">Pending approval:</span>
-            <div class="col-sm-8">
-              <em class="text-muted">Pending approval:</em>
-              <button type="submit" name="approve-membership" value="{{.Id}}" class="btn btn-sm btn-primary">Approve</button>
-              <button type="submit" name="decline-membership" value="{{.Id}}" class="btn btn-sm btn-danger">Decline</button>
-            </div>
-  {{else}}
-            <span class="col-sm-4 font-weight-bold">Designate free membership:</span>
-            <div class="col-sm-8">
-              <button type="submit" name="approve-membership" value="{{.Id}}" class="btn btn-sm btn-warning">Approve</button>
-            </div>
-  {{end}}
-          </div>
-        </form>
-  {{with .Payment}}
-    {{if .Invoices}}
-        <h4>Invoices</h4>
-        <table class="mb-3 mx-2 table table-sm table-responsive text-nowrap">
-          <thead>
-            <tr>
-              <th>Description</th>
-              <th>Amount</th>
-              <th>Start date</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-      {{with $.Data.member.Membership_invoice}}
-            <tr>  
-              <td>{{.Description}}</td>
-              <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
-              <td>
-        {{if .Start_date.IsZero}}
-                <em class="text-muted">Pending approval</em>
-        {{else}}
-                {{.Start_date.Format "2006-01-02"}}
-        {{end}}
-              </td>
-              <td>
-                <button type="submit" name="terminate_membership" class="btn btn-sm btn-danger">Terminate</button>
-              </td>
-            </tr>
-      {{end}}
-      {{range .Invoices}}
-        {{if ne .Category "membership"}}
-            <tr>  
-              <td>{{.Description}}</td>
-              <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
-              <td>{{.Start_date.Format "2006-01-02"}}</td>
-              <td>
-                <button type="submit" name="terminate" value="{{.Id}}" class="btn btn-sm btn-danger">Terminate</button>
-              </td>
-            </tr>
-        {{end}}
-      {{end}}
-          </tbody>
-        </table>
-    {{end}}
-  {{end}}
-        <h4>Account information</h4>
-        <div class="mx-2">
-          <form action="/admin/account/{{.Id}}" method="post" class="form-group row">
-            <label for="type" class="col-sm-4 col-form-label">Type:</label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <select class="form-control" name="type">
-  {{if .Admin}}
-                  <option disabled>Non-member</option>
-                  <option value="member">Member</option>
-                  <option selected value="admin">Administrator</option>
-  {{else if not .Approved}}
-                  <option selected>Non-member</option>
-                  <option disabled value="member">Member</option>
-                  <option value="admin">Administrator</option>
-  {{else}}
-                  <option disabled>Non-member</option>
-                  <option selected value="member">Member</option>
-                  <option value="admin">Administrator</option>
-  {{end}}
-                </select>
-                <div class="input-group-btn">
-                  <button type="submit" name="update-type" value="{{.Id}}" class="btn btn-sm btn-primary">Update</button>
+          <div class="collapse" id="modify-membership">
+            <div class="mx-2 mb-2 py-2 px-3 card bg-faded">
+  {{if ne .Membership_rate "free"}}
+              <div class="my-1 row">
+                <div class="col">
+                  <strong>Approve free membership:</strong>
                 </div>
-                <div class="input-group-btn">
-                  <button disabled type="submit" name="delete-account" value="{{.Id}}" class="btn btn-sm btn-danger">Delete</button>
+                <div class="col">
+                  <button class="btn btn-sm btn-primary" type="submit" name="approve-free-membership" value="{{.Id}}">
+                    Approve
+                  </button>
                 </div>
               </div>
+  {{end}}
+              <div class="my-1 row">
+                <div class="col">
+                  <strong>Link to corporate member:</strong>
+                </div>
+                <div class="col">
+                  <select class="form-control" disabled>
+                    {TODO}
+                  </select>
+                </div>
+              </div>
+  {{with $ms}}
+              <div class="my-1 row">
+                <div class="col">
+                  <strong>Cancel membership:</strong>
+                </div>
+                <div class="col">
+                  <button class="btn btn-sm btn-danger" type="submit" name="cancel-membership" value="{{.ID}}">
+                    Cancel
+                  </button>
+                  <label title="Send notification message" class="ml-2 form-check-label small">
+                    <input type="checkbox" class="form-check-input" name="notify" disabled checked>
+                    Notify
+                  </label>
+                </div>
+              </div>
+  {{end}}
             </div>
-          </form>
+          </div>
+  {{with $ms}}
+          <div class="mb-2 row">
+            <span class="col-sm-4 font-weight-bold">Approved on:</span>
+            <div class="col-sm-8">
+                {{fmt_time (timestamp .Created)}}
+            </div>
+          </div>
+  {{end}}
+  {{with .Get_pending_membership}}
+          <div class="mb-2 row">
+            <span class="col-sm-4 font-weight-bold">Pending approval:</span>
+            <div class="col-sm-8">
+              {{(index $.Plans .Plan_id).Name}}
+              <button type="submit" name="approve-membership" value="{{.Member.Id}}" class="ml-1 btn btn-sm btn-primary">Approve</button>
+              <button type="submit" name="decline-membership" value="{{.Member.Id}}" class="ml-1 btn btn-sm btn-warning">Decline</button>
+            </div>
+          </div>
+  {{end}}
+        </form>
+        <hr>
+        <h4>Account information</h4>
+        <div class="mx-2">
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.registered_error}} has-danger{{end}}">
             <label for="registered" class="col-sm-4 col-form-label">Registered:</label>
             <div class="col-sm-8">
@@ -137,25 +114,12 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <span class="input-group-addon">@</span>
-                <input type="text" class="form-control" name="username" minlength="3" maxlength="20" value="{{.Username}}" disabled>
-                <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary" disabled>Update</button>
-                </span>
-              </div>
-              <small class="form-control-feedback{{with $.Data.username_error}} show">{{.}}{{else}}">{{end}}</small>
-            </div>
-          </form>
-          <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.email_error}} has-danger{{end}}">
-            <label for="email" class="col-sm-4 col-form-label">E-mail:</label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <span class="input-group-addon glyphicons glyphicons-envelope"></span>
-                <input type="email" class="form-control" name="email" value="{{.Email}}">
+                <input type="text" class="form-control" name="username" minlength="3" maxlength="20" value="{{.Username}}">
                 <span class="input-group-btn">
                   <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with $.Data.email_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{$.Data.username_error}}</small>
             </div>
           </form>
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.name_error}} has-danger{{end}}">
@@ -168,7 +132,31 @@
                   <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with $.Data.name_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{$.Data.name_error}}</small>
+            </div>
+          </form>
+          <form action="/admin/account/{{.Id}}" method="post" class="form-group row">
+            <label class="col-sm-4 col-form-label">Force password reset:</label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
+                <span class="input-group-btn">
+                  <button type="submit" name="force-password-reset" class="btn btn-warning">Reset</button>
+                </span>
+              </div>
+            </div>
+          </form>
+          <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.email_error}} has-danger{{end}}">
+            <label for="email" class="col-sm-4 col-form-label">E-mail:</label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-envelope"></span>
+                <input type="email" class="form-control" name="email" value="{{.Email}}">
+                <span class="input-group-btn">
+                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                </span>
+              </div>
+              <small class="form-control-feedback">{{$.Data.email_error}}</small>
             </div>
           </form>
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.key_card_error}} has-danger{{end}}">
@@ -181,7 +169,7 @@
                   <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with $.Data.key_card_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{$.Data.key_card_error}}</small>
             </div>
           </form>
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.telephone_error}} has-danger{{end}}">
@@ -194,26 +182,23 @@
                   <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with $.Data.telephone_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{$.Data.telephone_error}}</small>
             </div>
           </form>
   {{with .Talk_user}}
           <div class="mb-2 row">
             <span class="col-sm-4 font-weight-bold">Talk forum:</span>
-            <span class="col-sm-8">
-              <a href="{{.Talk_api.Path}}/u/{{urlquery .Username}}/preferences">
-                Account preferences
-                <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
+            <div class="col-sm-8">
+              <a target="_blank" href="{{$.Talk.Path}}/admin/users/{{.Id}}/{{urlquery .Username}}">
+                Account management
+                <span class="glyphicons glyphicons-link" style="font-size: 1rem;"></span>
               </a>
-            </span>
-          </div>
-          <div class="mb-2 row">
-            <span class="col-sm-4 font-weight-bold">Talk groups:</span>
-            <span class="col-sm-8">
-    {{range $k, $v := .Groups}}
-              <a href="{{$.Talk_api.Path}}/groups/{{$k}}">{{$k}}</a>,
-    {{end}}
-            </span>
+              <br>
+              <a href="{{$.Talk.Path}}/u/{{urlquery .Username}}/preferences">
+                Account preferences
+                <span class="glyphicons glyphicons-link" style="font-size: 1rem;"></span>
+              </a>
+            </div>
           </div>
   {{end}}
         </div>

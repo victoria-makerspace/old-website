@@ -1,19 +1,20 @@
-{{$membership := .Member.Membership_invoice}}
-{{if or $membership .Member.Gratuitous}}
-  <div class="modal fade" id="terminate_membership" tabindex="-1" role="dialog" aria-hidden="true">
+{{$ms := .Get_membership}}
+{{$card := .Get_card}}
+{{if $ms}}
+  <div class="modal fade" id="cancel-membership" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Terminate membership</h5>
+          <h5 class="modal-title">Cancel membership</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <form action="/member/billing#terminate_membership" method="post">
+        <form action="/member/billing#cancel-membership" method="post">
           <div class="modal-body">
-            <p>Terminating your membership fees will result in immediate revocation of access to makerspace.  Any leased lockers/storage will be cancelled and given to the next member on the waitlist.</p>
+            <p>Cancelling your membership will result in immediate revocation of access to makerspace.</p>
             <div class="form-group">
-              <textarea class="form-control" name="cancellation_reason" rows="5" placeholder="Is there a reason for your cancellation that you would be willing to share?" autofocus></textarea>
+              <textarea class="form-control" name="cancellation-reason" rows="5" placeholder="Is there a reason for your cancellation that you would be willing to share?" autofocus></textarea>
             </div>
           </div>
           <div class="modal-footer align-items-end flex-wrap">
@@ -31,7 +32,7 @@
             </div>
             <div class="mt-2">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="submit" name="terminate_membership" class="btn btn-danger m-0">Terminate</button>
+              <button type="submit" name="cancel-membership" value="{{$ms.ID}}" class="btn btn-danger m-0">Cancel</button>
             </div>
           </div>
         </form>
@@ -41,275 +42,259 @@
 {{end}}
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-md-10 col-lg-8 col-xl-7">
+      <div class="col-lg-10 col-xl-8">
         <p class="alert alert-info">
           All prices and transactions are in Canadian dollars.<br>
           Billing inquiries should be addressed to <a href="mailto:accounting@makerspace.ca">accounting@makerspace.ca</a>.
         </p>
-{{with .Member.Payment}}
-        <section>
-          <h4>Transactions history</h4>
-          <div class="px-2 px-sm-3">
-  {{with .Get_transactions}}
+{{with .Get_customer}}
+  {{with .Subscriptions}}
+        <section id="Subscriptions">
+          <h4>Subscriptions</h4>
+          <div class="mx-sm-3">
             <table class="table table-sm table-striped table-responsive text-nowrap">
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Date</th>
+                  <th class="w-100">Name</th>
                   <th>Amount</th>
-                  <th>Description</th>
-                  <th>Card</th>
+                  <th>Current period</th>
+                  <th>Created</th>
+                  <th></th>
                 </tr>
               </thead>
+    {{range $sub := .}}
               <tbody>
-    {{$count := len .}}
-    {{range $i, $t := .}}
-                <tr{{if gt $i 8}} class="d-none"{{end}}>
-                  <td scope="row" class="font-weight-bold">{{sub $count $i}}</td>
-                  <td>{{$t.Time.Format "2006-01-02"}}</td>
-                  <td class="font-weight-bold">{{$t.Invoice.Amount | printf "$%.2f"}}</td>
-                  <td>{{$t.Invoice.Description}}</td>
-                  <td><small class="text-muted">x-{{$t.Card}}</small></td>
+      {{range $i, $v := .Items.Values}}
+                <tr{{if eq .ID $.Membership_id}} class="table-active"{{end}}>
+                  <td>{{.Plan.Name}}</td>
+                  <td>{{fmt_money (mul .Quantity .Plan.Amount)}}</td>
+        {{if eq $i 0}}
+                  <td rowspan="{{len $sub.Items.Values}}" class="align-middle px-2" {{if ne (len $sub.Items.Values) 1}}style="background-color: white"{{end}}>
+                    {{(timestamp $sub.PeriodStart).Format "Jan 02"}}
+                    &ndash;
+                    {{(timestamp $sub.PeriodEnd).Format "Jan 02"}}
+                  </td>
+        {{end}}
+                  <td>{{fmt_time (timestamp .Created)}}</td>
+                  <td>
+        {{if eq .ID $.Membership_id}}
+                      <button type="button" data-toggle="modal" data-target="#cancel-membership" class="btn btn-sm btn-danger">Cancel</button>
+        {{else if eq (Plan_category .Plan.ID) "storage"}}
+                      <a class="btn btn-sm btn-warning" href="/member/storage">Cancel</button>
+        {{else}}
+                    <form action="/member/billing" method="post">
+                      <input type="hidden" name="subscription-id" value="{{$sub.ID}}">
+                      <button type="submit" name="cancel-subscription-item" value="{{.ID}}" class="btn btn-sm btn-danger">Cancel</button>
+                    </form>
+        {{end}}
+                  </td>
                 </tr>
-    {{end}}
+      {{end}}
               </tbody>
+    {{end}}
             </table>
-  {{else}}
-            <p>You have no recent transactions.</p>
-  {{end}}
-  {{if .Invoices}}
-            <h5 id="Payments">Monthly payments</h5>
-    {{with .Error}}
-            <p class="alert alert-danger">
-      {{if or (eq . 1) (eq . 2)}}
-              You do not currently have any credit card information on file.
-      {{else if eq . 3}}
-              Your credit card is invalid.
-      {{else if eq . 4}}
-              Your credit card is expired.
-      {{end}}
-              The following payments will fail.  Please update your credit card information.
-            </p>
-    {{end}}
-    {{with $membership}}
-      {{if .Start_date.IsZero}}
-            <p class="alert alert-info">
-              Your membership is awaiting approval from an administrator.  Billing will commence once approved.
-            </p>
-      {{end}}
-    {{end}}
-            <form action="/member/billing" method="post" id="monthly">
-              <table class="table table-sm table-responsive text-nowrap">
-                <thead>
-                  <tr>
-                    <th>Description</th>
-                    <th>Amount</th>
-                    <th>Start date</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-    {{with $membership}}
-                  <tr>  
-                    <td>
-                      <a href="/member/account#Membership">
-                        {{.Description}}<span class="title-link"></span>
-                      </a>
-                    </td>
-                    <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
-                    <td>
-      {{if .Start_date.IsZero}}
-                      <em class="text-muted">Pending approval</em>
-      {{else}}
-                      {{.Start_date.Format "2006-01-02"}}
-      {{end}}
-                    </td>
-                    <td>
-                      <button type="button" data-toggle="modal" data-target="#terminate_membership" class="btn btn-sm btn-danger">Terminate</button>
-                    </td>
-                  </tr>
-    {{end}}
-    {{range .Invoices}}
-      {{if ne .Category "membership"}}
-                  <tr>  
-                    <td>{{.Description}}</td>
-                    <td class="font-weight-bold">{{.Amount | printf "$%.2f"}}</td>
-                    <td>{{.Start_date.Format "2006-01-02"}}</td>
-                    <td>
-                      <button type="submit" name="terminate" value="{{.Id}}" class="btn btn-sm btn-danger">Terminate</button>
-                    </td>
-                  </tr>
-      {{end}}
-    {{end}}
-                </tbody>
-              </table>
-            </form>
-  {{end}}
-  {{with .Get_missed_payments}}
-            <form action="/member/billing" method="post">
-              <h5 class="text-danger">Missed payments
-                <button type="submit" name="retry-missed-payments" class="btn btn-sm btn-warning">Retry</button>
-              </h5>
-            </form>
-            <table class="table table-warning table-sm table-responsive text-nowrap">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-    {{range .}}
-                <tr class="text-danger">
-                  <td>{{.Time.Format "2006-01-02"}}</td>
-                  <td class="font-weight-bold">{{.Invoice.Amount | printf "$%.2f"}}</td>
-                  <td>{{.Invoice.Description}}</td>
-                </tr>
-    {{end}}
-              </tbody>
-            </table>
-  {{end}}
           </div>
         </section>
-        <hr>
+  {{end}}
 {{end}}
-        <section>
-{{define "register-cc"}}
-          <h4>Register credit card<img class="ml-3 mb-2" style="height: 1.5rem" src="/mcvs_acc_hrz.svg"></h4>
-          <p class="mx-2 mx-sm-3 alert alert-info">This form allows the online payment service <a href="http://www.beanstream.com/home/">Beanstream</a> to create a payment profile, that we can use to process payments and recurring bills.  No credit card information is stored on or touches our server.<br>
-            Credit card registration will not incur a transaction or register you to become a Makerspace member, which must be done below.
-          </p>
-{{end}}
-{{if not .Member.Payment}}
-  {{template "register-cc"}}
-{{else if not .Member.Payment.Get_card}}
-  {{template "register-cc"}}
+        <section id="register-cc">
+          <h4>
+{{if or (not $card) .Data.card_error}}
+            <a href="#cc-form" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
 {{else}}
-  {{with .Member.Payment.Get_card}}
-          <h4>Update credit card<img class="ml-3 mb-2" style="height: 1.5rem" src="/mcvs_acc_hrz.svg"></h4>
-          <div class="d-flex flex-wrap flex-sm-nowrap justify-content-between px-2 px-sm-3">
-            <dl class="row no-gutters mb-0 mb-sm-3 text-muted">
-              <dt class="col-4">Cardholder:</dt>
-              <dd class="col-8 mb-0 initialism">{{.Name}}</dd>
-              <dt class="col-4">Number:</dt>
-              <dd class="col-8 mb-0">{{.Number}}</dd>
-              <dt class="col-4">Expiry:</dt>
-              <dd class="col-8">{{.ExpiryMonth}}/20{{.ExpiryYear}}</dd>
+            <a href="#cc-form" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
+{{end}}
+{{if $card}}
+            Update card
+{{else}}
+            Register card
+{{end}}
+            <img class="ml-1 mb-1" style="height: 1.5rem" src="/mcvs_acc_hrz.svg">
+          </h4>
+          <script src="https://js.stripe.com/v3/"></script>
+{{if or (not $card) .Data.card_error}}
+          <form action="/member/billing" method="post" id="cc-form" class="collapse show px-2 px-sm-3">
+{{else}}
+          <form action="/member/billing" method="post" id="cc-form" class="collapse px-2 px-sm-3">
+{{end}}
+{{with $card}}
+            <dl class="row px-2 mb-2">
+              <dt class="col-6 col-sm-3">Number:</strong>
+              <dd class="col-6 col-sm-9">
+                <span class="initialism">{{.Brand}}</span> x-{{.LastFour}}
+              </dd>
+              <dt class="col-6 col-sm-3">Expiration:</dt>
+              <dd class="col-6 col-sm-9">{{printf "%02d" .Month}}/{{.Year}}</dd>
+              <dt class="col-6 col-sm-3">Postal code:</dt>
+              <dd class="col-6 col-sm-9">{{.Zip}}</dd>
             </dl>
-            <form action="/member/billing" method="post" class="mb-3">
-              <button type="submit" name="delete-card" class="btn btn-warning">Delete</button>
-            </form>
-          </div>
-  {{end}}
 {{end}}
-          <form action="/member/billing" method="post" id="credit-card" class="px-2 px-sm-3">
-            <div class="form-group row mb-2 mb-sm-3">
-              <label for="name" class="col-sm-4 col-form-label">Name</label>
-              <div class="col-sm-8">
-                <input type="text" id="name" name="name" class="form-control" minlength="4" maxlength="32" required{{if not .Member.Payment}} autofocus{{else if not .Member.Payment.Get_card}} autofocus{{end}}>
-                <small class="form-control-feedback"></small>
-              </div>
-            </div>
-            <div class="form-group row mb-2 mb-sm-3">
-              <label for="ccNumber" class="col-sm-4 col-form-label">Card number</label>
-              <div class="col-sm-8">
-                <div class="input-group" data-beanstream-target="ccNumber_input">
-                  <span class="input-group-addon glyphicons glyphicons-credit-card"></span>
-                </div>
-                <small data-beanstream-target="ccNumber_error" class="form-control-feedback"></small>
-              </div>
-            </div>
-            <div class="form-group row mb-2 mb-sm-3">
-              <label for="ccExp" class="col-sm-4 col-form-label">Expiry <span class="font-weight-normal text-muted">(mm/yyyy)</span></label>
-              <div class="col-sm-8">
-                <div class="input-group" data-beanstream-target="ccExp_input">
-                  <span class="input-group-addon glyphicons glyphicons-calendar"></span>
-                </div>
-                <small data-beanstream-target="ccExp_error" class="form-control-feedback"></small>
-              </div>
-            </div>
-            <div class="form-group row">
-              <label for="ccCvv" class="col-sm-4 col-form-label">CVV</label>
-              <div class="col-sm-8">
-                <div class="input-group" data-beanstream-target="ccCvv_input">
-                  <span class="input-group-addon glyphicons glyphicons-lock"></span>
-                </div>
-                <small data-beanstream-target="ccCvv_error" class="form-control-feedback"></small>
-              </div>
-            </div>
-            <script src="https://payform.beanstream.com/payfields/beanstream_payfields.js" data-submitForm="true"></script>
-            <button type="submit" class="btn btn-primary">
-{{if not .Member.Payment}}
-              Register
-{{else if not .Member.Payment.Get_card}}
-              Register
-{{else}}
-              Update
+{{if not $card}}
+            <p class="alert alert-info">
+              Registering a credit card does not invoke any charges on said card until you register to become a member of Victoria Makerspace.  Credit card data is not stored on Makerspace servers, we use a third-party service (<a href="https://stripe.com/ca" target="_blank">Stripe<span class="title-link"></span></a>) to handle subscriptions and transactions.
+            </p>
 {{end}}
-            </button>
+            <div class="row">
+              <div class="col-sm-8 form-group">
+                <div id="card-element"></div>
+                <div class="text-danger" id="card-errors">{{.Data.card_error}}</div>
+              </div>
+              <div class="col-sm-4">
+                <button type="submit" class="btn btn-primary">Register</button>
+              </div>
+            </div>
           </form>
+          <script>
+            var stripe = Stripe("{{.Members.Config.Billing.Public_key}}");
+            var elements = stripe.elements();
+            var style = {
+              base: {
+                color: '#464a4c',
+                lineHeight: '20px',
+                fontSize: '16px',
+                '::placeholder': {
+                  color: '#aab7c4'
+                }
+              },
+              invalid: {
+                color: '#fa755a',
+                iconColor: '#fa755a'
+              }
+            };
+            var card = elements.create("card", {style: style});
+            card.mount("#card-element");
+            card.addEventListener("change", function(event) {
+              var displayError = document.getElementById("card-errors");
+              if (event.error) {
+                displayError.textContent = event.error.message;
+              } else {
+                displayError.textContent = "";
+              }
+            });
+            var form = document.getElementById("cc-form");
+            form.addEventListener("submit", function(event) {
+              event.preventDefault();
+              stripe.createToken(card).then(function(result) {
+                if (result.error) {
+                  var errorElement = document.getElementById('card-errors');
+                  errorElement.textContent = result.error.message;
+                } else {
+                  stripeTokenHandler(result.token);
+                }
+              });
+            });
+            function stripeTokenHandler(token) {
+              var form = document.getElementById("cc-form");
+              var hiddenInput = document.createElement("input");
+              hiddenInput.setAttribute("type", "hidden");
+              hiddenInput.setAttribute('name', 'stripeToken');
+              hiddenInput.setAttribute('value', token.id);
+              form.appendChild(hiddenInput);
+              form.submit();
+            }
+          </script>
         </section>
-{{if not .Member.Gratuitous}}
         <hr>
-        <section id="Membership-dues">
-            <h4>Membership dues</h4>
-            <form id="billing" class="px-2 px-sm-3" method="post" action="/member/billing">
-  {{if not $membership}}
-              <p class="alert alert-info">On initial registration, pending approval, your membership fee gets prorated for the remainder of the month (at the time of approval).  Once approved, and following your initial prorated payment, successive membership payments will be processed on the 1st of every month.</p>
+        <section>
+          <h4>
+{{if or (not $ms) (or .Data.membership_registration_error .Get_pending_membership)}}
+            <a href="#membership-registration" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
+{{else}}
+            <a href="#membership-registration" data-toggle="collapse" aria-expanded="false" class="dropdown-chevron collapsed"></a>
+{{end}}
+{{if $ms}}
+            Update Membership
+{{else}}
+            Membership registration
+{{end}}
+          </h4>
+{{if or (not $ms) (or .Data.membership_registration_error .Get_pending_membership)}}
+          <form id="membership-registration" class="collapse show px-2 px-sm-3" method="post" action="/member/billing">
+{{else}}
+          <form id="membership-registration" class="collapse px-2 px-sm-3" method="post" action="/member/billing">
+{{end}}
+{{with .Member.Get_pending_membership}}
+            <p class="alert alert-success">
+              Your request for "{{with index $.Plans .Plan_id}}{{.Name}}{{end}}" is pending approval.
+              <button type="submit" class="ml-1 btn btn-sm btn-danger" name="cancel-pending-membership">Cancel</button>
+            </p>
+{{else}}
+  {{if not $ms}}
+            <p class="alert alert-info">
+              Before you can become a member, you should attend an open-house.  Open-house nights are on the 2nd and 4th Tuesday of each month, from 7 to 9pm.
+            </p>
   {{end}}
-                <fieldset class="form-group mb-2 mb-sm-3">
-                    <label class="custom-control custom-radio">
-                        <input type="radio" name="rate" class="custom-control-input" value="regular"{{if not .Member.Student}} checked{{end}}>
-                        <span class="custom-control-indicator"></span>
-                        <span class="custom-control-description"><b>Regular</b> ($50/month)</span>
-                    </label>
-                    <label class="custom-control custom-radio">
-                        <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if .Member.Student}} checked{{end}}>
-                        <span class="custom-control-indicator"></span>
-                        <span class="custom-control-description"><b>Student</b> ($30/month)</span>
-                    </label>
-                </fieldset>
-                <fieldset id="student"{{if not .Member.Student}}class="text-muted" disabled{{end}}>
-                    <legend class="h5 mb-0 mb-sm-2">Student info</legend>
-                    <div class="form-group row mb-2"> 
-                        <label for="institution" class="col-sm-4 col-form-label">Institution name</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" id="institution" name="institution" {{if .Member.Student}} value="{{.Member.Student.Institution}}" required{{end}}>
-                            <small class="form-control-feedback"></small>
-                        </div>
-                    </div>
-                    <div class="form-group row mb-2"> 
-                        <label for="student_email" class="col-sm-4 col-form-label">Student E-mail</label>
-                        <div class="col-sm-8">
-                            <input type="email" class="form-control" name="student_email" {{if .Member.Student}} value="{{.Member.Student.Email}}" required{{end}}>
-                            <small class="form-control-feedback"></small>
-                        </div>
-                    </div>
-                <div class="form-group row mb-sm-2">
-                  <label for="graduation" class="col-sm-4 col-form-label">Expected graduation</label>
-                  <div class="col-sm-8">
-                    <input type="month" class="form-control" id="graduation" name="graduation"{{if .Member.Student}} value="{{.Member.Student.Graduation_date.Format "2006-01"}}" required{{end}}>
-                    <small class="form-control-feedback"></small>
-                  </div>
+            <fieldset class="mb-1"{{if .Data.disable_registration}} disabled{{end}}>
+              <label class="custom-control custom-radio">
+                <input type="radio" name="rate" class="custom-control-input" value="regular"{{if or (eq .Membership_rate "regular") (and (not $ms) (not .Member.Student))}} checked{{end}}>
+                <span class="custom-control-indicator"></span>
+  {{with index .Plans "membership-regular"}}
+                <span class="custom-control-description"><b>Regular</b> ({{fmt_money .Amount}}/{{Plan_interval .}})</span>
+  {{end}}
+              </label>
+              <label class="custom-control custom-radio">
+                <input type="radio" id="student-rate" name="rate" class="custom-control-input" value="student"{{if or (eq .Membership_rate "student") (and (not $ms) .Member.Student)}} checked{{end}}>
+                <span class="custom-control-indicator"></span>
+  {{with index .Plans "membership-student"}}
+                <span class="custom-control-description"><b>Student</b> ({{fmt_money .Amount}}/{{Plan_interval .}})</span>
+  {{end}}
+              </label>
+  {{if eq .Membership_rate "free"}}
+              <label class="custom-control custom-radio">
+                <input type="radio" class="custom-control-input" name="rate" checked>
+                <span class="custom-control-indicator"></span>
+                <span class="custom-control-description"><b>Free</b></span>
+              </label>
+  {{end}}
+            </fieldset>
+  {{if eq .Membership_rate "student"}}
+            <fieldset id="student" class="mt-2 collapse show">
+  {{else}}
+            <fieldset id="student" class="mt-2 collapse" disabled>
+  {{end}}
+              <legend class="h5 mb-0 mb-sm-2">Student info</legend>
+              <div class="form-group row mb-2"> 
+                <label for="institution" class="col-sm-4 col-form-label">Institution name</label>
+                <div class="col-sm-8">
+                  <input type="text" class="form-control" name="institution" {{if .Member.Student}} value="{{.Member.Student.Institution}}"{{end}} required>
                 </div>
-              </fieldset>
+              </div>
+              <div class="form-group row mb-2"> 
+                <label for="student-email" class="col-sm-4 col-form-label">Student E-mail</label>
+                <div class="col-sm-8">
+                  <input type="email" class="form-control" name="student-email" {{if .Member.Student}} value="{{.Member.Student.Email}}"{{end}} required>
+                </div>
+              </div>
+              <div class="form-group row mb-sm-2">
+                <label for="graduation-date" class="col-sm-4 col-form-label">Expected graduation</label>
+                <div class="col-sm-8">
+                  <input type="month" class="form-control" name="graduation-date"{{if .Member.Student}} value="{{.Member.Student.Graduation_date.Format "2006-01"}}"{{end}} required>
+                </div>
+              </div>
+            </fieldset>
+            <div class="d-inline-flex align-items-start mt-2">
+  {{if $ms}}
+              <button type="submit" name="register-membership" class="btn btn-primary"{{if .Data.disable_registration}} disabled{{end}}>Update</button>
+              <button type="button" data-toggle="modal" data-target="#cancel-membership" class="ml-1 btn btn-danger">Cancel</button>
+  {{else}}
+              <button type="submit" name="register-membership" class="btn btn-primary"{{if .Data.disable_registration}} disabled{{end}}>Register</button>
+  {{end}}
   {{if not .Member.Agreed_to_terms}}
-              <p class="alert alert-danger">You must agree to the <a href="/terms">Terms & Conditions</a>.</p>
-  {{else if not .Member.Payment}}
-              <p class="alert alert-warning">You must register a credit card.</p>
-  {{else if not .Member.Payment.Get_card}}
-              <p class="alert alert-warning">You must register a credit card.</p>
+              <p class="alert alert-warning ml-3 mb-0 py-2">
+                You must agree to the <a href="/terms">Terms & Conditions</a> before requesting a membership.
+              </p>
+  {{else if not .Get_payment_source}}
+              <p class="alert alert-warning ml-3 mb-0 py-2">You must register a credit card before membership registration.</p>
+  {{else if .Card_request_date.IsZero}}
+              <p class="alert alert-warning ml-3 mb-0 py-2">You must complete the access-card <a href="/member/access-card">request form</a> before membership registration.</p>
   {{end}}
-              <div class="d-inline-flex flex-row-reverse">
-  {{if not $membership}}
-              <button type="submit" name="register" class="ml-1 btn btn-primary"{{if not .Member.Payment}} disabled{{else if not .Member.Payment.Get_card}} disabled{{else if not .Member.Agreed_to_terms}} disabled{{end}}>Register</button>
+  {{with .Data.membership_registration_error}}
+              <p class="alert alert-danger ml-3 mb-0 py-2">{{.}}.</p>
   {{end}}
-              <button type="submit" name="update" class="btn btn-secondary">Update</button>
+{{end}}
             </div>
           </form>
         </section>
-{{end}}
       </div>
     </div>
   </div>

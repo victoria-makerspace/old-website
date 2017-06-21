@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/member"
 	"github.com/vvanpo/makerspace/site"
 	"github.com/vvanpo/makerspace/talk"
@@ -13,12 +12,10 @@ import (
 )
 
 var config struct {
-	Site       map[string]interface{}
-	Members    map[string]interface{}
-	Database   map[string]string
-	Beanstream map[string]string
-	Talk       map[string]string
-	Smtp       map[string]string
+	Site     site.Config
+	Members  member.Config
+	Database map[string]string
+	Talk     talk.Api
 }
 
 func init() {
@@ -37,23 +34,16 @@ func init() {
 	if err != nil {
 		log.Fatal("Config file error: ", err)
 	}
-	tls := config.Site["tls"].(bool)
-	url := config.Site["domain"].(string)
-	if tls {
-		url = "https://" + url
+	if config.Site.Talk_proxy != "" {
+		config.Talk.Url = config.Site.Talk_proxy + config.Talk.Path
 	} else {
-		url = "http://" + url
+		config.Talk.Url = config.Site.Url() + config.Talk.Path
 	}
-	config.Members["url"] = url
-	config.Talk["url"] = url + config.Talk["path"]
 }
 
 func main() {
 	db := Database(config.Database)
-	bs := config.Beanstream
-	b := billing.Billing_new(bs["merchant-id"], bs["payments-api-key"],
-		bs["profiles-api-key"], bs["reports-api-key"], db)
-	talk := talk.New_talk_api(config.Talk)
-	members := &member.Members{config.Members, db, talk, b}
-	site.Serve(config.Site, talk, members, db)
+	talk := &config.Talk
+	members := member.New(config.Members, db, talk)
+	site.Serve(config.Site, members, db)
 }

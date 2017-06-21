@@ -1,51 +1,80 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
-        <h2>Join Makerspace</h2>
-        <p>Before you can become a member, you should attend an open-house.  Open-house nights are on the 2nd and 4th Tuesday of each month, from 7 to 9pm.</p>
+        <h2 class="text-center">Join Makerspace</h2>
         <form id="join" method="post" action="/join">
-          <div class="form-group row{{if .Data.username_error}} has-danger{{end}}">
+{{with .Data.token_error}}
+          <p class="alert alert-danger">{{.}}</p>
+{{end}}
+{{if not .Data.email}}
+          <p>Once you've verified an e-mail address, you will be prompted to register a username and password.</p>
+  {{if .Data.success}}
+          <p class="alert alert-success">Verification e-mail sent to {{.PostFormValue "email"}}.</p>
+  {{else}}
+          <div class="form-group row{{if .Data.email_error}} has-danger{{end}}">
+            <label for="email" class="col-sm-2 col-form-label">E-mail</label>
+            <div class="col-sm-10 col-lg-8">
+              <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-envelope"></span>
+                <input type="email" class="form-control" name="email" autofocus required>
+                <span class="input-group-btn">
+                  <button type="submit" name="verify-email" class="btn btn-primary">Verify</button>
+                </span>
+              </div>
+              <small class="form-control-feedback">{{.Data.email_error}}</small>
+            </div>
+          </div>
+  {{end}}
+{{else}}
+  {{with .Data.join_error}}
+          <p class="alert alert-danger">{{.}}</p>
+  {{end}}
+          <div class="form-group row">
             <label for="username" class="col-sm-2 col-form-label">Username</label>
             <div class="col-10 col-lg-8">
               <div class="input-group">
                 <span class="input-group-addon">@</span>
-                <input type="text" id="username" name="username" class="form-control" minlength="3" maxlength="20" autofocus required{{if and (not .Data.username_error) .Data.username}} value="{{.Data.username}}"{{end}}>
+                <input type="text" name="username" class="form-control" minlength="3" maxlength="20" {{with .PostFormValue "username"}}value="{{.}}"{{else}}autofocus{{end}} required>
               </div>
-              <small class="form-control-feedback{{with .Data.username_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback"></small>
             </div>
           </div>
-          <div class="form-group row{{if .Data.name_error}} has-danger{{end}}">
+          <div class="form-group row">
             <label for="name" class="col-sm-2 col-form-label">Name</label>
             <div class="col-10 col-lg-8">
               <div class="input-group">
                 <span class="input-group-addon glyphicons glyphicons-user"></span>
-                <input type="text" class="form-control" id="name" name="name" required{{if and (not .Data.name_error) .Data.name}} value="{{.Data.name}}"{{end}}>
+                <input type="text" class="form-control" name="name" {{with .PostFormValue "name"}}value="{{.}}" {{else}}{{if .PostFormValue "username"}}autofocus {{end}}{{end}}required>
               </div>
-              <small class="form-control-feedback{{with .Data.name_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback"></small>
             </div>
           </div>
-          <div class="form-group row{{if .Data.email_error}} has-danger{{end}}">
+          <div class="form-group row">
             <label for="email" class="col-sm-2 col-form-label">E-mail</label>
             <div class="col-10 col-lg-8">
               <div class="input-group">
                 <span class="input-group-addon glyphicons glyphicons-envelope"></span>
-                <input type="email" class="form-control" id="email" name="email" required{{if and (not .Data.email_error) .Data.email}} value="{{.Data.email}}"{{end}}>
+                <input type="email" class="form-control" value="{{.Data.email}}" disabled>
               </div>
-              <small class="form-control-feedback{{with .Data.email_error}} show">{{.}}{{else}}">{{end}}</small>
             </div>
           </div>
-          <div class="form-group row{{if .Data.password_error}} has-danger{{end}}">
+          <div class="form-group row">
             <label for="password" class="col-sm-2 col-form-label">Password</label>
             <div class="col-10 col-lg-8">
               <div class="input-group">
                 <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
-                <input type="password" class="form-control" id="password" name="password" required>
+                <input type="password" class="form-control" name="password" {{if and (.PostFormValue "username") (.PostFormValue "name")}}autofocus {{end}}required>
               </div>
-              <small class="form-control-feedback{{with .Data.password_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback"></small>
             </div>
           </div>
           <button type="submit" name="join" class="btn btn-primary">Submit</button>
+{{end}}
+{{with .FormValue "token"}}
+          <input type="hidden" name="token" value="{{.}}">
+{{end}}
         </form>
+        <p>Having trouble joining? E-mail <a href="mailto:support@makerspace.ca">support@makerspace.ca</a>.</p>
       </div>
     </div>
   </div>

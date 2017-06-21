@@ -1,61 +1,61 @@
-{{$talk_url := .Talk_api.Path}}
+{{$ms := .Get_membership}}
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
-{{if or .Member.Membership_invoice .Member.Gratuitous}}
+{{if $ms}}
         <div class="row">
-          <h3 id="Membership" class="col col-sm-4">Membership</h3>
+          <h3 id="Membership" class="pb-1 col col-sm-4">Membership</h3>
           <div class="col mt-1">
-            <a href="/member/billing#terminate_membership" class="btn btn-sm btn-danger float-right float-sm-none">Cancel</a>
-          </div>
-        </div>
-  {{if not .Member.Approved}}
-        <p class="alert alert-info mt-2 mb-2">
-          Your membership is currently awaiting approval from an administrator.
-        </p>
-  {{end}}
-        <div class="mb-2 row">
-          <span class="col col-sm-4 font-weight-bold">Type:</span>
-          <div class="col">
-            <a href="/member/billing#Membership-dues" class="text-capitalize">
-  {{if .Member.Gratuitous}}
-              Free
-  {{else}}
-              {{.Member.Membership_invoice.Fee.Identifier}}
-  {{end}}
-            </a>
-          </div>
-  {{if .Member.Gratuitous}}
-          <p class="alert alert-info mt-2 mb-0 mx-3">
-            Your account is labelled as "free," either because an administrator has specifically marked it as such, or you are assumed to still be paying membership fees via PayPal.  Contact <a href="mailto:accounting@makerspace.ca">accounting@makerspace.ca</a> for more information.
-          </p>
-  {{end}}
-        </div>
-        <div class="mb-2 row">
-          <div class="col col-sm-4"><span class="font-weight-bold">Fee</span> <span class="text-muted">(monthly)</span>:</div>
-          <div class="col">
-  {{if .Member.Gratuitous}}
-            $0.00
-  {{else}}
-            ${{.Member.Membership_invoice.Amount | printf "%.2f"}} CAD
-  {{end}}
-          </div>
-        </div>
-        <div class="mb-3 row">
-          <span class="col-sm-4 font-weight-bold">Approved by:</span>
-          <div class="col-sm-8">
-  {{if .Member.Approved}}
-            <a href="/member/{{.Member.Approved_by.Id}}">@{{.Member.Approved_by.Username}}</a> on {{.Member.Approved_on.Format "January 2, 2006"}}
-  {{else}}
-            <em class="text-muted">Pending approval</em>
-  {{end}}
+            <a href="/member/billing#cancel-membership" class="btn btn-sm btn-danger float-right float-sm-none">Cancel</a>
           </div>
         </div>
 {{else}}
-        <h3>Membership</h3>
-        <p class="mx-2 alert alert-warning">You are not currently <a href="/member/billing#Membership-dues">registered</a> as a member.</p>
+        <h3 class="pb-1">Membership</h3>
 {{end}}
-        <h3>Account information</h3>
+        <div class="mx-2">
+          <div class="mb-2 row">
+            <span class="col col-sm-4 font-weight-bold">Type:</span>
+            <div class="col">
+{{with $ms}}
+              <span class="text-capitalize">{{Plan_identifier .Plan.ID}}</span>
+{{else}}
+  {{with .Get_pending_membership}}
+              <p class="alert alert-info mt-2 mb-2">
+                Your membership request is pending approval.
+              </p>
+  {{else}}
+              None
+  {{end}}
+{{end}}
+            </div>
+          </div>
+{{with $ms}}
+          <div class="mb-2 row">
+            <span class="col col-sm-4 font-weight-bold">Approved on:</span>
+            <div class="col col-sm-8">
+                {{fmt_time (timestamp .Created)}}
+            </div>
+          </div>
+{{end}}
+{{/*with $ms}}
+          TODO
+          <div class="mb-2 row">
+            <span class="col col-sm-4 font-weight-bold">Approved by:</span>
+            <div class="col col-sm-8">
+              <a href="/member/{{with $.Approved_by .}}{{.Id}}{{end}}">
+                @{{with $.Approved_by .}}{{.Username}}{{end}}</a>
+                on {{with $.Created_at .}}{{.Format "January 2, 2006"}}{{end}}
+            </div>
+          </div>
+{{end*/}}
+        </div>
+        <h3 class="mt-4 pb-1">
+          Account information
+          <a class="btn btn-sm btn-secondary float-right" href="/member/{{.Member.Id}}">
+            <span class="glyphicons glyphicons-user"></span>
+            Profile
+          </a>
+        </h3>
         <div class="mx-2">
           <div class="mb-2 row">
             <span class="col-sm-4 font-weight-bold">Registered:</span>
@@ -68,12 +68,25 @@
             <div class="col-sm-8">
               <div class="input-group">
                 <span class="input-group-addon">@</span>
-                <input type="text" class="form-control" name="username" minlength="3" maxlength="20" value="{{.Member.Username}}" disabled>
+                <input type="text" class="form-control" name="username" minlength="3" maxlength="20" value="{{.Member.Username}}">
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary" disabled>Update</button>
+                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with .Data.username_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{.Data.username_error}}</small>
+            </div>
+          </form>
+          <form action="/member/account" method="post" class="form-group row{{if $.Data.name_error}} has-danger{{end}}">
+            <label for="name" class="col-sm-4 col-form-label">Name:</label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-user"></span>
+                <input type="text" class="form-control" name="name" value="{{.Member.Name}}" maxlength="100">
+                <span class="input-group-btn">
+                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                </span>
+              </div>
+              <small class="form-control-feedback">{{.Data.name_error}}</small>
             </div>
           </form>
           <form action="/sso/verify-email" method="post" class="form-group row">
@@ -88,20 +101,7 @@
               </div>
             </div>
           </form>
-          <form action="/member/account" method="post" class="form-group row{{if $.Data.name_error}} has-danger{{end}}">
-            <label for="name" class="col-sm-4 col-form-label">Name:</label>
-            <div class="col-sm-8">
-              <div class="input-group">
-                <span class="input-group-addon glyphicons glyphicons-user"></span>
-                <input type="text" class="form-control" name="name" value="{{.Member.Name}}" maxlength="100">
-                <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
-                </span>
-              </div>
-              <small class="form-control-feedback{{with .Data.name_error}} show">{{.}}{{else}}">{{end}}</small>
-            </div>
-          </form>
-          <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.telephone_error}} has-danger{{end}}">
+          <form action="/member/account" method="post" class="form-group row{{if $.Data.telephone_error}} has-danger{{end}}">
             <label for="telephone" class="col-sm-4 col-form-label">Telephone:</label>
             <div class="col-sm-8">
               <div class="input-group">
@@ -111,7 +111,7 @@
                   <button type="submit" class="btn btn-sm btn-primary">Update</button>
                 </span>
               </div>
-              <small class="form-control-feedback{{with $.Data.telephone_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{.Data.telephone_error}}</small>
             </div>
           </form>
 {{with .Talk_user}}
@@ -119,13 +119,13 @@
             <span class="col-4 font-weight-bold">Avatar:</span>
             <div class="d-flex edit-img col justify-content-end justify-content-sm-start">
               <img src="{{$.Member.Avatar_url 48}}" class="rounded-circle">
-              <a href="{{$talk_url}}/u/{{urlquery .Username}}/preferences" class="glyphicons glyphicons-pencil"></a>
+              <a href="{{$.Talk.Path}}/u/{{urlquery .Username}}/preferences" class="glyphicons glyphicons-pencil"></a>
             </div>
           </div>
-          <div class="mb-3 row align-items-end">
+          <div class="row align-items-end">
             <span class="col-sm-4 font-weight-bold">Talk forum:</span>
             <span class="col-sm-8">
-              <a href="{{$talk_url}}/u/{{urlquery .Username}}/preferences">
+              <a href="{{$.Talk.Path}}/u/{{urlquery .Username}}/preferences">
                 Account preferences
                 <span class="glyphicons glyphicons-link align-baseline" style="font-size: 1rem;"></span>
               </a>
@@ -133,16 +133,16 @@
           </div>
 {{end}}
         </div>
-        <h3>Update password</h3>
+        <h3 class="mt-4 pb-1">Update password</h3>
         <form action="/member/account" method="post" class="mx-2">
           <div class="form-group row{{if .Data.old_password_error}} has-danger{{end}}">
-            <label for="old-password" class="col-sm-4 col-form-label">Current password:</label>
+            <label for="current-password" class="col-sm-4 col-form-label">Current password:</label>
             <div class="col-sm-8">
               <div class="input-group">
                 <span class="input-group-addon glyphicons glyphicons-fingerprint-remove"></span>
-                <input type="password" class="form-control" name="old-password" required>
+                <input type="password" class="form-control" name="current-password" autocomplete="current-password" required>
               </div>
-              <small class="form-control-feedback{{with .Data.old_password_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{.Data.current_password_error}}</small>
             </div>
           </div>
           <div class="form-group row{{if .Data.new_password_error}} has-danger{{end}}">
@@ -152,7 +152,7 @@
                 <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
                 <input type="password" class="form-control" name="new-password" required>
               </div>
-              <small class="form-control-feedback{{with .Data.new_password_error}} show">{{.}}{{else}}">{{end}}</small>
+              <small class="form-control-feedback">{{.Data.new_password_error}}</small>
             </div>
           </div>
           <div class="d-flex align-items-start">

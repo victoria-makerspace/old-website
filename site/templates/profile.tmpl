@@ -1,7 +1,7 @@
 {{with .Data.member}}
   {{with .Talk_user}}
     {{with .Profile_bg_url}}
-  <img class="profile-background" src="{{.}}">
+  <div class="profile-background" style="background-image: url({{.}});"></div>
     {{end}}
   {{end}}
   <div class="container">
@@ -28,7 +28,7 @@
             </h4>
   {{end}}
   {{if .Talk_user}}
-            <a href="{{$.Talk_api.Path}}/u/{{urlquery .Talk_user.Username}}" class="profile-username d-flex h5 mb-1 text-muted">
+            <a href="{{$.Talk.Path}}/u/{{urlquery .Talk_user.Username}}" class="profile-username d-flex h5 mb-1 text-muted">
               @{{.Username}}
     {{if $.Session}}
               <div class="glyphicons glyphicons-envelope mx-2"></div>

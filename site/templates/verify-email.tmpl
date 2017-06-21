@@ -1,35 +1,32 @@
   <div class="container">
     <section class="modal-dialog">
 {{if .FormValue "sent"}}
-      <p class="alert alert-success">Verification e-mail sent.  Verification tokens expire after {{index .Members.Config "email-verification-window"}}.</p>
+      <p class="alert alert-success">Verification e-mail sent.</p>
 {{end}}
-{{if .Data.token_error}}
-      <p class="alert alert-danger">Invalid reset token.</p>
+{{with .Data.token_error}}
+      <p class="alert alert-danger">{{.}}.</p>
 {{end}}
-      <h4 class="mb-3">Re-send verification e-mail</h4>
+      <h3 class="mb-3">
+        {{if .FormValue "sent"}}Re-send{{else}}Send{{end}} verification e-mail
+        <a class="btn btn-sm btn-secondary float-right" href="/member/account">
+          <span class="glyphicons glyphicons-cogwheel"></span>
+          Account
+        </a>
+      </h3>
       <form method="post" action="/sso/verify-email">
-{{if not .Session}}
-        <div class="form-group{{if .Data.username_error}} has-danger{{end}}">
-          <div class="input-group">
-            <span class="input-group-addon">@</span>
-            <input type="text" class="form-control" name="username" placeholder="Username" required {{with .Data.username}}value="{{.}}"{{else}}autofocus{{end}}>
-          </div>
-          <small class="form-control-feedback{{with .Data.username_error}} show">{{.}}{{else}}">{{end}}</small>
-        </div>
-{{end}}
         <div class="form-group{{if .Data.email_error}} has-danger{{end}}">
           <div class="input-group">
             <span class="input-group-addon glyphicons glyphicons-envelope"></span>
-            <input type="email" class="form-control" name="email" placeholder="E-mail" required{{if .Data.email}} value="{{.Data.email}}"{{else if or .Session .Data.username}} autofocus{{end}}>
+            <input type="email" class="form-control" name="email" placeholder="E-mail" autocomplete="off" {{with .FormValue "email"}}value="{{.}}" {{end}}required {{if or .Data.email_error (not (.FormValue "email"))}} autofocus{{end}}>
           </div>
-          <small class="form-control-feedback{{with .Data.email_error}} show">{{.}}{{else}}">{{end}}</small>
+          <small class="form-control-feedback">{{.Data.email_error}}</small>
         </div>
         <div class="form-group{{if .Data.password_error}} has-danger{{end}}">
           <div class="input-group">
             <span class="input-group-addon glyphicons glyphicons-fingerprint"></span>
-            <input type="password" class="form-control" name="password" placeholder="Password" required{{if .Data.email}}{{if or .Session .Data.username}} autofocus{{end}}{{end}}>
+            <input type="password" class="form-control" name="password" placeholder="Password" autocomplete="current-password" required{{if and (.FormValue "email") (not .Data.email_error)}} autofocus{{end}}>
           </div>
-          <small class="form-control-feedback{{with .Data.password_error}} show">{{.}}{{else}}">{{end}}</small>
+          <small class="form-control-feedback">{{.Data.password_error}}</small>
         </div>
         <button type="submit" name="send-verification-email" class="btn btn-primary">Send</button>
       </form>

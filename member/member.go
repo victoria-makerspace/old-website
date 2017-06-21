@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
-	"github.com/vvanpo/makerspace/billing"
 	"github.com/vvanpo/makerspace/talk"
 	"log"
 	"net/url"
@@ -19,84 +18,70 @@ type Member struct {
 	Name            string
 	Email           string
 	Key_card        string
-	Avatar_tmpl     string
 	Telephone       string
+	Vehicle_model	string
+	License_plate	string
+	Card_request_date	time.Time
+	Open_house_date	time.Time
+	Avatar_tmpl     string
 	Agreed_to_terms bool
 	Registered      time.Time
-	Gratuitous      bool
-	Approved        bool
+	Customer_id     string
+	password_key    string
+	password_salt   string
+	talk            *talk.User
+	customer        *Customer
 	*Admin
 	*Student
 	*Members
-	Membership_invoice *billing.Invoice
-	password_key       string
-	password_salt      string
-	talk               *talk.Talk_user
-	payment            *billing.Profile
 }
 
-//TODO: check corporate account
-func (ms *Members) Get_member_by_id(id int) *Member {
-	m := &Member{Id: id, Members: ms}
-	var (
-		email, key_card, password_key, password_salt, avatar_tmpl,
-		telephone sql.NullString
-		approved_at pq.NullTime
-	)
+// New members are created with an uninitialized password, which must be set via
+//	the reset form.
+func (ms *Members) New_member(username, name, email string) (*Member, error) {
+	m := &Member{
+		Username: username,
+		Name:     name,
+		Email:    email,
+		Members:  ms}
+	if err := ms.Validate_username(username); err != nil {
+		return nil, err
+	}
+	if err := Validate_name(name); err != nil {
+		return nil, err
+	}
+	if err := Validate_email(email); err != nil {
+		return nil, err
+	}
+	if !ms.Username_available(username) {
+		return nil, fmt.Errorf("Username is already in use")
+	}
+	if !ms.Email_available(email) {
+		return nil, fmt.Errorf("E-mail address is already in use")
+	}
 	if err := m.QueryRow(
-		"SELECT"+
-			"	username,"+
-			"	name,"+
-			"	password_key,"+
-			"	password_salt,"+
-			"	email,"+
-			"	key_card,"+
-			"	avatar_tmpl,"+
-			"	telephone,"+
-			"	agreed_to_terms,"+
-			"	registered,"+
-			"	gratuitous,"+
-			"	approved_at "+
-			"FROM member "+
-			"WHERE id = $1",
-		id).Scan(&m.Username, &m.Name, &password_key, &password_salt, &email,
-		&key_card, &avatar_tmpl, &telephone, &m.Agreed_to_terms, &m.Registered,
-		&m.Gratuitous, &approved_at); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
+		"INSERT INTO member"+
+			"	(username, name, email) "+
+			"VALUES ($1, $2, $3) "+
+			"RETURNING id, registered",
+		username, name, email).Scan(&m.Id, &m.Registered); err != nil {
 		log.Panic(err)
 	}
-	m.password_key = password_key.String
-	m.password_salt = password_salt.String
-	m.Email = email.String
-	m.Key_card = key_card.String
-	m.Avatar_tmpl = avatar_tmpl.String
-	m.Telephone = telephone.String
-	if approved_at.Valid {
-		m.Approved = true
+	if err := m.sync_talk_user(); err != nil {
+		m.Delete_member()
+		return nil, err
 	}
-	m.get_student()
-	m.get_admin()
-	if m.Payment() != nil {
-		m.Membership_invoice = m.payment.Get_membership()
-	}
-	return m
+	return m, nil
 }
 
-func (ms *Members) Get_member_by_username(username string) *Member {
-	var member_id int
-	if err := ms.QueryRow(
-		"SELECT id "+
-			"FROM member "+
-			"WHERE username = $1",
-		username).Scan(&member_id); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		log.Panic(err)
+func (m *Member) sync_talk_user() error {
+	talk, err := m.Talk.Sync(m.Id, m.Username, m.Email, m.Name)
+	if err != nil {
+		return err
 	}
-	return ms.Get_member_by_id(member_id)
+	m.talk = talk
+	m.Update_avatar_tmpl(talk.Avatar_tmpl)
+	return nil
 }
 
 //TODO: cascade through all tables
@@ -106,37 +91,48 @@ func (m *Member) Delete_member() {
 	}
 }
 
-func (m *Member) Verified_email() bool {
-	if m.Email != "" {
-		return true
-	}
-	return false
-}
-
-func (m *Member) Authenticate(password string) bool {
-	if m.password_key == key(password, m.password_salt) {
-		return true
-	}
-	return false
-}
-
 func (m *Member) Set_password(password string) {
 	m.password_salt = Rand256()
 	m.password_key = key(password, m.password_salt)
-	if _, err := m.Exec("UPDATE member "+
-		"SET password_key = $1, password_salt = $2 "+
-		"WHERE id = $3",
+	if _, err := m.Exec(
+		"UPDATE member "+
+			"SET password_key = $1,"+
+			"	password_salt = $2 "+
+			"WHERE id = $3",
 		m.password_key, m.password_salt, m.Id); err != nil {
 		log.Panic(err)
 	}
-	if _, err := m.Exec("DELETE FROM reset_password_token "+
-		"WHERE member = $1", m.Id); err != nil {
+	if _, err := m.Exec(
+		"DELETE FROM reset_password_token "+
+			"WHERE member = $1", m.Id); err != nil {
 		log.Panic(err)
 	}
 }
 
-func (m *Member) Set_name(name string) error {
-	if _, err := validate_name(name); err != nil {
+func (m *Member) Update_username(username string) error {
+	if username == m.Username {
+		return nil
+	}
+	if err := m.Validate_username(username); err != nil {
+		return err
+	}
+	if !m.Username_available(username) {
+		return fmt.Errorf("Username is already in use")
+	}
+	m.Username = username
+	if _, err := m.Exec("UPDATE member "+
+		"SET username = $1 "+
+		"WHERE id = $2", username, m.Id); err != nil {
+		log.Panic(err)
+	}
+	return m.sync_talk_user()
+}
+
+func (m *Member) Update_name(name string) error {
+	if name == m.Name {
+		return nil
+	}
+	if err := Validate_name(name); err != nil {
 		return err
 	}
 	m.Name = name
@@ -145,7 +141,35 @@ func (m *Member) Set_name(name string) error {
 		"WHERE id = $2", name, m.Id); err != nil {
 		log.Panic(err)
 	}
-	return nil
+	m.Update_customer("")
+	return m.sync_talk_user()
+}
+
+func (m *Member) Update_email(email string) error {
+	if email == m.Email {
+		return nil
+	}
+	if err := Validate_email(email); err != nil {
+		return err
+	}
+	if !m.Email_available(email) {
+		return fmt.Errorf("E-mail address is already in use")
+	}
+	if t, _ := m.Talk.Get_user_by_email(email); t != nil {
+		log.Printf("Talk user re-association attempt failed: @%s <%s> -> <%s>",
+			m.Username, m.Email, email)
+		return fmt.Errorf("E-mail address is already in use by a Talk user, " +
+			"cannot re-associate account")
+	}
+	m.Email = email
+	m.Delete_verification_tokens(email)
+	if _, err := m.Exec("UPDATE member "+
+		"SET email = $1 "+
+		"WHERE id = $2", email, m.Id); err != nil {
+		log.Panic(err)
+	}
+	m.Update_customer("")
+	return m.sync_talk_user()
 }
 
 func (m *Member) Set_registration_date(date time.Time) {
@@ -197,25 +221,56 @@ func (m *Member) Set_telephone(tel string) error {
 	return nil
 }
 
-func (m *Member) set_email(email string) {
-	m.Email = email
+func (m *Member) Set_vehicle(vehicle string) error {
+	m.Vehicle_model = vehicle
 	if _, err := m.Exec("UPDATE member "+
-		"SET email = $1 "+
-		"WHERE id = $2", email, m.Id); err != nil {
+		"SET vehicle_model = $1 "+
+		"WHERE id = $2", vehicle, m.Id); err != nil {
 		log.Panic(err)
 	}
+	return nil
 }
 
-func (m *Member) set_gratuitous(free bool) {
-	m.Gratuitous = free
+func (m *Member) Set_license_plate(plate string) error {
+	m.License_plate = plate
 	if _, err := m.Exec("UPDATE member "+
-		"SET gratuitous = $1 "+
-		"WHERE id = $2", free, m.Id); err != nil {
+		"SET license_plate = $1 "+
+		"WHERE id = $2", plate, m.Id); err != nil {
 		log.Panic(err)
 	}
+	return nil
 }
 
-func (m *Member) set_avatar_tmpl(avatar_tmpl string) {
+func (m *Member) Set_card_request_date(date time.Time) error {
+	if date.IsZero() {
+		date = time.Now()
+	}
+	m.Card_request_date = date
+	if _, err := m.Exec("UPDATE member "+
+		"SET card_request_date = $1 "+
+		"WHERE id = $2", date, m.Id); err != nil {
+		log.Panic(err)
+	}
+	return nil
+}
+
+func (m *Member) Set_open_house_date(date time.Time) error {
+	if date.IsZero() {
+		date = time.Now()
+	}
+	m.Open_house_date = date
+	if _, err := m.Exec("UPDATE member "+
+		"SET open_house_date = $1 "+
+		"WHERE id = $2", date, m.Id); err != nil {
+		log.Panic(err)
+	}
+	return nil
+}
+
+func (m *Member) Update_avatar_tmpl(avatar_tmpl string) {
+	if m.Avatar_tmpl == avatar_tmpl {
+		return
+	}
 	m.Avatar_tmpl = avatar_tmpl
 	if _, err := m.Exec("UPDATE member "+
 		"SET avatar_tmpl = $1 "+
@@ -224,14 +279,18 @@ func (m *Member) set_avatar_tmpl(avatar_tmpl string) {
 	}
 }
 
+func (m *Member) Authenticate(password string) bool {
+	if m.password_key == key(password, m.password_salt) {
+		return true
+	}
+	return false
+}
+
 func (m *Member) Avatar_url(size int) string {
 	return strings.Replace(m.Avatar_tmpl, "{size}", fmt.Sprint(size), 1)
 }
 
 func (m *Member) create_reset_token() string {
-	if !m.Verified_email() {
-		return ""
-	}
 	token := Rand256()
 	if _, err := m.Exec("INSERT INTO reset_password_token (member, token) "+
 		"VALUES ($1, $2) "+
@@ -242,7 +301,7 @@ func (m *Member) create_reset_token() string {
 	return token
 }
 
-func (m *Member) Send_password_reset() {
+func (m *Member) Send_password_reset(domain string) {
 	token := m.create_reset_token()
 	if token == "" {
 		return
@@ -250,143 +309,59 @@ func (m *Member) Send_password_reset() {
 	msg := message{subject: "Makerspace.ca: password reset"}
 	msg.set_from("Makerspace", "admin@makerspace.ca")
 	msg.add_to(m.Name, m.Email)
-	//TODO use config.json value for domain
+	//See TODO in /member/admin.go: Force_password_reset()
 	msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
 		"A password reset has been requested for your account.  " +
 		"If you did not initiate this request, please ignore this e-mail.\n\n" +
 		"Reset your makerspace password by visiting " +
-		m.Config["url"].(string) + "/sso/reset?token=" + token + ".\n\n" +
+		domain + "/sso/reset?token=" + token + ".\n\n" +
 		"Your password-reset token will expire in " +
-		m.Config["password-reset-window"].(string) + ", you can request a new" +
-		"token at " + m.Config["url"].(string) + "/sso/reset?username=" +
+		m.Config.Password_reset_window + ", you can request a new" +
+		"token at " + domain + "/sso/reset?username=" +
 		url.QueryEscape(m.Username) + "&email=" + url.QueryEscape(m.Email) +
 		".\n\n"
-	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
+	m.send_email("admin@makerspace.ca", msg.emails(), m.format_message(msg))
 }
 
-func (m *Member) Send_email_verification(email string) {
+func (ms *Members) Send_email_verification(email, body string, m *Member) {
 	token := Rand256()
-	if _, err := m.Exec(
-		"INSERT INTO email_verification_token"+
-			"	(member, email, token) "+
-			"VALUES ($1, $2, $3) "+
-			"ON CONFLICT (member) DO UPDATE SET"+
-			"	(email, token, time) = ($2, $3, now())", m.Id, email, token); err != nil {
+	var err error
+	if m == nil {
+		_, err = ms.Exec(
+			"INSERT INTO email_verification_token"+
+				"	(token, email) "+
+				"VALUES ($1, $2)", token, email)
+	} else {
+		_, err = ms.Exec(
+			"INSERT INTO email_verification_token"+
+				"	(token, email, member) "+
+				"VALUES ($1, $2, $3) "+
+				"ON CONFLICT (member) DO UPDATE "+
+				"SET (token, email, time) = ($1, $2, now())", token, email, m.Id)
+	}
+	if err != nil {
 		log.Panic("Failed to set email verification token: ", err)
 	}
-	msg := message{subject: "Makerspace.ca: e-mail verification"}
+	msg := message{
+		subject: "E-mail verification",
+		body:    body + token}
 	msg.set_from("Makerspace", "admin@makerspace.ca")
-	msg.add_to(m.Name, email)
-	msg.body = "Hello " + m.Name + " (@" + m.Username + "),\n\n" +
-		"To sign-in to your Makerspace account, you must first verify that " +
-		"are the owner of this associated e-mail address.\n\n" +
-		"If the above name and username is correct, please verify your " +
-		"e-mail address (" + email + ") by visiting " +
-		m.Config["url"].(string) + "/sso/verify-email?token=" + token + "\n\n" +
-		"Your verification token will expire in " +
-		m.Config["email-verification-window"].(string) + ", you can request " +
-		"a new token at " + m.Config["url"].(string) +
-		"/sso/verify-email?username=" + url.QueryEscape(m.Username) +
-		"&email=" + url.QueryEscape(email) + ".\n\n"
-	m.send_email("admin@makerspace.ca", msg.emails(), msg.format())
-}
-
-func (m *Member) Verify_email(email string) error {
-	m.talk = m.Sync(m.Id, m.Username, email, m.Name)
-	if m.talk == nil {
-		return fmt.Errorf("Failed to sync talk user: (%d) %s <%s>\n", m.Id,
-			m.Username, email)
+	if m != nil {
+		msg.add_to(m.Name, email)
 	} else {
-		m.set_avatar_tmpl(m.talk.Avatar_tmpl)
+		msg.add_to("", email)
 	}
-	m.set_email(email)
-	//TODO: delete unverified members with this pending verification
-	if _, err := m.Exec(
-		"DELETE FROM email_verification_token "+
-			"WHERE email = $1 "+
-			"	OR member = $2", email, m.Id); err != nil {
-		log.Panic(err)
-	}
-	return nil
+	ms.send_email("admin@makerspace.ca", msg.emails(), ms.format_message(msg))
 }
 
-func (m *Member) Talk_user() *talk.Talk_user {
-	if !m.Verified_email() {
-		return nil
-	} else if m.talk == nil {
-		m.talk = m.Talk_api.Get_user(m.Id)
+func (m *Member) Talk_user() *talk.User {
+	if m.talk == nil {
+		m.talk, _ = m.Talk.Get_user_by_external_id(m.Id)
 		if m.talk != nil && m.Avatar_tmpl != m.talk.Avatar_tmpl {
-			m.set_avatar_tmpl(m.talk.Avatar_tmpl)
+			m.Update_avatar_tmpl(m.talk.Avatar_tmpl)
 		}
 	}
 	return m.talk
-}
-
-func (m *Member) Payment() *billing.Profile {
-	if m.payment == nil {
-		m.payment = m.Get_profile(m.Id)
-	}
-	return m.payment
-}
-
-func (m *Member) New_membership_invoice() {
-	if m.Payment() == nil {
-		m.payment = m.New_profile(m.Id)
-	}
-	m.Membership_invoice = m.payment.New_pending_membership(m.Student != nil)
-	//TODO: propagate errors
-	if m.Membership_invoice != nil && m.Approved {
-		m.payment.Approve_pending_membership(m.Membership_invoice)
-		m.set_gratuitous(false)
-	}
-}
-
-func (m *Member) Cancel_membership() {
-	if _, err := m.Exec(
-		"UPDATE member "+
-			"SET"+
-			"	gratuitous = 'f',"+
-			"	approved_at = NULL,"+
-			"	approved_by = NULL "+
-			"WHERE id = $1", m.Id); err != nil {
-		log.Panic(err)
-	}
-	m.Gratuitous = false
-	m.Approved = false
-	if m.Membership_invoice != nil {
-		m.payment.Cancel_membership()
-	}
-	if m.Talk_user() != nil {
-		m.Talk_user().Remove_from_group("Members")
-	}
-}
-
-func (m *Member) Approved_on() time.Time {
-	var approved_at time.Time
-	if !m.Approved {
-		return approved_at
-	}
-	if err := m.QueryRow(
-		"SELECT approved_at "+
-			"FROM member "+
-			"WHERE id = $1", m.Id).Scan(&approved_at); err != nil {
-		log.Panic(err)
-	}
-	return approved_at
-}
-
-func (m *Member) Approved_by() *Member {
-	var approved_by int
-	if !m.Approved {
-		return nil
-	}
-	if err := m.QueryRow(
-		"SELECT approved_by "+
-			"FROM member "+
-			"WHERE id = $1", m.Id).Scan(&approved_by); err != nil {
-		log.Panic(err)
-	}
-	return m.Get_member_by_id(approved_by)
 }
 
 // Last_seen returns the last page-load time in a session by member <m>.

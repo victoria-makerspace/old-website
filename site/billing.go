@@ -1,8 +1,9 @@
 package site
 
 import (
-	"strconv"
 	"time"
+	"github.com/stripe/stripe-go"
+	"github.com/vvanpo/makerspace/member"
 )
 
 func init() {
@@ -14,63 +15,98 @@ func billing_handler(p *page) {
 	if !p.must_authenticate() {
 		return
 	}
-	pay_profile := p.Payment()
-	if token := p.PostFormValue("singleUseToken"); token != "" {
-		if pay_profile == nil {
-			pay_profile = p.New_profile(p.Member.Id)
+	if token := p.PostFormValue("stripeToken"); token != "" {
+		//p.Data["card_error"] = p.Update_customer(token, nil)
+		if err := p.Update_customer(token); err != nil {
+			p.http_error(500)
+			return
 		}
-		pay_profile.Update_card(token, p.PostFormValue("name"))
-		p.redirect = "/member/billing"
-		return
-	} else if _, ok := p.PostForm["delete-card"]; ok && pay_profile != nil {
-		pay_profile.Delete_card()
-		return
-	}
-	update_student := func() {
-		if p.PostFormValue("rate") == "student" &&
-			p.PostFormValue("institution") != "" &&
-			p.PostFormValue("student_email") != "" &&
-			p.PostFormValue("graduation") != "" {
-			graduation, err := time.Parse("2006-01",
-				p.PostFormValue("graduation"))
-			if err == nil && graduation.After(time.Now().AddDate(0, 1, 0)) {
-				p.Update_student(p.PostFormValue("institution"),
-					p.PostFormValue("student_email"), graduation)
-			} else {
-				p.Data["graduation_error"] = "Graduation date cannot be in the past"
-			}
-		} else {
-			p.Delete_student()
+	} else if subitem_id := p.PostFormValue("cancel-membership"); subitem_id != "" {
+		mp := p.Member.Get_membership()
+		if subitem_id != mp.ID {
+			p.http_error(400)
+			return
 		}
-	}
-	if _, ok := p.PostForm["update"]; ok {
-		update_student()
-		p.redirect = "/member/billing"
-	} else if _, ok := p.PostForm["terminate_membership"]; ok {
 		if !p.Member.Authenticate(p.PostFormValue("password")) {
 			p.Data["password_error"] = "Incorrect password"
+		} else {
+			//TODO: reason for cancellation: PostFormValue("cancellation-reason")
+			p.Member.Cancel_membership()
+			p.redirect = "/member/billing"
 			return
 		}
-		//TODO: reason for cancellation: PostFormValue("cancellation_reason")
-		p.Member.Cancel_membership()
-		p.redirect = "/member/billing"
-	} else if pay_profile == nil || !p.Agreed_to_terms {
-		return
-	} else if _, ok := p.PostForm["retry-missed-payments"]; ok {
-		pay_profile.Retry_missed_payments()
-	} else if _, ok := p.PostForm["register"]; ok {
-		update_student()
-		if p.Member.Membership_invoice != nil {
-			p.http_error(422)
+	} else if _, ok := p.PostForm["register-membership"]; ok {
+		rate := p.PostFormValue("rate")
+		if rate == "student" &&
+			p.PostFormValue("institution") != "" &&
+			p.PostFormValue("student-email") != "" &&
+			p.PostFormValue("graduation-date") != "" {
+			//TODO institution/email verification
+			graduation, err := time.Parse("2006-01",
+				p.PostFormValue("graduation-date"))
+			if err != nil {
+				p.http_error(400)
+				return
+			}
+			if err := p.Update_student(p.PostFormValue("institution"),
+				p.PostFormValue("student-email"), graduation); err != nil {
+				p.Data["membership_registration_error"] = err
+				return
+			}
+			if p.Member.Membership_rate() == "student" {
+				return
+			}
+		}
+		membership := p.Member.Get_membership()
+		if rate == "" || rate == p.Member.Membership_rate() {
+			p.Data["membership_registration_error"] = "Already registered for "+
+				membership.Plan.Name
 			return
 		}
-		p.New_membership_invoice()
-		p.redirect = "/member/billing"
-	} else if _, ok := p.PostForm["terminate"]; ok {
-		id, _ := strconv.Atoi(p.PostFormValue("terminate"))
-		if bill := pay_profile.Get_bill(id); bill != nil {
-			pay_profile.Cancel_recurring_bill(bill)
+		if err := p.Request_membership(rate); err != nil {
+			p.Data["membership_registration_error"] = err
+			return
 		}
 		p.redirect = "/member/billing"
+	} else if _, ok := p.PostForm["cancel-pending-membership"]; ok {
+		pending := p.Member.Get_pending_membership()
+		if pending == nil {
+			p.http_error(400)
+			return
+		}
+		p.Cancel_pending_subscription(pending)
+	} else if subitem_id := p.PostFormValue("cancel-subscription-item");
+		subitem_id != "" {
+		s, ok := p.Get_customer().Subscriptions[p.PostFormValue("subscription-id")]
+		if !ok {
+			p.http_error(400)
+			return
+		} else if subitem_id == p.Membership_id() {
+			p.http_error(403)
+			return
+		}
+		var subitem *stripe.SubItem
+		for _, i := range s.Items.Values {
+			if i.ID == subitem_id {
+				subitem = i
+				break
+			}
+		}
+		if subitem == nil {
+			p.http_error(400)
+			return
+		}
+		if member.Plan_category(subitem.Plan.ID) == "storage" {
+			p.http_error(403)
+			return
+		} else if err := p.Cancel_subscription_item(s.ID, subitem_id);
+			err != nil {
+			p.Data["cancel_subscription_error"] = err
+			return
+		}
+		p.redirect = "/member/billing"
+	}
+	if !p.Agreed_to_terms || p.Get_payment_source == nil || p.Card_request_date.IsZero() {
+		p.Data["disable_registration"] = true
 	}
 }

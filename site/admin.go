@@ -11,7 +11,10 @@ import (
 
 func init() {
 	init_handler("admin", admin_handler, "/admin")
+	init_handler("admin-list", admin_list_handler, "/admin/list",
+		"/admin/list/")
 	init_handler("admin-manage", manage_account_handler, "/admin/account/")
+	init_handler("admin-storage", admin_storage_handler, "/admin/storage")
 }
 
 func (p *page) must_be_admin() bool {
@@ -25,7 +28,7 @@ func (p *page) must_be_admin() bool {
 }
 
 func admin_handler(p *page) {
-	p.Title = "Admin panel"
+	p.Title = "Administrator panel"
 	if !p.must_be_admin() {
 		return
 	}
@@ -35,45 +38,125 @@ func admin_handler(p *page) {
 			p.http_error(400)
 			return
 		}
-		if member := p.Get_member_by_id(member_id); member == nil {
+		if m := p.Get_member_by_id(member_id); m == nil || m.Get_pending_membership() == nil {
 			p.http_error(400)
-		} else if !member.Approved {
-			p.Member.Approve_member(member)
-			p.Data["Member_approved"] = member
+			return
 		} else {
-			p.http_error(500)
+			if err := p.Approve_membership(m); err != nil {
+				p.http_error(500)
+			}
+			p.Data["Member_approved"] = m
+			if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
+				//TODO
+			}
 		}
-		return
 	} else if p.PostFormValue("decline-membership") != "" {
 		member_id, err := strconv.Atoi(p.PostFormValue("decline-membership"))
 		if err != nil {
 			p.http_error(400)
 			return
 		}
-		member := p.Get_member_by_id(member_id)
-		if member == nil {
+		m := p.Get_member_by_id(member_id)
+		if m == nil {
 			p.http_error(400)
 			return
 		}
-		if member.Talk_user() != nil {
-			p.Message_member("Your membership was declined",
-				"Your membership request was declined by @"+p.Member.Username+
-					".", member.Talk_user(), p.Member.Talk_user())
+		pending := m.Get_pending_membership()
+		if pending == nil {
+			p.http_error(400)
+			return
 		}
-		member.Cancel_membership()
+		p.Cancel_pending_subscription(pending)
+		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
+			p.Talk.Message_user("Your membership request was declined",
+				"Your membership request was declined by @"+p.Member.Username+
+					".", m.Talk_user(), p.Member.Talk_user())
+		}
 	} else if p.PostFormValue("member-upload") != "" {
 		member_upload_handler(p)
 	}
+	pending := p.List_all_pending_subscriptions()
+	storage_req := make([]*member.Pending_subscription, 0)
+	for i := 0; i < len(pending); i++ {
+		if strings.HasPrefix(pending[i].Plan_id, "storage-") {
+			storage_req = append(storage_req, pending[i])
+			pending = append(pending[:i], pending[i + 1:]...)
+			i--
+		}
+	}
+	p.Data["pending_subs"] = pending
+	p.Data["storage_requests"] = storage_req
+}
+
+func admin_list_handler(p *page) {
+	if !p.must_be_admin() {
+		return
+	}
+	type member_list struct{
+		Title string
+		Group string
+		Subgroups []member_list
+		Members func() []*member.Member
+	}
+	lists := []member_list{
+		member_list{"members", "all", nil, p.List_members},
+		member_list{"active members", "active", nil, p.List_active_members},
+		member_list{"new members", "new", nil,
+			func() []*member.Member {
+				limit := 20
+				if v := p.FormValue("limit"); v != "" {
+					if lim, err := strconv.Atoi(v); err == nil {
+						limit = lim
+					}
+				}
+				return p.List_new_members(limit)
+			}},
+		member_list{"memberships", "approved", []member_list{
+			member_list{"regular memberships", "regular", nil,
+				func() []*member.Member {
+					return p.List_members_with_membership("membership-regular")
+				}},
+			member_list{"student memberships", "student", nil,
+				func() []*member.Member {
+					return p.List_members_with_membership("membership-student")
+				}},
+			member_list{"free memberships", "free", nil,
+				func() []*member.Member {
+					return p.List_members_with_membership("membership-free")
+				}},
+			}, p.List_members_with_memberships},
+	}
+	p.Data["lists"] = lists
+	for _, l := range lists {
+		path := "/admin/list/" + l.Group
+		for _, ls := range l.Subgroups {
+			subpath := path + "/" + ls.Group
+			if p.URL.Path == subpath {
+				p.Data["parent_list"] = l
+				l = ls
+				path = subpath
+				break
+			}
+		}
+		if p.URL.Path != path &&
+			!(p.URL.Path == "/admin/list" && l.Group == "all") {
+			continue
+		}
+		p.Title = "Admin: " + l.Title
+		p.Data["list"] = l
+		return
+	}
+	p.http_error(404)
 }
 
 var account_path_rexp = regexp.MustCompile(`^/admin/account/[0-9]+$`)
 
 func manage_account_handler(p *page) {
-	if !p.must_be_admin() {
-		return
-	}
 	if !account_path_rexp.MatchString(p.URL.Path) {
 		p.http_error(404)
+		return
+	}
+	if !p.must_be_admin() {
 		return
 	}
 	member_id, _ := strconv.Atoi(p.URL.Path[len("/admin/account/"):])
@@ -82,41 +165,47 @@ func manage_account_handler(p *page) {
 		p.http_error(404)
 		return
 	}
-	p.Title = "Admin panel - @" + m.Username
+	p.Title = "Admin: @" + m.Username
 	p.Data["member"] = m
 	if p.PostFormValue("approve-membership") != "" {
 		member_id, err := strconv.Atoi(p.PostFormValue("approve-membership"))
 		if err != nil || member_id != m.Id {
 			p.http_error(400)
-		} else if !m.Approved {
-			p.Member.Approve_member(m)
-		} else {
-			p.http_error(500)
+			return
 		}
+		p.Member.Approve_membership(m)
+		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
+			//TODO
+		}
+		p.redirect = p.URL.Path
 	} else if p.PostFormValue("decline-membership") != "" {
 		member_id, err := strconv.Atoi(p.PostFormValue("decline-membership"))
 		if err != nil || member_id != m.Id {
 			p.http_error(400)
 			return
 		}
-		if m.Talk_user() != nil {
-			p.Message_member("Your membership was declined",
+		//TODO p.Decline_membership
+		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
+			p.Talk.Message_user("Your membership request was declined",
 				"Your membership request was declined by @"+p.Member.Username+
 					".", m.Talk_user(), p.Member.Talk_user())
 		}
+	} else if p.PostFormValue("approve-free-membership") != "" {
+		p.Member.Approve_free_membership(m)
+		p.redirect = p.URL.Path
+	} else if sub_id := p.PostFormValue("cancel-membership"); sub_id != "" {
+		membership := m.Get_membership()
+		if sub_id != membership.ID {
+			p.http_error(400)
+			return
+		}
 		m.Cancel_membership()
-	} else if _, ok := p.PostForm["terminate_membership"]; ok {
-		if m.Talk_user() != nil {
-			p.Message_member("Your membership has been cancelled",
-				"Your membership request was cancelled by @"+p.Member.Username+
+		if m.Talk_user() != nil && p.PostFormValue("notify-member") == "on" {
+			p.Talk.Message_user("Your membership has been cancelled",
+				"Your membership was cancelled by @"+p.Member.Username+
 					".", m.Talk_user(), p.Member.Talk_user())
 		}
-		m.Cancel_membership()
-	} else if _, ok := p.PostForm["terminate"]; ok && m.Payment() != nil {
-		id, _ := strconv.Atoi(p.PostFormValue("terminate"))
-		if invoice := m.Payment().Get_bill(id); invoice != nil {
-			m.Payment().Cancel_recurring_bill(invoice)
-		}
+		p.redirect = p.URL.Path
 	} else if p.PostFormValue("registered") != "" {
 		if registered, err := time.ParseInLocation("2006-01-02",
 			p.PostFormValue("registered"), time.Local); err != nil {
@@ -126,10 +215,16 @@ func manage_account_handler(p *page) {
 		} else {
 			m.Set_registration_date(registered)
 		}
+	} else if username := p.PostFormValue("username"); username != "" {
+		if err := m.Update_username(username); err != nil {
+			p.Data["username_error"] = err
+		}
 	} else if name := p.PostFormValue("name"); name != "" {
-		if err := m.Set_name(name); err != nil {
+		if err := m.Update_name(name); err != nil {
 			p.Data["name_error"] = err
 		}
+	} else if _, ok := p.PostForm["force-password-reset"]; ok {
+		p.Force_password_reset(p.Config.Url(), m)
 	} else if p.PostFormValue("key-card") != "" {
 		if err := m.Set_key_card(p.PostFormValue("key-card")); err != nil {
 			p.Data["key_card_error"] = err
@@ -138,13 +233,62 @@ func manage_account_handler(p *page) {
 		if err := m.Set_telephone(tel); err != nil {
 			p.Data["telephone_error"] = err
 		}
-	} else if p.PostFormValue("update-type") == fmt.Sprint(m.Id) {
-		if m.Admin == nil && p.PostFormValue("type") == "admin" {
-			//TODO
-		}
-	} else if p.PostFormValue("delete-account") == fmt.Sprint(m.Id) {
-		//TODO
 	}
+}
+
+func admin_storage_handler(p *page) {
+	if !p.must_be_admin() {
+		return
+	}
+	p.Title = "Admin: Storage"
+	if p.PostFormValue("member") != "" {
+		member_id, err := strconv.Atoi(p.PostFormValue("member"))
+		if err != nil {
+			p.http_error(400)
+			return
+		}
+		m := p.Get_member_by_id(member_id)
+		if m == nil {
+			p.http_error(400)
+			return
+		}
+		var plan_id string
+		if plan_id = p.PostFormValue("approve-storage"); plan_id != "" {
+			number, err := strconv.Atoi(p.PostFormValue("storage-number"))
+			if err != nil {
+				p.http_error(400)
+				return
+			}
+			if m.Get_payment_source() == nil {
+				p.Data["error"] = "No payment information for @" + m.Username
+			} else {
+				p.Data["error"] = m.New_storage_lease(plan_id, number)
+			}
+			p.Cancel_pending_subscription(&member.Pending_subscription{
+				Member: m, Plan_id: plan_id})
+		} else if plan_id = p.PostFormValue("decline-storage"); plan_id != "" {
+			p.Cancel_pending_subscription(&member.Pending_subscription{
+				Member: m, Plan_id: plan_id})
+		} else if p.PostFormValue("cancel-storage-number") != "" {
+			number, err := strconv.Atoi(p.PostFormValue("cancel-storage-number"))
+			if err != nil {
+				p.http_error(400)
+				return
+			}
+			plan_id := member.Plan_category(
+				p.PostFormValue("cancel-storage-plan")) + "-" +
+				member.Plan_identifier(p.PostFormValue("cancel-storage-plan"))
+			p.Data["error"] = m.Cancel_storage_lease(plan_id, number)
+		}
+	}
+	pending := p.List_all_pending_subscriptions()
+	for i := 0; i < len(pending); i++ {
+		if !strings.HasPrefix(pending[i].Plan_id, "storage-") {
+			pending = append(pending[:i], pending[i + 1:]...)
+			i--
+		}
+	}
+	p.Data["storage_requests"] = pending
 }
 
 func member_upload_handler(p *page) {
@@ -152,94 +296,76 @@ func member_upload_handler(p *page) {
 		p.http_error(400)
 		return
 	}
-	type new_member struct {
-		line                  int
-		username, name, email string
-		date                  time.Time
-		free                  bool
-		verified              bool
-		key_card              string
+	input := strings.Split(p.PostFormValue("member-upload"), "\n")
+	lines := make([]string, len(input))
+	copy(lines, input)
+	line_error := make(map[int]string)
+	line_success := make(map[int]*member.Member)
+	rm_line := func(i int) {
+		lines = append(lines[:i], lines[i+1:]...)
 	}
-	new_members := make([]new_member, 0)
-	lines := strings.Split(p.PostFormValue("member-upload"), "\n")
-	line_error := make([][]string, len(lines))
-	line_success := make([]*member.Member, len(lines))
+line_loop:
 	for i, line := range lines {
 		line := strings.TrimSpace(line)
 		if len(line) == 0 {
+			rm_line(i)
 			continue
 		}
 		fields := strings.Split(line, ",")
 		if len(fields) < 3 {
-			line_error[i] = []string{"Invalid: not enough fields"}
+			line_error[i] = "Invalid: not enough fields"
 			continue
 		}
-		nm := new_member{
-			line:     i,
-			username: strings.TrimSpace(fields[0]),
-			name:     strings.TrimSpace(fields[1]),
-			email:    strings.TrimSpace(fields[2])}
+		username := strings.TrimSpace(fields[0])
+		name := strings.TrimSpace(fields[1])
+		email := strings.TrimSpace(fields[2])
+		var (
+			free       bool
+			key_card   string
+			registered time.Time
+		)
 		for j, field := range fields[3:] {
 			field := strings.TrimSpace(field)
 			if field == "" {
 				continue
 			} else if field == "free" {
-				nm.free = true
-			} else if field == "verified" {
-				nm.verified = true
+				free = true
 			} else if member.Key_card_rexp.MatchString(field) {
-				nm.key_card = field
+				key_card = field
 			} else if t, err := time.ParseInLocation("2006-01-02", field,
 				time.Local); err == nil {
-				nm.date = t
+				registered = t
 			} else {
-				line_error[i] = []string{"Field " + fmt.Sprint(j+4) +
-					" invalid: '" + field + "'"}
-				break
+				line_error[i] = "Field " + fmt.Sprint(j+4) +
+					" is an invalid format: '" + field + "'"
+				continue line_loop
 			}
 		}
-		new_members = append(new_members, nm)
-	}
-	verified := make([]*member.Member, 0)
-	for _, nm := range new_members {
-		m, err := p.New_member(nm.username, nm.email, nm.name)
-		if m == nil {
-			line_error[nm.line] = make([]string, 0)
-			for _, v := range err {
-				line_error[nm.line] = append(line_error[nm.line], v)
-			}
+		m, err := p.New_member(username, name, email)
+		if err != nil {
+			line_error[i] = err.Error()
 			continue
 		}
-		if !nm.date.IsZero() {
-			m.Set_registration_date(nm.date)
+		line_success[i] = m
+		rm_line(i)
+		if !registered.IsZero() {
+			m.Set_registration_date(registered)
 		}
-		if nm.verified {
-			if err := m.Verify_email(nm.email); err != nil {
-				line_error[nm.line] = []string{"E-mail verification failed"}
-			} else {
-				verified = append(verified, m)
-			}
-		} else {
-			m.Send_email_verification(nm.email)
-		}
-		if nm.free {
-			p.Member.Approve_member(m)
-		}
-		if nm.key_card != "" {
-			if err := m.Set_key_card(nm.key_card); err != nil {
-				e := []string{err.Error()}
-				if line_error[nm.line] == nil {
-					line_error[nm.line] = e
-				} else {
-					line_error[nm.line] = append(line_error[nm.line], e...)
-				}
+		if key_card != "" {
+			if err := m.Set_key_card(key_card); err != nil {
+				line_error[i] = err.Error()
+				continue
 			}
 		}
-		line_success[nm.line] = m
-		lines[nm.line] = ""
+		if free {
+			if err := p.Member.Approve_free_membership(m); err != nil {
+				line_error[i] = err.Error()
+				continue
+			}
+		}
+		p.Member.Force_password_reset(p.Config.Url(), m)
 	}
 	p.Data["lines"] = lines
 	p.Data["line_error"] = line_error
 	p.Data["line_success"] = line_success
-	p.Member.Send_password_resets(verified...)
 }

@@ -1,38 +1,36 @@
+  <div class="member-list-heading fixed-top">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+          <h4 class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+{{with .Data.member_group}}
+  {{if eq . "all"}}
+              All
+  {{else if eq . "active"}}
+              Active
+  {{else if eq . "new"}}
+              New
+  {{end}}
+            </button>
+            <div class="dropdown-menu">
+              <a class="dropdown-item{{if eq . "all"}} active{{end}}" href="/member/list">All</a>
+              <a class="dropdown-item{{if eq . "active"}} active{{end}}" href="/member/list/active">Active</a>
+              <a class="dropdown-item{{if eq . "new"}} active{{end}}" href="/member/list/new">New</a>
+{{end}}
+            </div>
+            Members
+{{if $.Admin}}
+            <a href="/admin/list" class="glyphicons glyphicons-wrench float-right p-2"></a>
+{{end}}
+          </h4>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-lg-10 col-xl-8">
-        <h4 class="dropdown">
-          <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-{{with .Data.member_group}}
-  {{if eq . "all"}}
-            All
-  {{else if eq . "active"}}
-            Active
-  {{else if eq . "new"}}
-            New
-  {{else if eq . "unapproved"}}
-            Unapproved
-  {{else if eq . "pending"}}
-            Pending
-  {{else if eq . "unverified"}}
-            Unverified
-  {{end}}
-          </button>
-          <div class="dropdown-menu">
-            <a class="dropdown-item{{if eq . "all"}} active{{end}}" href="/member/list">All</a>
-            <a class="dropdown-item{{if eq . "active"}} active{{end}}" href="/member/list/active">Active</a>
-            <a class="dropdown-item{{if eq . "new"}} active{{end}}" href="/member/list/new">New</a>
-  {{if $.Session}}
-    {{if $.Member.Admin}}
-            <a class="dropdown-item{{if eq . "unapproved"}} active{{end}}" href="/member/list/unapproved">Unapproved</a>
-            <a class="dropdown-item{{if eq . "pending"}} active{{end}}" href="/member/list/pending">Pending</a>
-            <a class="dropdown-item{{if eq . "unverified"}} active{{end}}" href="/member/list/unverified">Unverified</a>
-    {{end}}
-  {{end}}
-{{end}}
-          </div>
-          Members
-        </h4>
 {{if ne .Data.member_group "new"}}
         <span class="text-muted">
           {{len .Data.member_list}}
@@ -70,37 +68,35 @@
           </thead>
           <tbody>
   {{range .}}
-    {{if eq $.Data.member_group "unverified"}}
-            <tr class="text-muted{{if $.Session}}{{if eq .Id $.Member.Id}} table-info{{end}}{{end}}">
-    {{else}}
             <tr{{if $.Session}}{{if eq .Id $.Member.Id}} class="table-info"{{end}}{{end}}>
-    {{end}}
               <td>
-                <a href="/member/{{.Id}}" class="member-icon">
-                  {{with .Avatar_url 48}}
-                  <img src="{{.}}">
-                  {{else}}
-                  <div class="glyphicons glyphicons-user"></div>
-                  {{end}}
-                </a>
-                <div class="flex-column mx-3">
-                  <a href="/member/{{.Id}}" class="d-block">
-                    @{{.Username}}
+                <div class="d-flex">
+                  <a href="/member/{{.Id}}" class="member-icon">
+                    {{with .Avatar_url 48}}
+                    <img src="{{.}}">
+                    {{else}}
+                    <div class="glyphicons glyphicons-user"></div>
+                    {{end}}
                   </a>
+                  <div class="flex-column mx-3">
+                    <a href="/member/{{.Id}}" class="d-block">
+                      @{{.Username}}
+                    </a>
     {{if $.Session}}
-                  <span class="small">{{.Name}}</span>
+                    <span class="small">{{.Name}}</span>
     {{end}}
+                  </div>
                 </div>
               </td>
     {{if eq $.Data.member_group "active"}}
               <td>
                 <small class="text-muted">
-                  {{fmt_last_seen .Last_seen}}
+                  {{fmt_time .Last_seen}}
                 </small>
               </td>
     {{end}}
     {{if eq $.Data.member_group "new"}}
-              <td>{{fmt_last_seen .Registered}}</td>
+              <td>{{fmt_time .Registered}}</td>
     {{else}}
               <td>{{.Registered.Format "Jan 02, 2006"}}</td>
     {{end}}

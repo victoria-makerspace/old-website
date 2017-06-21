@@ -2,6 +2,7 @@ package site
 
 import (
 	"fmt"
+	"github.com/vvanpo/makerspace/member"
 	"html/template"
 	"net/http"
 	"os"
@@ -24,13 +25,19 @@ var tmpl_funcmap = template.FuncMap{
 	"sub": func(i, j int) int {
 		return i - j
 	},
+	"mul": func(i, j uint64) uint64 {
+		return i * j
+	},
+	"div": func(i, j float64) float64 {
+		return i / j
+	},
 	"escape": func(html string) template.HTML {
 		return template.HTML(html)
 	},
 	"now": func() time.Time {
 		return time.Now()
 	},
-	"fmt_last_seen": func(t time.Time) string {
+	"fmt_time": func(t time.Time) string {
 		if t.IsZero() {
 			return "never"
 		}
@@ -48,6 +55,15 @@ var tmpl_funcmap = template.FuncMap{
 		}
 		return t.Format("Jan 2, 2006")
 	},
+	"timestamp": func(t int64) time.Time {
+		return time.Unix(t, 0)
+	},
+	"fmt_money": func(amount uint64) string {
+		return fmt.Sprintf("$%.2f", float64(amount)/100)
+	},
+	"Plan_category": member.Plan_category,
+	"Plan_identifier": member.Plan_identifier,
+	"Plan_interval":   member.Plan_interval,
 }
 
 // tmpl_name is the basename (i.e. minus the ".tmpl") of the template file

@@ -1,4 +1,4 @@
-{{$talk_url := .Talk_api.Path}}
+{{$talk_url := .Talk.Path}}
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-12 col-lg-10 col-xl-8 px-sm-5">
@@ -6,10 +6,6 @@
         <p class="alert alert-info">
           Please read and agree to the <a href="/terms">Terms &amp; Conditions</a> before registering to become a member, or making use of Makerspace as a guest.
         </p>
-{{else if not .Member.Approved}}
-  {{if .Member.Membership_invoice}}
-        <p class="alert alert-info">Your membership is pending approval.</p>
-  {{end}}
 {{end}}
 {{with .Talk_user}}
         <h4>
@@ -51,7 +47,7 @@
               </td>
               <td>{{.Reply_count}}</td>
               <td>
-                <small>{{fmt_last_seen .Last_post}}</small>
+                <small>{{fmt_time .Last_post}}</small>
               </td>
             </tr>
   {{else}}

@@ -1,4 +1,3 @@
-dump.sql
+data*.sql
+schema-*.sql
 members.sql
-storage.sql
-

@@ -136,8 +136,24 @@ img.member-icon-large,
 .member-icon-large .glyphicons::before {
     bottom: 0;
 }
-.member-list td:first-child {
-    display: flex;
+.member-list-heading {
+    z-index: 1000;
+    top: 3.5rem;
+}
+.member-list-heading .row {
+    margin-top: 0.25rem;
+    padding: 0.25rem 0;
+    background: rgba(255,255,255,0.8);
+}
+.member-list-heading .dropdown {
+    z-index: 1030;
+    margin: 0;
+}
+.member-list-heading ~ .container {
+    padding-top: 7rem;
+}
+.member-list td {
+    vertical-align: middle;
 }
 .navbar .member-icon {
     position: absolute;
@@ -157,9 +173,12 @@ img.member-icon-large,
 }
 .profile-background {
     width: 100%;
+    height: calc(3rem + 240px);
     position: absolute;
-    opacity: 0.25;
+    opacity: 0.20;
     box-shadow: 0 2px 4px -1px rgba(0,0,0,0.5);
+    background-size: 100%;
+    background-position: center;
 }
 #ms-menu {
     position: absolute;
@@ -275,6 +294,20 @@ a:focus .title-link::after {
     content: "\E051";
     color: #014c8c;
 }
+.dropdown-chevron {
+    font-size: 1rem;
+    vertical-align: baseline;
+    font-family: "Glyphicons Regular";
+}
+.dropdown-chevron::before, *:target .dropdown-chevron.collapsed::before {
+    content: "\E601";
+}
+.dropdown-chevron.collapsed::before {
+    content: "\E602";
+}
+*:target .collapse {
+    display: inherit;
+}
 .col-form-label {
     font-weight: bold;
 }
@@ -322,23 +355,6 @@ input[type=month] {
     width: 100%;
 }
 
-.storage-table tr td {
-    vertical-align: middle;
-}
-.storage-table tr td:nth-child(2) {
-    width: 100%;
-}
-.storage-table tr td:last-child,
-.storage-table tr th:last-child,
-#storage-table-wall thead th:nth-child(4),
-#storage-table-wall tr td:nth-child(4),
-#storage-table-wall tr td:nth-child(3) {
-    text-align: center;
-}
-#storage-table-wall tr td:nth-child(3) {
-    font-style: italic;
-}
-
 .edit-img > img {
     height: 3rem;
     z-index: 1;
@@ -355,6 +371,25 @@ input[type=month] {
     background-color: #014c8c;
 }
 
+.StripeElement {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    border: 1px solid rgba(0,0,0,.15);
+    box-shadow: 0 1px 3px 0 #e6ebf1;
+    transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
+}
+.StripeElement--focus {
+    box-shadow: 0 1px 3px 0 #cfd7df;
+    border-color: #5cb3fd;
+}
+.StripeElement--invalid {
+    border-color: #d9534f;
+}
+.StripeElement--success {
+    border-color: #5cb85c;
+}
+
+
 @media (max-width: 575px) {
     .navbar > .container {
         margin: 0;
@@ -366,9 +401,6 @@ input[type=month] {
         display: inline-block;
     }
     #notifications a:nth-child(7) ~ a {
-        display: none;
-    }
-    #student:disabled {
         display: none;
     }
 }

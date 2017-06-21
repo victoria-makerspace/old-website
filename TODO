@@ -1,16 +1,59 @@
 Site:
-    - Projects pages for members
-    - Form validation for CC registration
-    - Panic recovery in txn scheduler
-    - Deactivate accounts (also in Talk) from admin panel
-    - Modify admin permissions
-    - Storage waitlist
     - Tool wiki
+    - Calendar for priority use of tools
     - Class booking and calendar
-    - Corporate accounts
     - Student validation
+    - Join page form validation
+    - Profile page layout bugs (i.e. worst in mobile)
+    - Format error page to include option error message, and some kind of reload
+        link
+    - Talk forum integration:
+        - Projects pages for members
+        - Verify Talk group membership upon login
+        - Fix read/unread flag on private messages
+            - use both private-messages and private-messages-unread endpoints
+        - Only attempt changing custom groups, not automatic
+        - On username change, ensure no other Talk users have the same username
+    - Rewrite schema and packages to make clear distinction between "member" and
+        "user" (this will be a pretty tedious re-factor...)
+    - Admin panel:
+        - Notify administrator Talk group upon pending approval
+        - Modify admin permissions
+        - Make automatically sent-out e-mails more explicit and with options
+        - Record and list all e-mails sent from server
+        - Corporate accounts, link corporate members to corporate membership
+        - Invoice management
+        - Deactivate accounts (also in Talk)
+        - Force e-mail through Talk API on system/admin notices
+        - Session & activity log (IP address?)
+        - Change plan fees
+        - Set customer credit
+        - Send admins notice on failed payments/cancelled subscription
+        - Failed payment list in admin panel and member billing page
+        - /admin/list select multiple users for updates
+            - password reset
+            - approve free membership
+            - link corporate account
+            - cancel membership
+        - /admin/storage
+            - require approval
+            - cancel lease
+            - set unavailable
+            - update notice
+            - add/remove number
+            - set quantity per number
+            - set price/interval per plan
+            - re-order waitlist
+    - Storage:
+        - Waitlist
+        - View waitlist position
+    - Member search
+    - Delete user: cascade through schema, and de-associate & deactivate/delete
+        talk account
+    - Do proper error handling, using error types so the site handlers know what
+        http status code to return
 
-Tool use hooks:
+Tool-use hooks:
     - Laser cutter
         - Vacuum
         - Compressed air
@@ -30,6 +73,6 @@ Payment:
     - Membership termination notification and VITP card cancel
 
 Makerspace computers:
-    - NFS
-    - LDAP
+    - NFS?
+    - Active directory for SSO and boot image management
     - SSO using card reader

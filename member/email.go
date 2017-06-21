@@ -41,7 +41,7 @@ func (msg *message) emails() []string {
 	}
 	return emails
 }
-func (msg *message) format() []byte {
+func (ms *Members) format_message(msg message) []byte {
 	enc := func(s string) string {
 		return mime.BEncoding.Encode("utf-8", s)
 	}
@@ -63,22 +63,22 @@ func (msg *message) format() []byte {
 		}
 		body += "\r\n"
 	}
-	body += "Subject: " + enc(msg.subject) + "\r\n"
+	body += "Subject: " + enc(ms.Config.Smtp.Subject_prefix+msg.subject) +
+		"\r\n"
 	body += "Content-Type: text/plain; charset=\"utf-8\"\r\n"
 	body += "Content-Transfer-Encoding: base64\r\n"
 	body += "\r\n" + base64.StdEncoding.EncodeToString([]byte(msg.body))
 	return []byte(body)
 }
 
+//TODO: log e-mail
 func (ms *Members) send_email(from string, to []string, body []byte) {
-	config := ms.Config["smtp"].(map[string]interface{})
-	auth := smtp.PlainAuth("", config["username"].(string),
-		config["password"].(string), config["address"].(string))
-	addr := config["address"].(string) + ":" +
-		fmt.Sprint(int(config["port"].(float64)))
+	auth := smtp.PlainAuth("", ms.Config.Smtp.Username, ms.Config.Smtp.Password,
+		ms.Config.Smtp.Address)
+	addr := ms.Config.Smtp.Address + ":" + fmt.Sprint(ms.Config.Smtp.Port)
 	go func() {
 		if err := smtp.SendMail(addr, auth, from, to, body); err != nil {
-			log.Println("Failed to send email: ", err)
+			log.Println("Failed to send e-mail: ", err)
 		}
 	}()
 }
