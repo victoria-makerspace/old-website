@@ -8,29 +8,28 @@
     "members": {
         "reserved_usernames":           ["admin", "moderator", "administrator", "mod", "sys", "system", "community", "info", "you", "name", "username", "user", "nickname", "talk", "support", "director", "makerspace"],
         "password-reset-window":        "1 week",
-        "email-verification-window":    "1 week",
         "smtp": {
-            "address":  "localhost",
-            "port":     1025,
-            "username": "",
-            "password": ""
+            "address":          "localhost",
+            "port":             1025,
+            "username":         "",
+            "password":         "",
+            "subject_prefix":   "[makerspace.ca] ",
+            "admin_email":      "admin@makerspace.ca"
+        },
+        "billing": {
+            "private_key":  "",
+            "public_key":   ""
         }
     },
     "database": {
-            "dbname":   "makerspace",
-            "host":     "/var/run/postgresql",
-            "sslmode":  "disable"
-    },
-    "beanstream": {
-        "merchant-id":      "",
-        "payments-api-key": "",
-        "profiles-api-key": "",
-        "reports-api-key":  ""
+        "dbname":   "makerspace",
+        "host":     "/var/run/postgresql",
+        "sslmode":  "disable"
     },
     "talk": {
         "path":         "/talk",
         "admin":        "system",
-        "sso-secret":   "",
-        "api-key":      ""
+        "api-key":      "",
+        "sso-secret":   ""
     }
 }
