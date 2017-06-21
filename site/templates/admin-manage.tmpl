@@ -10,9 +10,9 @@
           <span class="text-muted">Last seen</span>
           {{fmt_time .Last_seen}}
         </h6>
-  {{if $ms}}
-        <a class="btn btn-secondary float-right" target="_blank" href="https://dashboard.stripe.com/subscriptions/{{(.Get_subscription_from_item $ms.ID).ID}}">
-          Subscription
+  {{with .Customer_id}}
+        <a class="btn btn-secondary float-right" target="_blank" href="https://dashboard.stripe.com/customers/{{.}}">
+          Customer
           <span class="title-link"></span>
         </a>
   {{end}}

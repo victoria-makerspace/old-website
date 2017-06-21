@@ -46,7 +46,7 @@ Site:
             - re-order waitlist
     - Storage:
         - Waitlist
-        - view waitlist position
+        - View waitlist position
     - Member search
     - Delete user: cascade through schema, and de-associate & deactivate/delete
         talk account

@@ -1,6 +1,9 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-xl-10">
+        <p class="alert alert-warning small">
+          Please do not modify plans or remove customers using the Stripe dashboard.  This will result in inconsistencies in our database.
+        </p>
 {{with .Data.member_approved}}
         <p class="alert alert-success">
           <a href="/member/{{.Id}}">@{{.Username}}</a>'s membership approved.
