@@ -129,6 +129,11 @@
               <dd class="col-6 col-sm-9">{{.Zip}}</dd>
             </dl>
 {{end}}
+{{if not $card}}
+            <p class="alert alert-info">
+              Registering a credit card does not invoke any charges on said card until you register to become a member of Victoria Makerspace.  Credit card data is not stored on Makerspace servers, we use a third-party service (<a href="https://stripe.com/ca" target="_blank">Stripe<span class="title-link"></span></a>) to handle subscriptions and transactions.
+            </p>
+{{end}}
             <div class="row">
               <div class="col-sm-8 form-group">
                 <div id="card-element"></div>
@@ -219,7 +224,7 @@
               Before you can become a member, you should attend an open-house.  Open-house nights are on the 2nd and 4th Tuesday of each month, from 7 to 9pm.
             </p>
   {{end}}
-            <fieldset class="mb-1"{{if or (not .Member.Agreed_to_terms) (not .Get_payment_source)}} disabled{{end}}>
+            <fieldset class="mb-1"{{if .Data.disable_registration}} disabled{{end}}>
               <label class="custom-control custom-radio">
                 <input type="radio" name="rate" class="custom-control-input" value="regular"{{if or (eq .Membership_rate "regular") (and (not $ms) (not .Member.Student))}} checked{{end}}>
                 <span class="custom-control-indicator"></span>
@@ -267,12 +272,12 @@
                 </div>
               </div>
             </fieldset>
-            <div class="d-inline-flex mt-2">
+            <div class="d-inline-flex align-items-start mt-2">
   {{if $ms}}
-              <button type="submit" name="register-membership" class="btn btn-primary"{{if not .Get_payment_source}} disabled{{end}}>Update</button>
+              <button type="submit" name="register-membership" class="btn btn-primary"{{if .Data.disable_registration}} disabled{{end}}>Update</button>
               <button type="button" data-toggle="modal" data-target="#cancel-membership" class="ml-1 btn btn-danger">Cancel</button>
   {{else}}
-              <button type="submit" name="register-membership" class="btn btn-primary"{{if or (not .Member.Agreed_to_terms) (not .Get_payment_source)}} disabled{{end}}>Register</button>
+              <button type="submit" name="register-membership" class="btn btn-primary"{{if .Data.disable_registration}} disabled{{end}}>Register</button>
   {{end}}
   {{if not .Member.Agreed_to_terms}}
               <p class="alert alert-warning ml-3 mb-0 py-2">
@@ -280,6 +285,8 @@
               </p>
   {{else if not .Get_payment_source}}
               <p class="alert alert-warning ml-3 mb-0 py-2">You must register a credit card before membership registration.</p>
+  {{else if .Card_request_date.IsZero}}
+              <p class="alert alert-warning ml-3 mb-0 py-2">You must complete the access-card <a href="/member/access-card">request form</a> before membership registration.</p>
   {{end}}
   {{with .Data.membership_registration_error}}
               <p class="alert alert-danger ml-3 mb-0 py-2">{{.}}.</p>

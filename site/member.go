@@ -4,6 +4,7 @@ import (
 	"github.com/vvanpo/makerspace/member"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 func init() {
@@ -11,6 +12,7 @@ func init() {
 	init_handler("dashboard", dashboard_handler, "/member/dashboard")
 	init_handler("account", account_handler, "/member/account")
 	init_handler("profile", profile_handler, "/member/")
+	init_handler("access-card", access_form_handler, "/member/access-card")
 }
 
 // Search for members by id, username, email, or name
@@ -158,4 +160,54 @@ func profile_handler(p *page) {
 	}
 	p.Title = "@" + m.Username
 	p.Data["member"] = m
+}
+
+func access_form_handler(p *page) {
+	p.Title = "Access card request"
+	if !p.must_authenticate() {
+		return
+	}
+	if _, ok := p.PostForm["request-card"]; ok {
+		var error bool
+		if tel := p.PostFormValue("telephone"); tel == "" {
+			p.Data["telephone_error"] = "Telephone number cannot be blank"
+			error = true
+		} else {
+			err := p.Set_telephone(tel)
+			if err != nil {
+				p.Data["telephone_error"] = err
+				error = true
+			}
+		}
+		if p.PostFormValue("vehicle") != "" {
+			err := p.Set_vehicle(p.PostFormValue("vehicle"))
+			if err != nil {
+				p.Data["vehicle_error"] = err
+				error = true
+			}
+			if p.PostFormValue("plate") == "" {
+				p.Data["plate_error"] = "Please submit your vehicle's license plate number"
+				error = true
+			}
+		}
+		if p.PostFormValue("plate") != "" {
+			err := p.Set_license_plate(p.PostFormValue("plate"))
+			if err != nil {
+				p.Data["plate_error"] = err
+				error = true
+			}
+			if p.PostFormValue("vehicle") == "" {
+				p.Data["vehicle_error"] = "Please submit your vehicle's make and model"
+				error = true
+			}
+		}
+		if p.PostFormValue("agree-to-declaration") != "on" {
+			p.Data["declaration_error"] = "You must agree to this declaration"
+			error = true
+		}
+		if !error {
+			p.Set_card_request_date(time.Now())
+			p.redirect = "/member/billing"
+		}
+	}
 }

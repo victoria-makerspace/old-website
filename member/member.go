@@ -19,6 +19,9 @@ type Member struct {
 	Email           string
 	Key_card        string
 	Telephone       string
+	Vehicle_model	string
+	License_plate	string
+	Card_request_date	time.Time
 	Avatar_tmpl     string
 	Agreed_to_terms bool
 	Registered      time.Time
@@ -212,6 +215,39 @@ func (m *Member) Set_telephone(tel string) error {
 	if _, err := m.Exec("UPDATE member "+
 		"SET telephone = $1 "+
 		"WHERE id = $2", tel, m.Id); err != nil {
+		log.Panic(err)
+	}
+	return nil
+}
+
+func (m *Member) Set_vehicle(vehicle string) error {
+	m.Vehicle_model = vehicle
+	if _, err := m.Exec("UPDATE member "+
+		"SET vehicle_model = $1 "+
+		"WHERE id = $2", vehicle, m.Id); err != nil {
+		log.Panic(err)
+	}
+	return nil
+}
+
+func (m *Member) Set_license_plate(plate string) error {
+	m.License_plate = plate
+	if _, err := m.Exec("UPDATE member "+
+		"SET license_plate = $1 "+
+		"WHERE id = $2", plate, m.Id); err != nil {
+		log.Panic(err)
+	}
+	return nil
+}
+
+func (m *Member) Set_card_request_date(date time.Time) error {
+	if date.IsZero() {
+		date = time.Now()
+	}
+	m.Card_request_date = date
+	if _, err := m.Exec("UPDATE member "+
+		"SET card_request_date = $1 "+
+		"WHERE id = $2", date, m.Id); err != nil {
 		log.Panic(err)
 	}
 	return nil

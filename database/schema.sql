@@ -14,7 +14,10 @@ CREATE TABLE member (
 	registered timestamp(0) with time zone NOT NULL DEFAULT now(),
 	stripe_customer_id text,
 	password_key character(64),
-	password_salt character(64) UNIQUE
+	password_salt character(64) UNIQUE,
+	vehicle_model text,
+	license_plate text,
+	card_request_date date
 );
 CREATE TABLE email_verification_token (
 	token character(64) NOT NULL,

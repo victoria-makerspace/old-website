@@ -19,10 +19,9 @@ func billing_handler(p *page) {
 		//p.Data["card_error"] = p.Update_customer(token, nil)
 		if err := p.Update_customer(token); err != nil {
 			p.http_error(500)
+			return
 		}
-		return
-	}
-	if subitem_id := p.PostFormValue("cancel-membership"); subitem_id != "" {
+	} else if subitem_id := p.PostFormValue("cancel-membership"); subitem_id != "" {
 		mp := p.Member.Get_membership()
 		if subitem_id != mp.ID {
 			p.http_error(400)
@@ -30,11 +29,12 @@ func billing_handler(p *page) {
 		}
 		if !p.Member.Authenticate(p.PostFormValue("password")) {
 			p.Data["password_error"] = "Incorrect password"
+		} else {
+			//TODO: reason for cancellation: PostFormValue("cancellation-reason")
+			p.Member.Cancel_membership()
+			p.redirect = "/member/billing"
 			return
 		}
-		//TODO: reason for cancellation: PostFormValue("cancellation-reason")
-		p.Member.Cancel_membership()
-		p.redirect = "/member/billing"
 	} else if _, ok := p.PostForm["register-membership"]; ok {
 		rate := p.PostFormValue("rate")
 		if rate == "student" &&
@@ -105,5 +105,8 @@ func billing_handler(p *page) {
 			return
 		}
 		p.redirect = "/member/billing"
+	}
+	if !p.Agreed_to_terms || p.Get_payment_source == nil || p.Card_request_date.IsZero() {
+		p.Data["disable_registration"] = true
 	}
 }
