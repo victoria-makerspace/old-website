@@ -226,6 +226,7 @@ func admin_account_handler(p *page) {
 		}
 	} else if _, ok := p.PostForm["force-password-reset"]; ok {
 		p.Force_password_reset(p.Config.Url(), m)
+		p.Data["reset_success"] = "Reset e-mail sent"
 	} else if p.PostFormValue("key-card") != "" {
 		if err := m.Set_key_card(p.PostFormValue("key-card")); err != nil {
 			p.Data["key_card_error"] = err
@@ -295,6 +296,22 @@ func admin_storage_handler(p *page) {
 func admin_cards_handler(p *page) {
 	if !p.must_be_admin() {
 		return
+	}
+	if p.PostFormValue("update-member") != "" {
+		member_id, err := strconv.Atoi(p.PostFormValue("update-member"))
+		if err != nil {
+			p.http_error(400)
+			return
+		}
+		m := p.Get_member_by_id(member_id)
+		if m == nil {
+			p.http_error(400)
+			return
+		}
+		if err := m.Set_key_card(p.PostFormValue("access-card")); err != nil {
+			p.Data["access_card_error_member"] = m.Id
+			p.Data["access_card_error"] = err
+		}
 	}
 }
 

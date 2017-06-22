@@ -106,6 +106,7 @@
             <label for="registered" class="col-sm-4 col-form-label">Registered:</label>
             <div class="col-sm-8">
               <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-calendar"></span>
                 <input type="date" class="form-control flex-row" name="registered" value="{{.Registered.Format "2006-01-02"}}">
                 <span class="input-group-btn">
                   <button type="submit" class="btn btn-sm btn-primary">Update</button>
@@ -140,7 +141,7 @@
               <small class="form-control-feedback">{{$.Data.name_error}}</small>
             </div>
           </form>
-          <form action="/admin/account/{{.Id}}" method="post" class="form-group row">
+          <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.reset_success}} has-success{{end}}">
             <label class="col-sm-4 col-form-label">Force password reset:</label>
             <div class="col-sm-8">
               <div class="input-group">
@@ -149,6 +150,7 @@
                   <button type="submit" name="force-password-reset" class="btn btn-warning">Reset</button>
                 </span>
               </div>
+              <small class="form-control-feedback">{{$.Data.reset_success}}</small>
             </div>
           </form>
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.email_error}} has-danger{{end}}">

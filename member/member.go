@@ -188,7 +188,7 @@ var Key_card_rexp = regexp.MustCompile(`^[0-9]{2}:[0-9]{5}$`)
 
 func (m *Member) Set_key_card(key_card string) error {
 	if !Key_card_rexp.MatchString(key_card) {
-		return fmt.Errorf("Invalid key-card format")
+		return fmt.Errorf("Invalid access-card format (re: /^[0-9]{2}:[0-9]{5}$/)")
 	}
 	var n int
 	if err := m.QueryRow(
@@ -199,7 +199,7 @@ func (m *Member) Set_key_card(key_card string) error {
 		log.Panic(err)
 	}
 	if n != 0 {
-		return fmt.Errorf("Key-card already in use")
+		return fmt.Errorf("Access-card already in use")
 	}
 	m.Key_card = key_card
 	if _, err := m.Exec("UPDATE member "+

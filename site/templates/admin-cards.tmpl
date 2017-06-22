@@ -8,7 +8,7 @@
       <thead>
         <tr>
           <th class="text-muted">{{len .}} Members</th>
-          <th class="text-center">Card #</th>
+          <th class="text-center" style="width: 10rem">Card #</th>
           <th class="text-center">Membership</th>
           <th></th>
         </tr>
@@ -24,14 +24,24 @@
               <div class="glyphicons glyphicons-user"></div>
               {{end}}
             </a>
-            <div class="flex-column mx-3">
-              <a href="/member/{{.Id}}" class="d-block">
+            <div class="mx-3">
+              <a href="/member/{{.Id}}">
                 @{{.Username}}
               </a>
-              <span class="small">{{.Name}}</span>
+              <span class="small d-block">{{.Name}}</span>
             </div>
           </td>
-          <td>{{.Key_card}}</td>
+          <td>
+            <form method="post" {{if $.Data.access_card_error_member}}{{if eq .Id $.Data.access_card_error_member}}class="has-danger"{{end}}{{end}}>
+              <div class="input-group">
+                <input type="text" class="form-control" name="access-card" value="{{.Key_card}}" maxlength="8">
+                <span class="input-group-btn">
+                  <button type="submit" name="update-member" value="{{.Id}}" class="btn btn-sm btn-primary glyphicons glyphicons-door"></button>
+                </span>
+              </div>
+              <small class="form-control-feedback">{{$.Data.access_card_error}}</small>
+            </form>
+          </td>
           <td class="text-capitalize">
     {{with .Membership_rate}}
             {{.}}
