@@ -286,6 +286,7 @@ a:focus .title-link::after {
 .form-control-feedback {
     display: none;
 }
+.has-success .form-control-feedback,
 .has-warning .form-control-feedback,
 .has-danger .form-control-feedback {
     display: inline;
