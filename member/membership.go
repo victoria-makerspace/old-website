@@ -67,7 +67,7 @@ func (m *Member) Membership_id() string {
 }
 
 func (m *Member) Update_membership(rate string) error {
-	p, ok := m.Plans["membership-" + rate]
+	p, ok := m.Plans["membership-"+rate]
 	if !ok {
 		return fmt.Errorf("Invalid membership rate '%s'", rate)
 	}

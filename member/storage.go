@@ -15,7 +15,7 @@ type Storage struct {
 	Quantity  uint64
 	Available bool
 	*stripe.Plan
-	sub_id string
+	sub_id     string
 	subitem_id string
 	*Member
 }
@@ -29,14 +29,14 @@ func (ms *Members) get_storage(plan_id string, number int) (*Storage, error) {
 	var sub_id, subitem_id sql.NullString
 	if err := ms.QueryRow(
 		"SELECT"+
-		"	available,"+
-		"	quantity,"+
-		"	subscription_id,"+
-		"	subitem_id "+
-		"FROM storage "+
-		"WHERE plan_id = $1 AND number = $2",
+			"	available,"+
+			"	quantity,"+
+			"	subscription_id,"+
+			"	subitem_id "+
+			"FROM storage "+
+			"WHERE plan_id = $1 AND number = $2",
 		plan_id, number).Scan(&s.Available, &s.Quantity,
-			&sub_id, &subitem_id); err != nil {
+		&sub_id, &subitem_id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("Invalid storage number for '%s'", p.Name)
 		}
@@ -74,10 +74,10 @@ func (ms *Members) List_storage(plan_id string) ([]*Storage, error) {
 	storage := make([]*Storage, 0)
 	rows, err := ms.Query(
 		"SELECT"+
-		"	number, quantity, available, subscription_id, subitem_id  "+
-		"FROM storage "+
-		"WHERE plan_id = $1 "+
-		"ORDER BY number ASC", plan_id)
+			"	number, quantity, available, subscription_id, subitem_id  "+
+			"FROM storage "+
+			"WHERE plan_id = $1 "+
+			"ORDER BY number ASC", plan_id)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -133,10 +133,10 @@ func (ms *Members) List_available_storage_numbers(plan_id string) []int {
 	numbers := make([]int, 0)
 	rows, err := ms.Query(
 		"SELECT"+
-		"	number "+
-		"FROM storage "+
-		"WHERE plan_id = $1 AND available = true AND subscription_id IS NULL "+
-		"ORDER BY number ASC", plan_id)
+			"	number "+
+			"FROM storage "+
+			"WHERE plan_id = $1 AND available = true AND subscription_id IS NULL "+
+			"ORDER BY number ASC", plan_id)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -188,8 +188,7 @@ func (m *Member) New_storage_lease(plan_id string, number int) error {
 	}
 	quantity += lease.Quantity
 	if len(st_numbers) > 0 {
-		if err := m.Update_subscription_item(sub_id, subitem_id, quantity);
-			err != nil {
+		if err := m.Update_subscription_item(sub_id, subitem_id, quantity); err != nil {
 			return err
 		}
 	} else {
@@ -204,7 +203,7 @@ func (m *Member) New_storage_lease(plan_id string, number int) error {
 		"UPDATE storage "+
 			"SET subscription_id = $3, subitem_id = $4 "+
 			"WHERE plan_id = $1 AND number = $2",
-			plan_id, number, sub_id, subitem_id); err != nil {
+		plan_id, number, sub_id, subitem_id); err != nil {
 		log.Panic(err)
 	}
 	return nil

@@ -1,11 +1,11 @@
 package member
 
 import (
-	"github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/customer"
-	"github.com/stripe/stripe-go/card"
-	"log"
 	"fmt"
+	"github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/card"
+	"github.com/stripe/stripe-go/customer"
+	"log"
 	"strings"
 )
 
@@ -33,7 +33,7 @@ func (m *Member) Get_customer() *Customer {
 
 func (m *Member) Update_customer(token string) error {
 	params := &stripe.CustomerParams{
-		Desc: m.Name + "'s account",
+		Desc:  m.Name + "'s account",
 		Email: m.Email}
 	params.Meta = map[string]string{"member_id": fmt.Sprint(m.Id)}
 	if token != "" {

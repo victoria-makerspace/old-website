@@ -49,14 +49,14 @@ func (ms *Members) get_members_by_query(where_cond string, values ...interface{}
 	defer rows.Close()
 	for rows.Next() {
 		var (
-			m                                             Member
+			m Member
 			key_card, telephone, avatar_tmpl, customer_id, vehicle,
-				license_plate, password_key, password_salt                   sql.NullString
-			card_request_date, open_house_date							 pq.NullTime
-			admin, student                                sql.NullInt64
-			privileges                                    pq.StringArray
-			institution, student_email                    sql.NullString
-			graduation_date                               pq.NullTime
+			license_plate, password_key, password_salt sql.NullString
+			card_request_date, open_house_date pq.NullTime
+			admin, student                     sql.NullInt64
+			privileges                         pq.StringArray
+			institution, student_email         sql.NullString
+			graduation_date                    pq.NullTime
 		)
 		if err := rows.Scan(&m.Id, &m.Username, &m.Name, &m.Email, &key_card,
 			&telephone, &avatar_tmpl, &m.Agreed_to_terms, &m.Registered,
@@ -210,7 +210,6 @@ func (ms *Members) List_members_with_access_card() []*Member {
 	query := "WHERE key_card IS NOT NULL"
 	return ms.list_members_by_query(less, query)
 }
-
 
 // Ordered by membership approval date
 func (ms *Members) order_members_by_customer_subs(subs map[string]*stripe.Sub) []*Member {

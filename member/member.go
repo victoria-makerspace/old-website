@@ -13,24 +13,24 @@ import (
 )
 
 type Member struct {
-	Id              int
-	Username        string
-	Name            string
-	Email           string
-	Key_card        string
-	Telephone       string
-	Vehicle_model	string
-	License_plate	string
-	Card_request_date	time.Time
-	Open_house_date	time.Time
-	Avatar_tmpl     string
-	Agreed_to_terms bool
-	Registered      time.Time
-	Customer_id     string
-	password_key    string
-	password_salt   string
-	talk            *talk.User
-	customer        *Customer
+	Id                int
+	Username          string
+	Name              string
+	Email             string
+	Key_card          string
+	Telephone         string
+	Vehicle_model     string
+	License_plate     string
+	Card_request_date time.Time
+	Open_house_date   time.Time
+	Avatar_tmpl       string
+	Agreed_to_terms   bool
+	Registered        time.Time
+	Customer_id       string
+	password_key      string
+	password_salt     string
+	talk              *talk.User
+	customer          *Customer
 	*Admin
 	*Student
 	*Members
@@ -210,6 +210,15 @@ func (m *Member) Set_key_card(key_card string) error {
 	return nil
 }
 
+func (m *Member) Delete_access_card() {
+	m.Key_card = ""
+	if _, err := m.Exec("UPDATE member "+
+		"SET key_card = NULL "+
+		"WHERE id = $1", m.Id); err != nil {
+		log.Panic(err)
+	}
+}
+
 //TODO: validate input
 func (m *Member) Set_telephone(tel string) error {
 	m.Telephone = tel
@@ -219,6 +228,15 @@ func (m *Member) Set_telephone(tel string) error {
 		log.Panic(err)
 	}
 	return nil
+}
+
+func (m *Member) Delete_telephone() {
+	m.Telephone = ""
+	if _, err := m.Exec("UPDATE member "+
+		"SET telephone = NULL "+
+		"WHERE id = $1", m.Id); err != nil {
+		log.Panic(err)
+	}
 }
 
 func (m *Member) Set_vehicle(vehicle string) error {
@@ -231,6 +249,15 @@ func (m *Member) Set_vehicle(vehicle string) error {
 	return nil
 }
 
+func (m *Member) Delete_vehicle() {
+	m.Vehicle_model = ""
+	if _, err := m.Exec("UPDATE member "+
+		"SET vehicle_model = NULL "+
+		"WHERE id = $1", m.Id); err != nil {
+		log.Panic(err)
+	}
+}
+
 func (m *Member) Set_license_plate(plate string) error {
 	m.License_plate = plate
 	if _, err := m.Exec("UPDATE member "+
@@ -239,6 +266,15 @@ func (m *Member) Set_license_plate(plate string) error {
 		log.Panic(err)
 	}
 	return nil
+}
+
+func (m *Member) Delete_license_plate() {
+	m.License_plate = ""
+	if _, err := m.Exec("UPDATE member "+
+		"SET license_plate = NULL "+
+		"WHERE id = $1", m.Id); err != nil {
+		log.Panic(err)
+	}
 }
 
 func (m *Member) Set_card_request_date(date time.Time) error {
@@ -265,6 +301,15 @@ func (m *Member) Set_open_house_date(date time.Time) error {
 		log.Panic(err)
 	}
 	return nil
+}
+
+func (m *Member) Delete_open_house_date() {
+	m.Open_house_date = time.Time{}
+	if _, err := m.Exec("UPDATE member "+
+		"SET open_house_date = NULL "+
+		"WHERE id = $1", m.Id); err != nil {
+		log.Panic(err)
+	}
 }
 
 func (m *Member) Update_avatar_tmpl(avatar_tmpl string) {

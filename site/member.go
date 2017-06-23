@@ -170,8 +170,8 @@ func access_form_handler(p *page) {
 	if _, ok := p.PostForm["request-card"]; ok {
 		var error bool
 		if open_house := p.PostFormValue("open-house"); open_house == "" {
-			p.Data["open_house_error"] = "You must attend an open-house (held"+
-				" on the 2nd and 4th Tuesday's of every month) before"+
+			p.Data["open_house_error"] = "You must attend an open-house (held" +
+				" on the 2nd and 4th Tuesday's of every month) before" +
 				" requesting Makerspace access"
 			error = true
 		} else if date, err := time.ParseInLocation("2006-01-02", open_house,
