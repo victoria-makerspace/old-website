@@ -230,13 +230,17 @@ func admin_account_handler(p *page) {
 	} else if _, ok := p.PostForm["update-telephone"]; ok {
 		p.Data["telephone_error"] = m.Set_telephone(p.PostFormValue("telephone"))
 	} else if _, ok := p.PostForm["update-open-house"]; ok {
-		date, err := time.ParseInLocation("2006-01-02",
-			p.PostFormValue("open-house"), time.Local)
-		if err != nil {
-			p.http_error(400)
-			return
+		if p.PostFormValue("open-house") == "" {
+			p.Data["open_house_error"] = "Invalid date"
+		} else {
+			date, err := time.ParseInLocation("2006-01-02",
+				p.PostFormValue("open-house"), time.Local)
+			if err != nil {
+				p.http_error(400)
+				return
+			}
+			p.Data["open_house_error"] = m.Set_open_house_date(date)
 		}
-		p.Data["open_house_error"] = m.Set_open_house_date(date)
 	} else if _, ok := p.PostForm["update-vehicle"]; ok {
 		p.Data["vehicle_error"] = m.Set_vehicle(p.PostFormValue("vehicle"))
 	} else if _, ok := p.PostForm["update-plate"]; ok {
