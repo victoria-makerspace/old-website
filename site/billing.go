@@ -1,9 +1,9 @@
 package site
 
 import (
-	"time"
 	"github.com/stripe/stripe-go"
 	"github.com/vvanpo/makerspace/member"
+	"time"
 )
 
 func init() {
@@ -59,7 +59,7 @@ func billing_handler(p *page) {
 		}
 		membership := p.Member.Get_membership()
 		if rate == "" || rate == p.Member.Membership_rate() {
-			p.Data["membership_registration_error"] = "Already registered for "+
+			p.Data["membership_registration_error"] = "Already registered for " +
 				membership.Plan.Name
 			return
 		}
@@ -75,8 +75,7 @@ func billing_handler(p *page) {
 			return
 		}
 		p.Cancel_pending_subscription(pending)
-	} else if subitem_id := p.PostFormValue("cancel-subscription-item");
-		subitem_id != "" {
+	} else if subitem_id := p.PostFormValue("cancel-subscription-item"); subitem_id != "" {
 		s, ok := p.Get_customer().Subscriptions[p.PostFormValue("subscription-id")]
 		if !ok {
 			p.http_error(400)
@@ -99,8 +98,7 @@ func billing_handler(p *page) {
 		if member.Plan_category(subitem.Plan.ID) == "storage" {
 			p.http_error(403)
 			return
-		} else if err := p.Cancel_subscription_item(s.ID, subitem_id);
-			err != nil {
+		} else if err := p.Cancel_subscription_item(s.ID, subitem_id); err != nil {
 			p.Data["cancel_subscription_error"] = err
 			return
 		}

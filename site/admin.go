@@ -81,7 +81,7 @@ func admin_handler(p *page) {
 	for i := 0; i < len(pending); i++ {
 		if strings.HasPrefix(pending[i].Plan_id, "storage-") {
 			storage_req = append(storage_req, pending[i])
-			pending = append(pending[:i], pending[i + 1:]...)
+			pending = append(pending[:i], pending[i+1:]...)
 			i--
 		}
 	}
@@ -93,11 +93,11 @@ func admin_list_handler(p *page) {
 	if !p.must_be_admin() {
 		return
 	}
-	type member_list struct{
-		Title string
-		Group string
+	type member_list struct {
+		Title     string
+		Group     string
 		Subgroups []member_list
-		Members func() []*member.Member
+		Members   func() []*member.Member
 	}
 	lists := []member_list{
 		member_list{"members", "all", nil, p.List_members},
@@ -125,7 +125,7 @@ func admin_list_handler(p *page) {
 				func() []*member.Member {
 					return p.List_members_with_membership("membership-free")
 				}},
-			}, p.List_members_with_memberships},
+		}, p.List_members_with_memberships},
 	}
 	p.Data["lists"] = lists
 	for _, l := range lists {
@@ -207,33 +207,51 @@ func admin_account_handler(p *page) {
 					".", m.Talk_user(), p.Member.Talk_user())
 		}
 		p.redirect = p.URL.Path
-	} else if p.PostFormValue("registered") != "" {
-		if registered, err := time.ParseInLocation("2006-01-02",
-			p.PostFormValue("registered"), time.Local); err != nil {
-			p.http_error(400)
-		} else if registered.After(time.Now()) {
-			p.Data["registered_error"] = "Invalid input date"
-		} else {
-			m.Set_registration_date(registered)
-		}
-	} else if username := p.PostFormValue("username"); username != "" {
-		if err := m.Update_username(username); err != nil {
-			p.Data["username_error"] = err
-		}
-	} else if name := p.PostFormValue("name"); name != "" {
-		if err := m.Update_name(name); err != nil {
-			p.Data["name_error"] = err
-		}
 	} else if _, ok := p.PostForm["force-password-reset"]; ok {
 		p.Force_password_reset(p.Config.Url(), m)
 		p.Data["reset_success"] = "Reset e-mail sent"
-	} else if p.PostFormValue("key-card") != "" {
-		if err := m.Set_key_card(p.PostFormValue("key-card")); err != nil {
-			p.Data["key_card_error"] = err
+	} else if _, ok := p.PostForm["update-registered"]; ok {
+		if date, err := time.ParseInLocation("2006-01-02",
+			p.PostFormValue("registered"), time.Local); err != nil {
+			p.http_error(400)
+			return
+		} else if date.After(time.Now()) {
+			p.Data["registered_error"] = "Registration date cannot be in the" +
+				" future"
+		} else {
+			m.Set_registration_date(date)
 		}
-	} else if tel := p.PostFormValue("telephone"); tel != "" {
-		if err := m.Set_telephone(tel); err != nil {
-			p.Data["telephone_error"] = err
+	} else if _, ok := p.PostForm["update-username"]; ok {
+		p.Data["username_error"] = m.Update_username(p.PostFormValue("username"))
+	} else if _, ok := p.PostForm["update-name"]; ok {
+		p.Data["name_error"] = m.Update_name(p.PostFormValue("name"))
+	} else if _, ok := p.PostForm["update-access-card"]; ok {
+		p.Data["access_card_error"] = m.Set_key_card(p.PostFormValue("access-card"))
+	} else if _, ok := p.PostForm["update-telephone"]; ok {
+		p.Data["telephone_error"] = m.Set_telephone(p.PostFormValue("telephone"))
+	} else if _, ok := p.PostForm["update-open-house"]; ok {
+		date, err := time.ParseInLocation("2006-01-02",
+			p.PostFormValue("open-house"), time.Local)
+		if err != nil {
+			p.http_error(400)
+			return
+		}
+		p.Data["open_house_error"] = m.Set_open_house_date(date)
+	} else if _, ok := p.PostForm["update-vehicle"]; ok {
+		p.Data["vehicle_error"] = m.Set_vehicle(p.PostFormValue("vehicle"))
+	} else if _, ok := p.PostForm["update-plate"]; ok {
+		p.Data["plate_error"] = m.Set_license_plate(p.PostFormValue("plate"))
+	} else if _, ok := p.PostForm["delete"]; ok {
+		if _, ok = p.PostForm["access-card"]; ok {
+			m.Delete_access_card()
+		} else if _, ok = p.PostForm["telephone"]; ok {
+			m.Delete_telephone()
+		} else if _, ok = p.PostForm["open-house"]; ok {
+			m.Delete_open_house_date()
+		} else if _, ok = p.PostForm["vehicle"]; ok {
+			m.Delete_vehicle()
+		} else if _, ok = p.PostForm["plate"]; ok {
+			m.Delete_license_plate()
 		}
 	}
 }
@@ -286,7 +304,7 @@ func admin_storage_handler(p *page) {
 	pending := p.List_all_pending_subscriptions()
 	for i := 0; i < len(pending); i++ {
 		if !strings.HasPrefix(pending[i].Plan_id, "storage-") {
-			pending = append(pending[:i], pending[i + 1:]...)
+			pending = append(pending[:i], pending[i+1:]...)
 			i--
 		}
 	}

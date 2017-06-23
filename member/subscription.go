@@ -60,8 +60,8 @@ func (m *Member) Get_pending_subscription_by_plan(plan_id string) *Pending_subsc
 	pending := &Pending_subscription{Member: m, Plan_id: plan_id}
 	if err := m.QueryRow(
 		"SELECT requested_at "+
-		"FROM pending_subscription "+
-		"WHERE member = $1 AND plan_id = $2", m.Id, plan_id).Scan(
+			"FROM pending_subscription "+
+			"WHERE member = $1 AND plan_id = $2", m.Id, plan_id).Scan(
 		&pending.Requested_at); err != nil {
 		if err == sql.ErrNoRows {
 			return nil

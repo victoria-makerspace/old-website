@@ -94,7 +94,7 @@
             <div class="col-sm-8">
               {{(index $.Plans .Plan_id).Name}}
               <button type="submit" name="approve-membership" value="{{.Member.Id}}" class="ml-1 btn btn-sm btn-primary">Approve</button>
-              <button type="submit" name="decline-membership" value="{{.Member.Id}}" class="ml-1 btn btn-sm btn-warning">Decline</button>
+              <button type="submit" name="decline-membership" value="{{.Member.Id}}" class="ml-1 btn btn-sm btn-danger">Decline</button>
             </div>
           </div>
   {{end}}
@@ -109,7 +109,7 @@
                 <span class="input-group-addon glyphicons glyphicons-calendar"></span>
                 <input type="date" class="form-control flex-row" name="registered" value="{{.Registered.Format "2006-01-02"}}">
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                  <button type="submit" name="update-registered" class="btn btn-sm btn-primary glyphicons glyphicons-ok"></button>
                 </span>
               </div>
               <small class="form-control-feedback{{with $.Data.registered_error}} show">{{.}}{{else}}">{{end}}</small>
@@ -122,7 +122,7 @@
                 <span class="input-group-addon">@</span>
                 <input type="text" class="form-control" name="username" minlength="3" maxlength="20" value="{{.Username}}">
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                  <button type="submit" name="update-username" class="btn btn-sm btn-primary glyphicons glyphicons-ok"></button>
                 </span>
               </div>
               <small class="form-control-feedback">{{$.Data.username_error}}</small>
@@ -135,7 +135,7 @@
                 <span class="input-group-addon glyphicons glyphicons-user"></span>
                 <input type="text" class="form-control" name="name" value="{{.Name}}" maxlength="100">
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                  <button type="submit" name="update-name" class="btn btn-sm btn-primary glyphicons glyphicons-ok"></button>
                 </span>
               </div>
               <small class="form-control-feedback">{{$.Data.name_error}}</small>
@@ -160,23 +160,26 @@
                 <span class="input-group-addon glyphicons glyphicons-envelope"></span>
                 <input type="email" class="form-control" name="email" value="{{.Email}}">
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                  <button type="submit" name="update-email" class="btn btn-sm btn-primary glyphicons glyphicons-ok"></button>
                 </span>
               </div>
               <small class="form-control-feedback">{{$.Data.email_error}}</small>
             </div>
           </form>
-          <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.key_card_error}} has-danger{{end}}">
-            <label for="email" class="col-sm-4 col-form-label">Access card:</label>
+          <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.access_card_error}} has-danger{{end}}">
+            <label for="access-card" class="col-sm-4 col-form-label">Access card:</label>
             <div class="col-sm-8">
               <div class="input-group">
                 <span class="input-group-addon glyphicons glyphicons-door"></span>
-                <input type="text" class="form-control" name="key-card" value="{{.Key_card}}" maxlength="8">
+                <input type="text" class="form-control" name="access-card" value="{{.Key_card}}" maxlength="8">
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                  <button type="submit" name="update-access-card" class="btn btn-sm btn-primary glyphicons glyphicons-ok"></button>
+                </span>
+                <span class="input-group-btn">
+                  <button type="submit" name="delete" class="btn btn-sm btn-danger glyphicons glyphicons-remove"></button>
                 </span>
               </div>
-              <small class="form-control-feedback">{{$.Data.key_card_error}}</small>
+              <small class="form-control-feedback">{{$.Data.access_card_error}}</small>
             </div>
           </form>
           <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.telephone_error}} has-danger{{end}}">
@@ -186,10 +189,60 @@
                 <span class="input-group-addon glyphicons glyphicons-iphone"></span>
                 <input type="tel" class="form-control" name="telephone" value="{{.Telephone}}">
                 <span class="input-group-btn">
-                  <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                  <button type="submit" name="update-telephone" class="btn btn-sm btn-primary glyphicons glyphicons-ok"></button>
+                </span>
+                <span class="input-group-btn">
+                  <button type="submit" name="delete" class="btn btn-sm btn-danger glyphicons glyphicons-remove"></button>
                 </span>
               </div>
               <small class="form-control-feedback">{{$.Data.telephone_error}}</small>
+            </div>
+          </form>
+          <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.open_house_error}} has-danger{{end}}">
+            <label for="open-house" class="col-sm-4 col-form-label">Open-house attendance:</label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-calendar"></span>
+                <input type="date" class="form-control flex-row" name="open-house" value="{{if not .Open_house_date.IsZero}}{{.Open_house_date.Format "2006-01-02"}}{{end}}">
+                <span class="input-group-btn">
+                  <button type="submit" name="update-open-house" class="btn btn-sm btn-primary glyphicons glyphicons-ok"></button>
+                </span>
+                <span class="input-group-btn">
+                  <button type="submit" name="delete" class="btn btn-sm btn-danger glyphicons glyphicons-remove"></button>
+                </span>
+              </div>
+              <small class="form-control-feedback">{{$.Data.open_house_error}}</small>
+            </div>
+          </form>
+          <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.vehicle_error}} has-danger{{end}}">
+            <label for="vehicle" class="col-sm-4 col-form-label">Vehicle <small class="text-muted">(Make &amp; Model)</small>:</label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <span class="input-group-addon glyphicons glyphicons-car"></span>
+                <input type="text" class="form-control" name="vehicle" value="{{.Vehicle_model}}">
+                <span class="input-group-btn">
+                  <button type="submit" name="update-vehicle" class="btn btn-sm btn-primary glyphicons glyphicons-ok"></button>
+                </span>
+                <span class="input-group-btn">
+                  <button type="submit" name="delete" class="btn btn-sm btn-danger glyphicons glyphicons-remove"></button>
+                </span>
+              </div>
+              <small class="form-control-feedback">{{$.Data.vehicle_error}}</small>
+            </div>
+          </form>
+          <form action="/admin/account/{{.Id}}" method="post" class="form-group row{{if $.Data.plate_error}} has-danger{{end}}">
+            <label for="vehicle" class="col-sm-4 col-form-label">License plate:</label>
+            <div class="col-sm-8">
+              <div class="input-group">
+                <input type="text" class="form-control" name="plate" value="{{.License_plate}}">
+                <span class="input-group-btn">
+                  <button type="submit" name="update-plate" class="btn btn-sm btn-primary glyphicons glyphicons-ok"></button>
+                </span>
+                <span class="input-group-btn">
+                  <button type="submit" name="delete" class="btn btn-sm btn-danger glyphicons glyphicons-remove"></button>
+                </span>
+              </div>
+              <small class="form-control-feedback">{{$.Data.plate_error}}</small>
             </div>
           </form>
   {{with .Talk_user}}
