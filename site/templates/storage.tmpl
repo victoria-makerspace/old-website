@@ -1,85 +1,81 @@
   <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-xl-10">
-        <p class="alert alert-info">
+    <p class="alert alert-info">
 {{if .Admin}}
-          <a href="/admin/storage" class="glyphicons glyphicons-wrench float-right"></a>
+      <a href="/admin/storage" class="glyphicons glyphicons-wrench float-right"></a>
 {{end}}
-          Please <span class="text-nowrap">e-mail</span> <a href="mailto:storage@makerspace.ca">storage@makerspace.ca</a> for more information about storage availabilities.
-        </p>
+      Please <span class="text-nowrap">e-mail</span> <a href="mailto:storage@makerspace.ca">storage@makerspace.ca</a> for more information about storage availabilities.
+    </p>
 {{if not .Get_payment_source}}
-        <p class="alert alert-warning">
-          You must <a href="/member/billing">register</a> a credit card before requesting a storage lease.
-        </p>
+    <p class="alert alert-warning">
+      You must <a href="/member/billing">register</a> a credit card before requesting a storage lease.
+    </p>
 {{end}}
 {{with .Data.error}}
-        <p class="alert alert-danger">{{.}}</p>
+    <p class="alert alert-danger">{{.}}</p>
 {{end}}
-        <div class="row">
+    <div class="row">
 {{range .List_storage_plans}}
   {{$storage := $.List_storage .}}
-          <div class="col">
+      <div class="col">
   {{with index $storage 0}}
     {{if $.Get_payment_source}}
-            <form method="post" action="/member/storage">
+        <form method="post" action="/member/storage">
       {{if $.Get_pending_subscription_by_plan (printf "%s-%s" (Plan_category .Plan.ID) (Plan_identifier .Plan.ID))}}
-              <button type="submit" name="unrequest-storage-plan" value="{{.Plan.ID}}" class="float-right mr-2 btn btn-sm btn-outline-warning active">Requested ×</button>
+          <button type="submit" name="unrequest-storage-plan" value="{{.Plan.ID}}" class="float-right mr-2 btn btn-sm btn-outline-warning active">Requested ×</button>
       {{else}}
-              <button type="submit" name="request-storage-plan" value="{{.Plan.ID}}" class="float-right mr-2 btn btn-sm btn-outline-primary">Request</button>
+          <button type="submit" name="request-storage-plan" value="{{.Plan.ID}}" class="float-right mr-2 btn btn-sm btn-outline-primary">Request</button>
       {{end}}
-            </form>
+        </form>
     {{end}}
-            <h5 class="mt-1">{{.Plan.Name}}</h5>
+        <h5 class="mt-1">{{.Plan.Name}}</h5>
     {{with index .Plan.Meta "notice"}}
-            <small class="pl-sm-2 align-top text-muted">{{.}}</small>
+        <small class="pl-sm-2 align-top text-muted">{{.}}</small>
     {{end}}
   {{end}}
-            <table class="px-sm-2 table table-sm table-responsive text-nowrap text-center">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th class="w-100">Owner</th>
-                  <th>Fee <span class="small text-muted">(monthly)</span></th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
+        <table class="px-sm-2 table table-sm table-responsive text-nowrap text-center">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th class="w-100">Owner</th>
+              <th>Fee <span class="small text-muted">(monthly)</span></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
   {{range $storage}}
-                <tr{{if not .Available}} class="text-muted"{{else if .Member}}{{if eq .Member.Id $.Member.Id}} class="table-success"{{end}}{{end}}>
-                  <th scope="row">{{.Number}}</th>
-                  <td class="text-left">
+            <tr{{if not .Available}} class="text-muted"{{else if .Member}}{{if eq .Member.Id $.Member.Id}} class="table-success"{{end}}{{end}}>
+              <th scope="row">{{.Number}}</th>
+              <td class="text-left">
     {{if .Member}}
-                    <a href="/member/{{.Id}}">@{{.Member.Username}}</a>
+                <a href="/member/{{.Id}}">@{{.Member.Username}}</a>
     {{else if not .Available}}
-                    <small>Unavailable</small>
+                <small>Unavailable</small>
     {{else}}
-                    <span class="ml-2">-</span>
+                <span class="ml-2">-</span>
     {{end}}
-                  </td>
-                  <td>
+              </td>
+              <td>
     {{if .Available}}
-                    {{fmt_money (mul .Quantity .Plan.Amount)}}
+                {{fmt_money (mul .Quantity .Plan.Amount)}}
     {{else}}
-                    -
+                -
     {{end}}
-                  </td>
-                  <td>
+              </td>
+              <td>
     {{if .Member}}
       {{if eq $.Member.Id .Member.Id}}
-                    <form method="post" action="/member/storage">
-                      <input type="hidden" name="cancel-storage-plan" value="{{.Plan.ID}}">
-                      <button type="submit" name="cancel-storage-number" value="{{.Number}}" class="btn btn-sm btn-warning">Cancel</button>
-                    </form>
+              <form method="post" action="/member/storage">
+                <input type="hidden" name="cancel-storage-plan" value="{{.Plan.ID}}">
+                <button type="submit" name="cancel-storage-number" value="{{.Number}}" class="btn btn-sm btn-warning">Cancel</button>
+              </form>
       {{end}}
     {{end}}
-                  </td>
-                </tr>
+              </td>
+            </tr>
   {{end}}
-              </tbody>
-            </table>
-          </div>
-{{end}}
-        </div>
+          </tbody>
+        </table>
       </div>
+{{end}}
     </div>
   </div>

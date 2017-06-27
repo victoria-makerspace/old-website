@@ -155,16 +155,14 @@ img.member-icon-large,
     z-index: 1000;
     top: 3.5rem;
 }
-.member-list-heading .row {
-    padding: 1rem 0 0.75rem 0;
+.member-list-heading > .container {
     background: rgba(255,255,255,0.8);
 }
 .member-list-heading .dropdown {
     z-index: 1030;
-    margin: 0;
 }
 .member-list-heading ~ .container {
-    padding-top: 7.5rem;
+    padding-top: 9rem;
 }
 .member-list td {
     vertical-align: middle;

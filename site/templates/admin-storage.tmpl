@@ -3,116 +3,112 @@
       <a class="breadcrumb-item" href="/admin">Admin panel</a>
       <a class="breadcrumb-item active" href="/admin/storage">Storage</a>
     </nav>
-    <div class="row justify-content-center">
-      <div class="col-xl-10">
 {{with .Data.error}}
-        <p class="alert alert-danger">{{.}}</p>
+    <p class="alert alert-danger">{{.}}</p>
 {{end}}
 {{with .Data.storage_requests}}
-        <h4>
-          <a href="#pending-storage" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
-          Pending storage requests
-        </h4>
-        <form action="/admin/storage" method="post" class="collapse show mx-sm-3" id="pending-storage">
-          <table class="table table-sm table-striped table-responsive text-nowrap">
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th class="w-75">Name</th>
-                <th class="w-25">Type</th>
-                <th>Request date</th>
-                <th></th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
+    <h4>
+      <a href="#pending-storage" data-toggle="collapse" aria-expanded="true" class="dropdown-chevron"></a>
+      Pending storage requests
+    </h4>
+    <form action="/admin/storage" method="post" class="collapse show mx-sm-3" id="pending-storage">
+      <table class="table table-sm table-striped table-responsive text-nowrap">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th class="w-75">Name</th>
+            <th class="w-25">Type</th>
+            <th>Request date</th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
   {{range .}}
-              <tr>
-                <input type="hidden" name="member" value="{{.Member.Id}}">
-                <td><a href="/member/{{.Member.Id}}">@{{.Username}}</a></td>
-                <td>{{.Member.Name}}</td>
-                <td>{{with index $.Plans .Plan_id}}{{.Name}}{{end}}</td>
-                <td>{{.Requested_at.Format "2006-01-02"}}</td>
-                <td>
-                  <div class="input-group">
-                    <select name="storage-number" class="py-1 custom-select" style="height: inherit; line-height: 1;">
-                      <option selected>#</option>
-                    {{range $.List_available_storage_numbers .Plan_id}}
-                      <option value="{{.}}">{{.}}</option>
-                    {{else}}
-                      <option>Unavailable</option>
-                    {{end}}
-                    </select>
-                    <span class="input-group-btn">
-                      <button type="submit" name="approve-storage" value="{{.Plan_id}}" class="btn btn-sm btn-primary">Approve</button>
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <button type="submit" name="decline-storage" value="{{.Plan_id}}" class="btn btn-sm btn-danger">Decline</button>
-                </td>
-              </tr>
+          <tr>
+            <input type="hidden" name="member" value="{{.Member.Id}}">
+            <td><a href="/member/{{.Member.Id}}">@{{.Username}}</a></td>
+            <td>{{.Member.Name}}</td>
+            <td>{{with index $.Plans .Plan_id}}{{.Name}}{{end}}</td>
+            <td>{{.Requested_at.Format "2006-01-02"}}</td>
+            <td>
+              <div class="input-group">
+                <select name="storage-number" class="py-1 custom-select" style="height: inherit; line-height: 1;">
+                  <option selected>#</option>
+                {{range $.List_available_storage_numbers .Plan_id}}
+                  <option value="{{.}}">{{.}}</option>
+                {{else}}
+                  <option>Unavailable</option>
+                {{end}}
+                </select>
+                <span class="input-group-btn">
+                  <button type="submit" name="approve-storage" value="{{.Plan_id}}" class="btn btn-sm btn-primary">Approve</button>
+                </span>
+              </div>
+            </td>
+            <td>
+              <button type="submit" name="decline-storage" value="{{.Plan_id}}" class="btn btn-sm btn-danger">Decline</button>
+            </td>
+          </tr>
   {{end}}
-            </tbody>
-          </table>
-        </form>
+        </tbody>
+      </table>
+    </form>
 {{end}}
-        <hr>
-        <div class="row">
+    <hr>
+    <div class="row">
 {{range .List_storage_plans}}
   {{$storage := $.List_storage .}}
-          <div class="col">
+      <div class="col">
   {{with index $storage 0}}
-            <h5 class="mt-1">{{.Plan.Name}}</h5>
+        <h5 class="mt-1">{{.Plan.Name}}</h5>
     {{with index .Plan.Meta "notice"}}
-            <small class="pl-sm-2 align-top text-muted">{{.}}</small>
+        <small class="pl-sm-2 align-top text-muted">{{.}}</small>
     {{end}}
   {{end}}
-            <table class="px-sm-2 table table-sm table-responsive text-nowrap text-center">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th class="w-100">Owner</th>
-                  <th>Fee <span class="small text-muted">(monthly)</span></th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
+        <table class="px-sm-2 table table-sm table-responsive text-nowrap text-center">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th class="w-100">Owner</th>
+              <th>Fee <span class="small text-muted">(monthly)</span></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
   {{range $storage}}
-                <tr{{if not .Available}} class="text-muted"{{end}}>
-                  <th scope="row">{{.Number}}</th>
-                  <td class="text-left">
+            <tr{{if not .Available}} class="text-muted"{{end}}>
+              <th scope="row">{{.Number}}</th>
+              <td class="text-left">
     {{if .Member}}
-                    <a href="/member/{{.Id}}">@{{.Member.Username}}</a>
+                <a href="/member/{{.Id}}">@{{.Member.Username}}</a>
     {{else if not .Available}}
-                    <small>Unavailable</small>
+                <small>Unavailable</small>
     {{else}}
-                    <span class="ml-2">-</span>
+                <span class="ml-2">-</span>
     {{end}}
-                  </td>
-                  <td>
+              </td>
+              <td>
     {{if .Available}}
-                    {{fmt_money (mul .Quantity .Plan.Amount)}}
+                {{fmt_money (mul .Quantity .Plan.Amount)}}
     {{else}}
-                    -
+                -
     {{end}}
-                  </td>
-                  <td>
+              </td>
+              <td>
     {{if .Member}}
-                    <form method="post" action="/admin/storage">
-                      <input type="hidden" name="member" value="{{.Member.Id}}">
-                      <input type="hidden" name="cancel-storage-plan" value="{{.Plan.ID}}">
-                      <button type="submit" name="cancel-storage-number" value="{{.Number}}" class="btn btn-sm btn-warning">Cancel</button>
-                    </form>
+                <form method="post" action="/admin/storage">
+                  <input type="hidden" name="member" value="{{.Member.Id}}">
+                  <input type="hidden" name="cancel-storage-plan" value="{{.Plan.ID}}">
+                  <button type="submit" name="cancel-storage-number" value="{{.Number}}" class="btn btn-sm btn-danger">Cancel</button>
+                </form>
     {{end}}
-                  </td>
-                </tr>
+              </td>
+            </tr>
   {{end}}
-              </tbody>
-            </table>
-          </div>
-{{end}}
-        </div>
+          </tbody>
+        </table>
       </div>
+{{end}}
     </div>
   </div>
