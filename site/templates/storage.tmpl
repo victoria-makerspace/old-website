@@ -1,10 +1,10 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-xl-10">
+        <p class="alert alert-info">
 {{if .Admin}}
-        <a href="/admin/storage" class="glyphicons glyphicons-wrench float-right p-2"></a>
+          <a href="/admin/storage" class="glyphicons glyphicons-wrench float-right"></a>
 {{end}}
-        <p class="alert alert-warning">
           Please <span class="text-nowrap">e-mail</span> <a href="mailto:storage@makerspace.ca">storage@makerspace.ca</a> for more information about storage availabilities.
         </p>
 {{if not .Get_payment_source}}

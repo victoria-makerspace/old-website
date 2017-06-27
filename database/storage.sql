@@ -1,7 +1,18 @@
 -- Storage values
 	-- Hallway lockers
 	INSERT INTO storage (number, plan_id)
-	SELECT generate_series(1,12), 'storage-locker_hallway';
+	SELECT generate_series(1,12), 'storage-locker_hallway_small';
+		UPDATE storage
+		SET available = false
+		WHERE number = 11
+			AND plan_id = 'storage-locker_hallway_small';
+	INSERT INTO storage (number, plan_id)
+	SELECT generate_series(1,12), 'storage-locker_hallway_large';
+		-- Bathroom lockers 7 and 8 are reserved for VITP cleaners
+		UPDATE storage
+		SET available = false
+		WHERE number = 9
+			AND plan_id = 'storage-locker_hallway_large';
 	-- Bathroom lockers
 	INSERT INTO storage (number, plan_id)
 	SELECT generate_series(1,11), 'storage-locker_bathroom';
