@@ -88,12 +88,6 @@ func (hs *http_server) register_handlers() {
 					p.srv_json = true
 				}
 				p.tmpl = h.Template
-				///TODO: remove after testing ////////////////////////
-				if p.tmpl != nil {
-					p.tmpl = template.New(name + ".tmpl").Funcs(tmpl_funcmap)
-					template.Must(p.tmpl.ParseFiles(file_path("templates", name+".tmpl")))
-				}
-				/////////////////////////////////////////////////////
 				p.ParseForm()
 				// Don't authenticate on static requests
 				if name != "index" {
