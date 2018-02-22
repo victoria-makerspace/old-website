@@ -1,8 +1,6 @@
 package app
 
-import (
-	
-)
+import ()
 
 type Config struct {
 	Database string

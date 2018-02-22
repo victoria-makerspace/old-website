@@ -3,8 +3,9 @@ CREATE TABLE user (
 	id serial PRIMARY KEY,
 	username text NOT NULL UNIQUE,
 	email text NOT NULL UNIQUE,
+	registered timestamp(0) with time zone NOT NULL DEFAULT now(),
 	password character(128), -- First half is the key, next half is the salt.
-	registered timestamp(0) with time zone NOT NULL DEFAULT now()
+	name text NOT NULL
 );
 CREATE TABLE session (
 	token character(64) PRIMARY KEY,

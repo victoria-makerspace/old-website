@@ -7,7 +7,7 @@ import (
 
 type Application struct {
 	conf *Config
-	db *sql.DB
+	db   *sql.DB
 }
 
 // New allocates and starts a new application instance
