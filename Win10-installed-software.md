@@ -1,0 +1,16 @@
+
+- Windows features (Settings -> Apps -> Programs and Features -> Turn Windows features on or off):
+  - NFS client
+  - Windows Subsystem for Linux (Download a distribution from Microsoft Store)
+- 7-Zip
+- Autodesk Fusion 360
+- Backup and Sync from Google
+- Dropbox
+- Gimp
+- Google Chrome
+- KeePass 2 (keepass.info)
+- LaserCAD (sinjoe.com/download)
+- LibreOffice
+- SumatraPDF
+- Tixati
+- VLC
