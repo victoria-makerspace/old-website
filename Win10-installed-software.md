@@ -14,3 +14,4 @@
 - SumatraPDF
 - Tixati
 - VLC
+- VS Code (code.visualstudio.com)
